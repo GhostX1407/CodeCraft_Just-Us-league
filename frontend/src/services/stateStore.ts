@@ -6,7 +6,13 @@ import {
   ReliabilityRow,
   CaseRouting,
 } from '../types/domain';
-import { SEED_HOSPITALS } from './seedData';
+import {
+  SEED_HOSPITALS,
+  SEED_CASES,
+  SEED_ROUTINGS,
+  SEED_REQUESTS,
+  SEED_AUDIT_LOGS,
+} from './seedData';
 import { toMillis } from '../utils/time';
 
 interface StoreState {
@@ -28,7 +34,14 @@ function getInitialState(): StoreState {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.hospitals) && parsed.hospitals.length > 0) {
-        return parsed;
+        return {
+          hospitals: parsed.hospitals,
+          cases: parsed.cases && Object.keys(parsed.cases).length > 0 ? parsed.cases : { ...SEED_CASES },
+          routings: parsed.routings && Object.keys(parsed.routings).length > 0 ? parsed.routings : { ...SEED_ROUTINGS },
+          requests: parsed.requests && Object.keys(parsed.requests).length > 0 ? parsed.requests : { ...SEED_REQUESTS },
+          auditLogs: Array.isArray(parsed.auditLogs) && parsed.auditLogs.length > 0 ? parsed.auditLogs : [...SEED_AUDIT_LOGS],
+          reliability: parsed.reliability || {},
+        };
       }
     }
   } catch (e) {
@@ -51,10 +64,10 @@ function getInitialState(): StoreState {
 
   return {
     hospitals: [...SEED_HOSPITALS],
-    cases: {},
-    routings: {},
-    requests: {},
-    auditLogs: [],
+    cases: { ...SEED_CASES },
+    routings: { ...SEED_ROUTINGS },
+    requests: { ...SEED_REQUESTS },
+    auditLogs: [...SEED_AUDIT_LOGS],
     reliability: initialReliability,
   };
 }
@@ -128,7 +141,7 @@ export const stateStore = {
   },
 
   getHospital(id: string): Hospital | undefined {
-    return state.hospitals.find((h) => h.id === id);
+    return state.hospitals.find((h) => h.id === id || (id.startsWith('hosp_apex') && h.id === 'hosp_apex'));
   },
 
   getHospitals(): Hospital[] {
@@ -136,7 +149,8 @@ export const stateStore = {
   },
 
   updateHospital(id: string, patch: Partial<Hospital>): Hospital {
-    const idx = state.hospitals.findIndex((h) => h.id === id);
+    const resolvedId = (id.startsWith('hosp_apex') && !state.hospitals.some(h => h.id === id)) ? 'hosp_apex' : id;
+    const idx = state.hospitals.findIndex((h) => h.id === resolvedId);
     if (idx === -1) throw new Error(`Hospital not found: ${id}`);
     
     const updated: Hospital = {

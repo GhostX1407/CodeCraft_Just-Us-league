@@ -20,11 +20,11 @@ export const FreshnessBadge: React.FC<FreshnessBadgeProps> = ({
   const getStyle = () => {
     switch (status) {
       case 'fresh':
-        return 'border-solid border-[#0D9488]/40 text-[#0F766E] bg-[#CCFBF1] font-bold';
+        return 'border-solid border-[#52796F]/40 text-[#354F52] bg-[#EFF6F3] font-bold';
       case 'stale':
         return 'border-dashed border-[#D97706]/40 text-[#B45309] bg-[#FEF3C7] font-bold';
       case 'unknown':
-        return 'border-dotted border-[#CBD5E1] text-[#475569] bg-[#F1F5F9] font-bold';
+        return 'border-dotted border-[#D8CFBF] text-[#7D7067] bg-[#F4EFE6] font-bold';
     }
   };
 
@@ -39,15 +39,15 @@ export const FreshnessBadge: React.FC<FreshnessBadgeProps> = ({
         <span
           className={clsx(
             'w-1.5 h-1.5 rounded-full',
-            status === 'fresh' && 'bg-[#0D9488]',
+            status === 'fresh' && 'bg-[#52796F]',
             status === 'stale' && 'bg-[#D97706]',
-            status === 'unknown' && 'bg-[#64748B]'
+            status === 'unknown' && 'bg-[#7D7067]'
           )}
         />
         <span>Updated {formattedTime}</span>
       </div>
       {status === 'unknown' && showSentenceOnUnknown && (
-        <span className="text-[11px] font-sans text-[#475569] font-semibold leading-tight">
+        <span className="text-[11px] font-sans text-[#7D7067] font-semibold leading-tight">
           Status unknown — de-prioritised in ranking.
         </span>
       )}

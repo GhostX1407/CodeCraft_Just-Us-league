@@ -24,14 +24,14 @@ export const ReliabilityMeter: React.FC<ReliabilityMeterProps> = ({
   return (
     <div className={clsx('select-none font-mono', className)}>
       <div className="flex items-center justify-between gap-2 mb-1">
-        <span className="text-[11px] uppercase tracking-wider text-[#0F172A] font-bold">
+        <span className="text-[11px] uppercase tracking-wider text-[#2D231C] font-bold">
           Commitment Reliability
         </span>
         <span
           className={clsx(
             'font-black tabular-nums',
             size === 'sm' ? 'text-xs' : 'text-sm',
-            percentage >= 85 ? 'text-[#0D9488]' : percentage >= 70 ? 'text-[#149B9E]' : 'text-[#E11D48]',
+            percentage >= 85 ? 'text-[#52796F]' : percentage >= 70 ? 'text-[#EA580C]' : 'text-[#E11D48]',
             animateOnChange && 'transition-all duration-300'
           )}
         >
@@ -50,9 +50,9 @@ export const ReliabilityMeter: React.FC<ReliabilityMeterProps> = ({
                 'h-2 flex-1 rounded-[2px] transition-all duration-300',
                 isActive
                   ? percentage >= 85
-                    ? 'bg-[#0D9488]'
-                    : 'bg-[#149B9E]'
-                  : 'bg-[#E2E8F0]'
+                    ? 'bg-[#52796F]'
+                    : 'bg-[#EA580C]'
+                  : 'bg-[#E8E2D9]'
               )}
             />
           );
@@ -60,7 +60,7 @@ export const ReliabilityMeter: React.FC<ReliabilityMeterProps> = ({
       </div>
 
       {/* Raw fraction & Definition */}
-      <div className="flex items-center justify-between text-[10px] text-[#475569] font-bold mt-1">
+      <div className="flex items-center justify-between text-[10px] text-[#7D7067] font-bold mt-1">
         {metrics ? (
           <span>
             {metrics.successful_commitment_count}/{metrics.accepted_count} honoured (avg {metrics.average_response_seconds}s)
@@ -68,7 +68,7 @@ export const ReliabilityMeter: React.FC<ReliabilityMeterProps> = ({
         ) : (
           <span>Accepted & honoured ratio</span>
         )}
-        <span className="text-[#64748B] text-[9px] font-semibold">Honoured ÷ Accepted</span>
+        <span className="text-[#7D7067] text-[9px] font-semibold">Honoured ÷ Accepted</span>
       </div>
     </div>
   );

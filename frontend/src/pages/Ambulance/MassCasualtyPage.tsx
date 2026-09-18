@@ -109,15 +109,15 @@ export const MassCasualtyPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen text-[#0F172A] p-4 sm:p-8 font-sans select-none relative z-10">
+    <div className="min-h-screen text-[#2D231C] p-4 sm:p-8 font-sans select-none relative z-10">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header Bar */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+        <div className="flex items-center justify-between pb-4 border-b border-[#E8E2D9]">
           <Link
             to="/ambulance"
-            className="text-xs font-mono font-bold text-[#475569] hover:text-[#149B9E] flex items-center gap-1.5 transition-colors"
+            className="text-xs font-mono font-bold text-[#7D7067] hover:text-[#EA580C] flex items-center gap-1.5 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 text-[#149B9E]" />
+            <ArrowLeft className="w-4 h-4 text-[#EA580C]" />
             <span>Back to Single Dispatch</span>
           </Link>
           <div className="flex items-center gap-2">
@@ -129,22 +129,22 @@ export const MassCasualtyPage: React.FC = () => {
         </div>
 
         {/* Incident Context Banner */}
-        <div className="p-6 bg-white rounded-3xl border border-[#E2E8F0] shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="p-6 bg-white rounded-3xl border border-[#E8E2D9] shadow-sm flex flex-wrap items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#0D7C7E] font-black bg-[#E6F7F7] px-2.5 py-1 rounded-full border border-[#149B9E]/30">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#C2410C] font-black bg-[#FFF7ED] px-2.5 py-1 rounded-full border border-[#EA580C]/30">
               Active Multi-Casualty Protocol
             </span>
-            <h1 className="text-xl sm:text-2xl font-display font-black text-[#0F172A] tracking-tight mt-2">
+            <h1 className="text-xl sm:text-2xl font-display font-black text-[#2D231C] tracking-tight mt-2">
               Expressway Multi-Vehicle Collision (4 Immediate Casualties)
             </h1>
-            <p className="text-xs text-[#475569] mt-1 font-mono font-semibold">
-              Incident Group: <code className="text-[#149B9E] font-bold">{incidentGroupId}</code>
+            <p className="text-xs text-[#7D7067] mt-1 font-mono font-semibold">
+              Incident Group: <code className="text-[#EA580C] font-bold">{incidentGroupId}</code>
             </p>
           </div>
 
           <div className="text-right">
-            <span className="text-xs font-mono font-bold text-[#64748B] uppercase">Total Casualties</span>
-            <div className="text-2xl font-mono font-black text-[#0F172A]">4 Patients</div>
+            <span className="text-xs font-mono font-bold text-[#7D7067] uppercase">Total Casualties</span>
+            <div className="text-2xl font-mono font-black text-[#2D231C]">4 Patients</div>
           </div>
         </div>
 

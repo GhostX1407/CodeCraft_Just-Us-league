@@ -62,7 +62,7 @@ export const Countdown: React.FC<CountdownProps> = ({
               cx={dimensions.dim / 2}
               cy={dimensions.dim / 2}
               r={radius}
-              stroke="#E2E8F0"
+              stroke="#E8E2D9"
               strokeWidth={dimensions.stroke}
               fill="transparent"
               className="opacity-70"
@@ -73,7 +73,7 @@ export const Countdown: React.FC<CountdownProps> = ({
               cx={dimensions.dim / 2}
               cy={dimensions.dim / 2}
               r={radius}
-              stroke={isUrgent ? '#E11D48' : '#149B9E'}
+              stroke={isUrgent ? '#E11D48' : '#EA580C'}
               strokeWidth={dimensions.stroke}
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
@@ -92,8 +92,8 @@ export const Countdown: React.FC<CountdownProps> = ({
               className={clsx(
                 'font-mono tabular-nums leading-none tracking-tight transition-colors duration-200 drop-shadow-sm',
                 dimensions.text,
-                isUrgent ? 'text-[#E11D48] font-black' : 'text-[#0F172A] font-black',
-                expiredLocally && 'text-[#94A3B8]'
+                isUrgent ? 'text-[#E11D48] font-black' : 'text-[#2D231C] font-black',
+                expiredLocally && 'text-[#A89F97]'
               )}
             >
               {formatMMSS(secondsRemaining)}
@@ -105,8 +105,8 @@ export const Countdown: React.FC<CountdownProps> = ({
           className={clsx(
             'mt-4 font-mono uppercase tracking-widest text-center select-none font-bold',
             dimensions.labelText,
-            isUrgent ? 'text-[#E11D48] animate-pulse font-black' : 'text-[#475569]',
-            expiredLocally && 'text-[#94A3B8]'
+            isUrgent ? 'text-[#E11D48] animate-pulse font-black' : 'text-[#7D7067]',
+            expiredLocally && 'text-[#A89F97]'
           )}
         >
           {expiredLocally
@@ -123,25 +123,25 @@ export const Countdown: React.FC<CountdownProps> = ({
   return (
     <div className={clsx('w-full select-none', className)}>
       <div className="flex items-center justify-between text-xs font-mono mb-2">
-        <span className={clsx(isUrgent ? 'text-[#E11D48] font-black' : 'text-[#475569] font-bold')}>
+        <span className={clsx(isUrgent ? 'text-[#E11D48] font-black' : 'text-[#7D7067] font-bold')}>
           {expiredLocally ? 'Awaiting hospital response…' : label}
         </span>
         <span
           className={clsx(
             'tabular-nums font-black tracking-tight text-sm',
-            isUrgent ? 'text-[#E11D48] animate-pulse' : 'text-[#0F172A]',
-            expiredLocally && 'text-[#94A3B8]'
+            isUrgent ? 'text-[#E11D48] animate-pulse' : 'text-[#2D231C]',
+            expiredLocally && 'text-[#A89F97]'
           )}
         >
           {formatMMSS(secondsRemaining)}
         </span>
       </div>
-      <div className="w-full h-2.5 bg-[#F1F5F9] rounded-full overflow-hidden border border-[#E2E8F0] p-0.5 shadow-inner">
+      <div className="w-full h-2.5 bg-[#F4EFE6] rounded-full overflow-hidden border border-[#E8E2D9] p-0.5 shadow-inner">
         <div
           className={clsx(
             'h-full transition-all duration-150 ease-linear rounded-full',
-            isUrgent ? 'bg-[#E11D48] shadow-[0_0_12px_rgba(225,29,72,0.6)]' : 'bg-[#149B9E] shadow-[0_0_12px_rgba(20,155,158,0.6)]',
-            expiredLocally && 'bg-[#94A3B8] shadow-none'
+            isUrgent ? 'bg-[#E11D48] shadow-[0_0_12px_rgba(225,29,72,0.6)]' : 'bg-[#EA580C] shadow-[0_0_12px_rgba(20,155,158,0.6)]',
+            expiredLocally && 'bg-[#A89F97] shadow-none'
           )}
           style={{ width: `${Math.max(0, Math.min(100, fraction * 100))}%` }}
         />

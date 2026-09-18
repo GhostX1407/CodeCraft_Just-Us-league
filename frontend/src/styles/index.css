@@ -6,56 +6,60 @@
 
 @layer base {
   html {
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #0F172A;
-    background-color: #F8FAFC;
+    font-family: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #2D231C;
+    background-color: #FAF8F5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
     overflow-x: hidden;
+    font-size: 16px;
   }
 
   body {
-    background-color: #F8FAFC;
-    color: #0F172A;
-    font-weight: 500;
+    background-color: #FAF8F5;
+    color: #2D231C;
+    font-weight: 550;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
   }
 
-  /* Display Font for Headings - High Contrast & Bold */
+  /* Display Font for Headings - High Contrast & Bold Visibility */
   h1, h2, h3, .font-display {
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
     letter-spacing: -0.025em;
-    color: #0F172A;
-    font-weight: 700;
+    color: #2D231C;
+    font-weight: 800;
   }
 
   /* Semantic Monospace: Tabular Figures for Machine-Measured Figures */
   .font-mono, code, pre, .tabular-nums {
-    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
+    font-weight: 600;
   }
 
-  /* Focus ring with Medical Teal signature glow */
+  /* Focus ring with Brand Saffron signature glow */
   *:focus-visible {
-    outline: 2px solid #149B9E;
+    outline: 2px solid #EA580C;
     outline-offset: 2px;
-    box-shadow: 0 0 12px rgba(20, 155, 158, 0.35);
+    box-shadow: 0 0 12px rgba(234, 88, 12, 0.35);
   }
 
-  /* Custom Smooth Clinical Hospital Scrollbar */
+  /* Custom Smooth Warm Silk Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #F1F5F9;
+    background: #F4EFE6;
   }
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
+    background: #D8CFBF;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #94A3B8;
+    background: #B8ABA0;
   }
 }
 
@@ -63,8 +67,8 @@
 .macos-window {
   background: #FFFFFF;
   border-radius: 20px;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
+  border: 1px solid #E8E2D9;
+  box-shadow: 0 20px 45px -10px rgba(45, 35, 28, 0.08), 0 2px 8px rgba(45, 35, 28, 0.04);
   overflow: hidden;
 }
 
@@ -73,8 +77,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
-  border-bottom: 1px solid #E2E8F0;
-  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #E8E2D9;
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(16px);
 }
 
@@ -93,42 +97,42 @@
 }
 
 .macos-dot-close {
-  background-color: #E11D48;
-  border: 1px solid #BE123C;
+  background-color: #DC2626;
+  border: 1px solid #B91C1C;
 }
 
 .macos-dot-minimize {
-  background-color: #D97706;
-  border: 1px solid #B45309;
+  background-color: #EA580C;
+  border: 1px solid #C2410C;
 }
 
 .macos-dot-expand {
-  background-color: #0D9488;
-  border: 1px solid #0F766E;
+  background-color: #52796F;
+  border: 1px solid #354F52;
 }
 
-/* ─────────────────────────────── Glassmorphism (Clinical Frosted White) ────────────────── */
+/* ─────────────────────────────── Glassmorphism (Warm Silk Porcelain) ────────────────── */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(226, 232, 240, 0.8);
-}
-
-.glass-panel-interactive {
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  border: 1px solid #E8E2D9;
+  box-shadow: 0 10px 30px -5px rgba(45, 35, 28, 0.04), 0 0 0 1px rgba(232, 226, 217, 0.8);
+}
+
+.glass-panel-interactive {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid #E8E2D9;
+  box-shadow: 0 4px 20px rgba(45, 35, 28, 0.04);
   transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glass-panel-interactive:hover {
   background: #FFFFFF;
   transform: translateY(-2px);
-  border-color: rgba(20, 155, 158, 0.45);
-  box-shadow: 0 18px 35px -8px rgba(15, 23, 42, 0.10), 0 0 0 1px rgba(20, 155, 158, 0.25);
+  border-color: rgba(234, 88, 12, 0.45);
+  box-shadow: 0 18px 35px -8px rgba(45, 35, 28, 0.10), 0 0 0 1px rgba(234, 88, 12, 0.25);
 }
 
 /* 3D Perspective Card Tilt Utilities */
@@ -139,7 +143,7 @@
   transform-style: preserve-3d;
 }
 
-/* Circuit Rail on Clinical White Ground */
+/* Circuit Rail on Porcelain Silk Ground */
 .circuit-rail {
   position: relative;
 }
@@ -150,35 +154,35 @@
   top: 0;
   bottom: 0;
   width: 3.5px;
-  background-color: #E2E8F0;
+  background-color: #E8E2D9;
   transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .circuit-rail.committed::before {
-  background-color: #0D9488;
-  box-shadow: 0 0 12px rgba(13, 148, 136, 0.4);
+  background-color: #52796F;
+  box-shadow: 0 0 12px rgba(82, 121, 111, 0.4);
 }
 .circuit-rail.in-flight::before {
-  background-color: #149B9E;
-  box-shadow: 0 0 12px rgba(20, 155, 158, 0.4);
+  background-color: #EA580C;
+  box-shadow: 0 0 12px rgba(234, 88, 12, 0.4);
 }
 
-/* Living Ambient Background Mesh (Subtle Technical Grid on Crisp Canvas) */
+/* Living Ambient Background Mesh (Subtle Technical Grid on Warm Canvas) */
 .bg-spatial-grid {
   background-image: 
-    linear-gradient(to right, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+    linear-gradient(to right, rgba(45, 35, 28, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(45, 35, 28, 0.035) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
-/* Glow Utilities (Medical Teal & Clean Clinic Aesthetics) */
+/* Glow Utilities (Radiant Saffron & Healing Sage Aesthetics) */
 .glow-signal {
-  box-shadow: 0 0 24px rgba(20, 155, 158, 0.35);
+  box-shadow: 0 0 24px rgba(234, 88, 12, 0.35);
 }
 .glow-commit {
-  box-shadow: 0 0 24px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 0 24px rgba(82, 121, 111, 0.3);
 }
 .glow-critical {
-  box-shadow: 0 0 24px rgba(225, 29, 72, 0.25);
+  box-shadow: 0 0 24px rgba(220, 38, 38, 0.25);
 }
 .glow-caution {
   box-shadow: 0 0 24px rgba(217, 119, 6, 0.25);
@@ -220,9 +224,9 @@
   animation: ecgScan 2.4s linear infinite;
 }
 
-/* Leaflet Clean Hospital Cartography */
+/* Leaflet Clean Warm Cartography */
 .leaflet-container {
-  background-color: #F1F5F9 !important;
+  background-color: #F4EFE6 !important;
   font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
 .leaflet-tile {
@@ -231,40 +235,33 @@
 
 /* Tactile 3D Button Press */
 .btn-tactile {
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(45, 35, 28, 0.08);
   transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .btn-tactile:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 18px rgba(45, 35, 28, 0.12);
 }
 .btn-tactile:active {
   transform: translateY(1px);
-  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.15);
+  box-shadow: inset 0 1px 3px rgba(45, 35, 28, 0.15);
 }
 
 /* ─────────────────────────── Signature Page Transmission Animation ───────────── */
 @keyframes spatialPageEmerge {
   0% {
     opacity: 0;
-    transform: translateY(18px) scale(0.985);
-    filter: blur(8px);
-  }
-  45% {
-    opacity: 0.75;
-    transform: translateY(4px) scale(0.995);
-    filter: blur(2px);
+    transform: translateY(10px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translateY(0);
   }
 }
 
 .animate-spatial-emerge {
-  animation: spatialPageEmerge 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity, filter;
+  animation: spatialPageEmerge 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
 @keyframes nanoHorizonBeam {

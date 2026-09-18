@@ -77,28 +77,28 @@ export const Card3D: React.FC<Card3DProps> = ({
   const getRailColor = () => {
     switch (railStatus) {
       case 'accepted':
-        return 'before:bg-[#0D9488] before:shadow-[0_0_12px_rgba(13,148,136,0.4)]';
+        return 'before:bg-[#52796F] before:shadow-[0_0_12px_rgba(82,121,111,0.4)]';
       case 'pending':
-        return 'before:bg-[#149B9E] before:shadow-[0_0_12px_rgba(20,155,158,0.4)]';
+        return 'before:bg-[#EA580C] before:shadow-[0_0_12px_rgba(234,88,12,0.4)]';
       case 'rejected':
       case 'timed_out':
-        return 'before:bg-[#E11D48] before:shadow-[0_0_12px_rgba(225,29,72,0.4)]';
+        return 'before:bg-[#DC2626] before:shadow-[0_0_12px_rgba(220,38,38,0.4)]';
       case 'superseded':
         return 'before:bg-[#D97706] before:shadow-[0_0_12px_rgba(217,119,6,0.4)]';
       default:
-        return 'before:bg-[#E2E8F0]';
+        return 'before:bg-[#E8E2D9]';
     }
   };
 
   const getElevation = () => {
     switch (elevation) {
       case 'lifted':
-        return 'shadow-[0_18px_35px_-8px_rgba(15,23,42,0.08),0_0_0_1px_rgba(226,232,240,0.8)] bg-white border-[#E2E8F0]';
+        return 'shadow-[0_18px_35px_-8px_rgba(45,35,28,0.08),0_0_0_1px_rgba(232,226,217,0.8)] bg-white border-[#E8E2D9]';
       case 'sunken':
-        return 'opacity-90 border-[#E2E8F0] bg-[#F8FAFC]';
+        return 'opacity-90 border-[#E8E2D9] bg-[#FAF8F5]';
       case 'flat':
       default:
-        return 'border-[#E2E8F0] bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04),0_1px_3px_rgba(15,23,42,0.02)]';
+        return 'border-[#E8E2D9] bg-white shadow-[0_4px_14px_rgba(45,35,28,0.04),0_1px_3px_rgba(45,35,28,0.02)]';
     }
   };
 
@@ -115,10 +115,10 @@ export const Card3D: React.FC<Card3DProps> = ({
           : 'transform 450ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 450ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
       className={clsx(
-        'relative rounded-2xl border select-none overflow-hidden transform-3d will-change-transform text-[#0F172A]',
+        'relative rounded-2xl border select-none overflow-hidden transform-3d will-change-transform text-[#2D231C]',
         railStatus && 'pl-4 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3.5px] before:rounded-l',
         railStatus && getRailColor(),
-        interactive && 'cursor-pointer hover:border-[#149B9E]/50 hover:shadow-[0_20px_45px_-10px_rgba(15,23,42,0.10)]',
+        interactive && 'cursor-pointer hover:border-[#EA580C]/50 hover:shadow-[0_20px_45px_-10px_rgba(45,35,28,0.10)]',
         getElevation(),
         !noPadding && 'p-6',
         className

@@ -20,55 +20,55 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       case 'accepted':
         return {
           label: 'Committed',
-          shape: 'rounded-full border-[#0D9488]/40 bg-[#CCFBF1] text-[#0F766E] font-bold',
+          shape: 'rounded-full border-[#52796F]/40 bg-[#EFF6F3] text-[#354F52] font-bold',
           symbol: '●', // Filled circle
         };
       case 'pending':
         return {
           label: 'In Flight',
-          shape: 'rounded-md border-[#149B9E]/40 bg-[#E6F7F7] text-[#0D7C7E] font-bold',
+          shape: 'rounded-md border-[#FED7AA] bg-[#FFF7ED] text-[#C2410C] font-bold',
           symbol: '▲', // Triangle shape
         };
       case 'rejected':
         return {
           label: 'Declined',
-          shape: 'rounded-md border-[#E11D48]/30 bg-[#FFE4E6] text-[#BE123C] font-bold',
+          shape: 'rounded-md border-[#FECACA] bg-[#FEE2E2] text-[#B91C1C] font-bold',
           symbol: '✕', // Cross
         };
       case 'timed_out':
         return {
           label: 'Timed Out',
-          shape: 'rounded-md border-[#E11D48]/30 bg-[#FFE4E6] text-[#BE123C] font-bold',
+          shape: 'rounded-md border-[#FECACA] bg-[#FEE2E2] text-[#B91C1C] font-bold',
           symbol: '⏱', // Clock
         };
       case 'superseded':
         return {
           label: 'Rerouted (Mid-Transit)',
-          shape: 'rounded-md border-[#D97706]/40 bg-[#FEF3C7] text-[#B45309] font-bold',
+          shape: 'rounded-md border-[#FDE68A] bg-[#FEF3C7] text-[#B45309] font-bold',
           symbol: '↻', // Reroute cycle
         };
       case 'fresh':
         return {
           label: 'Fresh (<10m)',
-          shape: 'rounded-full border-[#0D9488]/40 bg-[#CCFBF1] text-[#0F766E] font-bold',
+          shape: 'rounded-full border-[#52796F]/40 bg-[#EFF6F3] text-[#354F52] font-bold',
           symbol: '◈',
         };
       case 'stale':
         return {
           label: 'Stale (10-30m)',
-          shape: 'rounded-md border-[#D97706]/40 bg-[#FEF3C7] text-[#B45309] border-dashed font-bold',
+          shape: 'rounded-md border-[#FDE68A] bg-[#FEF3C7] text-[#B45309] border-dashed font-bold',
           symbol: '◇',
         };
       case 'unknown':
         return {
           label: 'Unknown (>30m)',
-          shape: 'rounded-md border-[#CBD5E1] bg-[#F1F5F9] text-[#475569] border-dotted font-bold',
+          shape: 'rounded-md border-[#D8CFBF] bg-[#F4EFE6] text-[#7D7067] border-dotted font-bold',
           symbol: '?',
         };
       default:
         return {
           label: String(status),
-          shape: 'rounded-md border-[#E2E8F0] bg-[#F8FAFC] text-[#475569] font-bold',
+          shape: 'rounded-md border-[#E8E2D9] bg-[#FAF8F5] text-[#7D7067] font-bold',
           symbol: '•',
         };
     }

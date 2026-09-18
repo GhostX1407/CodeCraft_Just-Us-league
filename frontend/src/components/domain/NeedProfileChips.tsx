@@ -48,8 +48,8 @@ export const NeedProfileChips: React.FC<NeedProfileChipsProps> = ({
               chipBase,
               'border',
               satisfied
-                ? 'border-[#149B9E]/40 bg-[#E6F7F7] text-[#0D7C7E] font-bold'
-                : 'border-[#E2E8F0] text-[#94A3B8] line-through bg-[#F8FAFC]'
+                ? 'border-[#EA580C]/40 bg-[#FFF7ED] text-[#C2410C] font-bold'
+                : 'border-[#E8E2D9] text-[#A89F97] line-through bg-[#FAF8F5]'
             )}
             title={satisfied ? 'Specialist verified on duty' : 'Specialist unavailable'}
           >
@@ -68,8 +68,8 @@ export const NeedProfileChips: React.FC<NeedProfileChipsProps> = ({
               chipBase,
               'border',
               satisfied
-                ? 'border-[#0D9488]/40 bg-[#CCFBF1] text-[#0F766E] font-bold'
-                : 'border-[#E2E8F0] text-[#94A3B8] bg-[#F8FAFC]'
+                ? 'border-[#52796F]/40 bg-[#EFF6F3] text-[#354F52] font-bold'
+                : 'border-[#E8E2D9] text-[#A89F97] bg-[#FAF8F5]'
             )}
           >
             {flag.replace('_', ' ')}
@@ -85,7 +85,7 @@ export const NeedProfileChips: React.FC<NeedProfileChipsProps> = ({
             'border',
             isBloodSatisfied(needProfile.blood_type_needed)
               ? 'border-[#E11D48]/30 bg-[#FFE4E6] text-[#BE123C] font-bold'
-              : 'border-[#E2E8F0] text-[#94A3B8] line-through bg-[#F8FAFC]'
+              : 'border-[#E8E2D9] text-[#A89F97] line-through bg-[#FAF8F5]'
           )}
         >
           Blood: {needProfile.blood_type_needed}

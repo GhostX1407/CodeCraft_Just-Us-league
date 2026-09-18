@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { LoginPage } from '../pages/Auth/LoginPage';
 import { RoleChooserPage } from '../pages/Landing/RoleChooserPage';
 import { AmbulanceHomePage } from '../pages/Ambulance/AmbulanceHomePage';
 import { ActiveCasePage } from '../pages/Ambulance/ActiveCasePage';
@@ -13,7 +14,9 @@ import { ComponentGalleryPage } from '../pages/Dev/ComponentGalleryPage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<RoleChooserPage />} />
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/roles" element={<RoleChooserPage />} />
       <Route path="/ambulance" element={<AmbulanceHomePage />} />
       <Route path="/ambulance/mass-casualty" element={<MassCasualtyPage />} />
       <Route path="/ambulance/:caseId" element={<ActiveCasePage />} />
