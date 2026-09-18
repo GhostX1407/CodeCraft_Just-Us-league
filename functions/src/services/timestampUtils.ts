@@ -163,3 +163,13 @@ export function getFreshnessFactor(classification: FreshnessClassification): num
       return 0.7;
   }
 }
+
+/**
+ * Normalizes any timestamp representation into a clean ISO-8601 string.
+ */
+export function toISOString(
+  value: FirebaseFirestore.Timestamp | Date | string | number | undefined | null
+): string {
+  return toDate(value).toISOString();
+}
+

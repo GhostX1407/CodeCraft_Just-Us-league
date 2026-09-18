@@ -18,7 +18,10 @@ import {
   CaseRepository,
   HospitalRepository,
   RequestRepository,
+  AuditRepository,
 } from './services/repositories';
+import { AiOperationsAnalyst } from './ai/operationsAnalyst';
+import { AiIncidentAnalyst } from './ai/incidentAnalyst';
 import {
   Case,
   Hospital,
@@ -324,6 +327,20 @@ export const api = functions.https.onRequest(async (req, res) => {
       }
 
       const body = req.body || {};
+
+      // Invariant A: Countable resources cannot be negative
+      if (
+        (typeof body.icu_beds_free === 'number' && body.icu_beds_free < 0) ||
+        (typeof body.ventilators_free === 'number' && body.ventilators_free < 0) ||
+        (body.blood_stock && Object.values(body.blood_stock).some((v: any) => typeof v === 'number' && v < 0))
+      ) {
+        res.status(400).json({
+          error: 'Countable resources cannot be negative',
+          code: 'INVALID_RESOURCE_VALUE',
+        });
+        return;
+      }
+
       const updatedFields: Partial<Hospital> = {
         ...body,
         last_updated_at: nowTimestamp(),
@@ -370,6 +387,41 @@ export const api = functions.https.onRequest(async (req, res) => {
 
       const result = await MassCasualtyService.distributeIncident(incidentGroupId, {
         actorId: req.body?.actor_id || 'system',
+      });
+      res.status(200).json(result);
+      return;
+    }
+
+    // 15. POST /ai/operations-analyst - AI Regional Operations & Bottleneck Analysis
+    if (method === 'POST' && pathParts[0] === 'ai' && pathParts[1] === 'operations-analyst') {
+      const allHospitals = await HospitalRepository.listAll();
+      const recentAudit = await AuditRepository.listRecent(20);
+      const result = await AiOperationsAnalyst.analyzeOperations({
+        hospitals: allHospitals,
+        auditLogs: recentAudit,
+      });
+      res.status(200).json(result);
+      return;
+    }
+
+    // 16. POST /ai/incident-analyst - AI Forensic Incident Timeline & Observations
+    if (method === 'POST' && pathParts[0] === 'ai' && pathParts[1] === 'incident-analyst') {
+      const caseId = req.body?.case_id;
+      if (!caseId) {
+        res.status(400).json({ error: 'case_id is required', code: 'MISSING_FIELD' });
+        return;
+      }
+      const caseData = await CaseRepository.get(caseId);
+      if (!caseData) {
+        res.status(404).json({ error: 'Case not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const requests = await RequestRepository.listByCase(caseId);
+      const auditLogs = await AuditRepository.listByCase(caseId);
+      const result = await AiIncidentAnalyst.analyzeIncident({
+        caseData,
+        requests,
+        auditLogs,
       });
       res.status(200).json(result);
       return;

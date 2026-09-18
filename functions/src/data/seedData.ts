@@ -12,10 +12,13 @@ import { getDb } from '../services/firebase';
 import { AuditLogger } from '../audit/auditLogger';
 import { generateNeedProfile } from '../domain/needProfile';
 
-const now = Date.now();
-const minutesAgo = (mins: number) => new Date(now - mins * 60 * 1000).toISOString();
+export function createMinutesAgoFn(baseTime: number = Date.now()) {
+  return (mins: number) => new Date(baseTime - mins * 60 * 1000).toISOString();
+}
 
-export const DEMO_HOSPITALS: Hospital[] = [
+export function generateDemoHospitals(baseTime: number = Date.now()): Hospital[] {
+  const minutesAgo = createMinutesAgoFn(baseTime);
+  return [
   {
     id: 'hospital_001',
     name: 'CityCare General Hospital',
@@ -199,9 +202,12 @@ export const DEMO_HOSPITALS: Hospital[] = [
     last_updated_at: minutesAgo(8), // FRESH
     reliability_score: 0.88,
   },
-];
+  ];
+}
 
-export const DEMO_CASES: Case[] = [
+export function generateDemoCases(baseTime: number = Date.now()): Case[] {
+  const minutesAgo = createMinutesAgoFn(baseTime);
+  return [
   // Scenario A: Single acute cardiac case
   {
     id: 'case_demo_cardiac_01',
@@ -339,10 +345,13 @@ export const DEMO_CASES: Case[] = [
     active_request_id: null,
     attempt_number: 0,
   },
-];
+  ];
+}
 
+export const DEMO_HOSPITALS: Hospital[] = generateDemoHospitals();
+export const DEMO_CASES: Case[] = generateDemoCases();
 
-export async function seedAllDemoData(): Promise<{
+export async function seedAllDemoData(baseTime: number = Date.now()): Promise<{
   hospitalsCount: number;
   casesCount: number;
   reliabilityCount: number;
@@ -354,7 +363,10 @@ export async function seedAllDemoData(): Promise<{
   let reliabilityCount = 0;
   let auditCount = 0;
 
-  for (const hospital of DEMO_HOSPITALS) {
+  const hospitals = generateDemoHospitals(baseTime);
+  const cases = generateDemoCases(baseTime);
+
+  for (const hospital of hospitals) {
     await HospitalRepository.create(hospital);
     hospitalsCount++;
 
@@ -376,7 +388,7 @@ export async function seedAllDemoData(): Promise<{
     reliabilityCount++;
   }
 
-  for (const caseItem of DEMO_CASES) {
+  for (const caseItem of cases) {
     await CaseRepository.create(caseItem);
     casesCount++;
 
