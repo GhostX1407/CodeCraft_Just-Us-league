@@ -126,8 +126,17 @@ export function isCommitmentStillValid(
         continue;
       }
 
-      // 2b. ICU Capacity
+      // 2b. ICU Capacity & Operational Status
       if (normFlag === 'icu') {
+        if (hospital.operational_status?.icu === false) {
+          detailedReasons.push({
+            type: 'icu_unavailable',
+            detail: 'Required ICU facility is operationally unavailable',
+            required_item: 'icu',
+          });
+          continue;
+        }
+
         const icuHolds = currentHolds?.icu_holds || 0;
         const icuFree = hospital.icu_beds_free ?? 0;
         const isUnavailable = isCaseHoldAllocated ? icuFree < 0 : icuFree <= icuHolds;
@@ -143,8 +152,17 @@ export function isCommitmentStillValid(
         continue;
       }
 
-      // 2c. Ventilator Capacity
+      // 2c. Ventilator Capacity & Operational Status
       if (normFlag === 'ventilator' || normFlag === 'ventilators') {
+        if (hospital.operational_status?.ventilator === false) {
+          detailedReasons.push({
+            type: 'ventilator_unavailable',
+            detail: 'Required ventilator equipment is operationally unavailable',
+            required_item: flag,
+          });
+          continue;
+        }
+
         const ventHolds = currentHolds?.ventilator_holds || 0;
         const ventFree = hospital.ventilators_free ?? 0;
         const isUnavailable = isCaseHoldAllocated ? ventFree < 0 : ventFree <= ventHolds;
@@ -172,20 +190,28 @@ export function isCommitmentStillValid(
     }
   }
 
-  // 3. Check Required Blood Stock
+  // 3. Check Required Blood Stock & Operational Status
   if (need.blood_type_needed) {
     const bloodType = need.blood_type_needed;
-    const availableStock = hospital.blood_stock?.[bloodType] ?? 0;
-    const bloodHolds = currentHolds?.blood_holds?.[bloodType] || 0;
-    const isUnavailable = isCaseHoldAllocated ? availableStock < 0 : availableStock <= bloodHolds;
-    if (isUnavailable) {
+    if (hospital.operational_status?.blood === false) {
       detailedReasons.push({
         type: 'blood_unavailable',
-        detail: isCaseHoldAllocated
-          ? `Required blood stock for ${bloodType} is overdrawn (${availableStock} units in stock)`
-          : `Required blood stock for ${bloodType} is no longer available (${availableStock} units in stock, ${bloodHolds} committed holds)`,
+        detail: `Required blood bank operations are unavailable for ${bloodType}`,
         required_item: bloodType,
       });
+    } else {
+      const availableStock = hospital.blood_stock?.[bloodType] ?? 0;
+      const bloodHolds = currentHolds?.blood_holds?.[bloodType] || 0;
+      const isUnavailable = isCaseHoldAllocated ? availableStock < 0 : availableStock <= bloodHolds;
+      if (isUnavailable) {
+        detailedReasons.push({
+          type: 'blood_unavailable',
+          detail: isCaseHoldAllocated
+            ? `Required blood stock for ${bloodType} is overdrawn (${availableStock} units in stock)`
+            : `Required blood stock for ${bloodType} is no longer available (${availableStock} units in stock, ${bloodHolds} committed holds)`,
+          required_item: bloodType,
+        });
+      }
     }
   }
 

@@ -409,4 +409,161 @@ describe('Mid-Transit Commitment Invalidation (T-P1-044)', () => {
       expect(JSON.stringify(cardiacNeed)).toBe(initialNeedSnapshot);
     });
   });
+
+  // ==========================================================================
+  // OPERATIONAL STATUS FOR COUNTABLE RESOURCES (Minimal Shared-Contract Fix)
+  // ==========================================================================
+  describe('OPERATIONAL STATUS FOR COUNTABLE RESOURCES', () => {
+    const icuOnlyNeed: NeedProfile = {
+      specialists_needed: [],
+      capability_flags: ['icu'],
+      blood_type_needed: null,
+    };
+
+    const ventOnlyNeed: NeedProfile = {
+      specialists_needed: [],
+      capability_flags: ['ventilator'],
+      blood_type_needed: null,
+    };
+
+    const bloodOnlyNeed: NeedProfile = {
+      specialists_needed: [],
+      capability_flags: [],
+      blood_type_needed: 'O-',
+    };
+
+    it('invalidates an accepted ICU commitment when operational_status.icu is false, even if hold is allocated', () => {
+      const hospIcuOffline: Hospital = {
+        ...baseHospital,
+        icu_beds_free: 0,
+        operational_status: { icu: false },
+      };
+
+      const result = isCommitmentStillValid(icuOnlyNeed, hospIcuOffline, {
+        is_case_hold_allocated: true,
+      });
+
+      expect(result.is_valid).toBe(false);
+      expect(result.is_invalid).toBe(true);
+      expect(result.detailed_reasons).toHaveLength(1);
+      expect(result.detailed_reasons[0].type).toBe('icu_unavailable');
+      expect(result.detailed_reasons[0].required_item).toBe('icu');
+      expect(result.detailed_reasons[0].detail).toContain('operationally unavailable');
+    });
+
+    it('does NOT invalidate merely because free ICU beds are 0 when operational_status.icu is true and hold is allocated', () => {
+      const hospIcuOperational: Hospital = {
+        ...baseHospital,
+        icu_beds_free: 0,
+        operational_status: { icu: true },
+      };
+
+      const result = isCommitmentStillValid(icuOnlyNeed, hospIcuOperational, {
+        is_case_hold_allocated: true,
+      });
+
+      expect(result.is_valid).toBe(true);
+      expect(result.is_invalid).toBe(false);
+      expect(result.detailed_reasons).toHaveLength(0);
+    });
+
+    it('invalidates when ventilator is required and operational_status.ventilator is false', () => {
+      const hospVentOffline: Hospital = {
+        ...baseHospital,
+        ventilators_free: 0,
+        operational_status: { ventilator: false },
+      };
+
+      const result = isCommitmentStillValid(ventOnlyNeed, hospVentOffline, {
+        is_case_hold_allocated: true,
+      });
+
+      expect(result.is_valid).toBe(false);
+      expect(result.is_invalid).toBe(true);
+      expect(result.detailed_reasons).toHaveLength(1);
+      expect(result.detailed_reasons[0].type).toBe('ventilator_unavailable');
+      expect(result.detailed_reasons[0].required_item).toBe('ventilator');
+      expect(result.detailed_reasons[0].detail).toContain('operationally unavailable');
+    });
+
+    it('does not invalidate when ventilator is required, free count is 0, and operational_status.ventilator is true with allocated hold', () => {
+      const hospVentOperational: Hospital = {
+        ...baseHospital,
+        ventilators_free: 0,
+        operational_status: { ventilator: true },
+      };
+
+      const result = isCommitmentStillValid(ventOnlyNeed, hospVentOperational, {
+        is_case_hold_allocated: true,
+      });
+
+      expect(result.is_valid).toBe(true);
+      expect(result.is_invalid).toBe(false);
+    });
+
+    it('invalidates when blood is required and operational_status.blood is false', () => {
+      const hospBloodOffline: Hospital = {
+        ...baseHospital,
+        blood_stock: { 'O-': 5 },
+        operational_status: { blood: false },
+      };
+
+      const result = isCommitmentStillValid(bloodOnlyNeed, hospBloodOffline, {
+        is_case_hold_allocated: true,
+      });
+
+      expect(result.is_valid).toBe(false);
+      expect(result.is_invalid).toBe(true);
+      expect(result.detailed_reasons).toHaveLength(1);
+      expect(result.detailed_reasons[0].type).toBe('blood_unavailable');
+      expect(result.detailed_reasons[0].required_item).toBe('O-');
+      expect(result.detailed_reasons[0].detail).toContain('blood bank operations are unavailable');
+    });
+
+    it('does not invalidate when blood is required, stock is 0, and operational_status.blood is true with allocated hold', () => {
+      const hospBloodOperational: Hospital = {
+        ...baseHospital,
+        blood_stock: { 'O-': 0 },
+        operational_status: { blood: true },
+      };
+
+      const result = isCommitmentStillValid(bloodOnlyNeed, hospBloodOperational, {
+        is_case_hold_allocated: true,
+      });
+
+      expect(result.is_valid).toBe(true);
+      expect(result.is_invalid).toBe(false);
+    });
+
+    it('preserves existing behavior when operational_status is completely omitted', () => {
+      const hospNoOperationalStatus: Hospital = {
+        ...baseHospital,
+        icu_beds_free: 0,
+        operational_status: undefined,
+      };
+
+      // With is_case_hold_allocated: true, 0 beds remains valid
+      const validWithAllocated = isCommitmentStillValid(icuOnlyNeed, hospNoOperationalStatus, {
+        is_case_hold_allocated: true,
+      });
+      expect(validWithAllocated.is_valid).toBe(true);
+
+      // Without is_case_hold_allocated, 0 beds <= 0 holds is invalid
+      const invalidWithoutAllocated = isCommitmentStillValid(icuOnlyNeed, hospNoOperationalStatus);
+      expect(invalidWithoutAllocated.is_valid).toBe(false);
+    });
+
+    it('does NOT invalidate when operational_status of an unneeded countable resource is false', () => {
+      // Case needs blood O-, does not need ICU or ventilator
+      const hospUnrelatedOffline: Hospital = {
+        ...baseHospital,
+        blood_stock: { 'O-': 5 },
+        operational_status: { icu: false, ventilator: false },
+      };
+
+      const result = isCommitmentStillValid(bloodOnlyNeed, hospUnrelatedOffline);
+      expect(result.is_valid).toBe(true);
+      expect(result.is_invalid).toBe(false);
+    });
+  });
 });
