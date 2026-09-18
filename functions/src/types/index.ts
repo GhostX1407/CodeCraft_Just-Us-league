@@ -74,6 +74,12 @@ export interface Case {
 // 3. Hospital Capability Profile
 // ============================================================================
 
+export interface HospitalOperationalStatus {
+  icu?: boolean;
+  ventilator?: boolean;
+  blood?: boolean;
+}
+
 export interface Hospital {
   id: string;
   name: string;
@@ -89,6 +95,7 @@ export interface Hospital {
   last_updated_at: string | number | Date;
   reliability_score: number; // 0.0 to 1.0
   capabilities?: CapabilityFlag[]; // Optional non-specialist capability flags
+  operational_status?: HospitalOperationalStatus;
 }
 
 export interface CommittedResourceHolds {
