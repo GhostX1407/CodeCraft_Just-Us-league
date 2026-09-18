@@ -18,6 +18,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { NotificationDrawer } from './NotificationDrawer';
 
 export const AppHeader: React.FC = () => {
   const location = useLocation();
@@ -126,7 +127,9 @@ export const AppHeader: React.FC = () => {
             </button>
           )}
 
-          {/* Audio Tone Button */}
+          {/* Role Notification Drawer */}
+          <NotificationDrawer currentRole={user?.role || 'admin'} recipientId={user?.badge} />
+
           <button
             onClick={handleAudioToggle}
             className={clsx(

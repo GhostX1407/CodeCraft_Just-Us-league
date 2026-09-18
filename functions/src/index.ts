@@ -40,6 +40,16 @@ import { ExplanationService, ExplanationRequest } from './ai/explanationService'
 import { AuditLogger } from './audit/auditLogger';
 import { seedAllDemoData } from './data/seedData';
 import { generateNeedProfile } from './domain/needProfile';
+import {
+  evaluateSeverityAssistance,
+  generateDynamicNeedProfile,
+  EMERGENCY_SUBCATEGORIES,
+} from './domain/vitalsIntelligence';
+import { CrisisManagementService, IncidentRepository } from './domain/crisisManagement';
+import { RegistrationRepository } from './domain/registrations';
+import { TrackingAndTransitService, JourneyStage } from './domain/trackingAndTransit';
+import { NotificationRepository, RecipientRole } from './domain/notifications';
+import { AiOperationsService } from './domain/aiOperations';
 
 // Re-export canonical P1 need profile generator for consumers
 export { generateNeedProfile };
@@ -100,9 +110,14 @@ export const api = functions.https.onRequest(async (req, res) => {
         return;
       }
 
-      // Canonical need profile derived deterministically from category + severity.
-      // Arbitrary client-supplied need_profile is NOT accepted as authoritative.
-      const needProfile = generateNeedProfile(category, severity);
+      // Dynamic need profile taking into account subcategory, vitals, symptoms, and capability graph DAG dependencies
+      const needProfile = generateDynamicNeedProfile(
+        category,
+        severity,
+        body.subcategory,
+        body.vitals,
+        body.symptoms
+      );
       const caseId = body.id || `case_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
       const newCase: Case = {
@@ -120,10 +135,39 @@ export const api = functions.https.onRequest(async (req, res) => {
         status: 'routing',
         active_request_id: null,
         attempt_number: 0,
+        subcategory: body.subcategory,
+        vitals: body.vitals,
+        symptoms: body.symptoms,
+        suggested_severity: body.suggested_severity,
+        clinical_justification: body.clinical_justification,
+        journey_stage: 'CASE_CREATED',
+        transit_condition: 'stable',
       };
 
-
       await CaseRepository.create(newCase);
+
+      // Initialize tracking and transit lifecycle
+      await TrackingAndTransitService.initializeCaseTransit(caseId, location, body.ambulance_id || 'AMB-01');
+
+      // Send dispatch notifications
+      await NotificationRepository.create({
+        recipientRole: 'admin',
+        type: 'CASE_CREATED',
+        severity: severity === 'red' ? 'urgent' : 'info',
+        title: `New ${severity.toUpperCase()} Case Created`,
+        message: `Case ${caseId} (${category}${body.subcategory ? ` - ${body.subcategory}` : ''}) created and entering routing.`,
+        caseId,
+      });
+
+      await NotificationRepository.create({
+        recipientRole: 'ambulance',
+        recipientId: body.ambulance_id || 'AMB-01',
+        type: 'NEW_DISPATCH',
+        severity: 'info',
+        title: `Case Dispatched: ${caseId}`,
+        message: `Searching for best matching hospital based on capability profile.`,
+        caseId,
+      });
 
       await AuditLogger.log({
         caseId,
@@ -142,6 +186,13 @@ export const api = functions.https.onRequest(async (req, res) => {
       });
 
       res.status(201).json({ success: true, case: newCase });
+      return;
+    }
+
+    // 1b. GET /cases - List All Cases
+    if (method === 'GET' && pathParts[0] === 'cases' && pathParts.length === 1) {
+      const allCases = await CaseRepository.listAll();
+      res.status(200).json({ cases: allCases });
       return;
     }
 
@@ -211,6 +262,25 @@ export const api = functions.https.onRequest(async (req, res) => {
         caseData,
       });
 
+      // Update journey stage and dispatch match notifications
+      await TrackingAndTransitService.updateJourneyStage(
+        caseId,
+        'HOSPITAL_MATCHED',
+        'system',
+        'system',
+        `Deterministic match: ${top.hospital.name} (Score: ${top.breakdown.final_score})`
+      );
+
+      await NotificationRepository.create({
+        recipientRole: 'ambulance',
+        type: 'HOSPITAL_MATCHED',
+        severity: 'info',
+        title: `Hospital Matched: ${top.hospital.name}`,
+        message: `Compatibility score ${top.breakdown.final_score}. Commitment request transmitted.`,
+        caseId,
+        hospitalId: top.hospital.id,
+      });
+
       res.status(200).json({
         exhausted: false,
         match: top,
@@ -226,6 +296,48 @@ export const api = functions.https.onRequest(async (req, res) => {
       const actorId = req.body?.actor_id || 'hospital_user';
 
       const result = await RequestLifecycleService.acceptRequest(requestId, actorId);
+
+      if (result.success && result.request) {
+        await TrackingAndTransitService.updateJourneyStage(
+          result.request.case_id,
+          'HOSPITAL_ACCEPTED',
+          actorId,
+          'hospital',
+          `Hospital accepted commitment request. Reserving resources.`
+        );
+
+        await NotificationRepository.create({
+          recipientRole: 'ambulance',
+          type: 'HOSPITAL_ACCEPTED',
+          severity: 'urgent',
+          title: `Bed & Resource Hold Confirmed!`,
+          message: `Hospital ${result.request.hospital_id} accepted the case. Proceed immediately.`,
+          caseId: result.request.case_id,
+          hospitalId: result.request.hospital_id,
+        });
+
+        await NotificationRepository.create({
+          recipientRole: 'hospital',
+          recipientId: result.request.hospital_id,
+          type: 'INCOMING_CRITICAL_PATIENT',
+          severity: 'urgent',
+          title: `Inbound Emergency Patient`,
+          message: `Hold active. Prepare trauma/critical care bay for Case ${result.request.case_id}.`,
+          caseId: result.request.case_id,
+          hospitalId: result.request.hospital_id,
+        });
+
+        await NotificationRepository.create({
+          recipientRole: 'family',
+          type: 'HOSPITAL_CONFIRMED',
+          severity: 'info',
+          title: `Hospital Confirmed`,
+          message: `Your loved one is routed to confirmed facility: ${result.request.hospital_id}.`,
+          caseId: result.request.case_id,
+          hospitalId: result.request.hospital_id,
+        });
+      }
+
       res.status(200).json(result);
       return;
     }
@@ -313,6 +425,47 @@ export const api = functions.https.onRequest(async (req, res) => {
       const requestId = pathParts[1];
       const actorId = req.body?.actor_id || 'hospital_user';
       const result = await RequestLifecycleService.completeHandoff(requestId, actorId);
+
+      if (result.success && result.request) {
+        await TrackingAndTransitService.updateJourneyStage(
+          result.request.case_id,
+          'HANDOFF_COMPLETED',
+          actorId,
+          'hospital',
+          `Clinical handoff completed successfully. Bed hold released/consumed.`
+        );
+
+        await NotificationRepository.create({
+          recipientRole: 'ambulance',
+          type: 'HANDOFF_COMPLETED',
+          severity: 'info',
+          title: `Handoff Complete`,
+          message: `Patient transfer to clinical care completed successfully.`,
+          caseId: result.request.case_id,
+          hospitalId: result.request.hospital_id,
+        });
+
+        await NotificationRepository.create({
+          recipientRole: 'family',
+          type: 'CARE_TRANSFERRED',
+          severity: 'info',
+          title: `Patient Safely Admitted`,
+          message: `Patient care has been transferred to the hospital clinical team.`,
+          caseId: result.request.case_id,
+          hospitalId: result.request.hospital_id,
+        });
+
+        await NotificationRepository.create({
+          recipientRole: 'admin',
+          type: 'HANDOFF_COMPLETED',
+          severity: 'info',
+          title: `Emergency Cycle Complete`,
+          message: `Case ${result.request.case_id} handoff completed at hospital ${result.request.hospital_id}.`,
+          caseId: result.request.case_id,
+          hospitalId: result.request.hospital_id,
+        });
+      }
+
       res.status(200).json(result);
       return;
     }
@@ -424,6 +577,382 @@ export const api = functions.https.onRequest(async (req, res) => {
         auditLogs,
       });
       res.status(200).json(result);
+      return;
+    }
+
+    // 17. GET /vitals/subcategories - Emergency subcategories dictionary
+    if (method === 'GET' && pathParts[0] === 'vitals' && pathParts[1] === 'subcategories') {
+      res.status(200).json({ subcategories: EMERGENCY_SUBCATEGORIES });
+      return;
+    }
+
+    // 18. POST /vitals/assess - Deterministic Severity Assistance & Dynamic Need Profile
+    if (method === 'POST' && pathParts[0] === 'vitals' && pathParts[1] === 'assess') {
+      const { category, severity, subcategory, vitals, symptoms } = req.body || {};
+      const assistance = evaluateSeverityAssistance(category || 'trauma', vitals, symptoms);
+      const needProfile = generateDynamicNeedProfile(
+        category || 'trauma',
+        severity || assistance.suggested_severity,
+        subcategory,
+        vitals,
+        symptoms
+      );
+      res.status(200).json({
+        severity_assistance: assistance,
+        need_profile: needProfile,
+      });
+      return;
+    }
+
+    // 19. POST /incidents/activate-crisis - Raahi Crisis Mode
+    if (method === 'POST' && pathParts[0] === 'incidents' && pathParts[1] === 'activate-crisis') {
+      const { name, type, casualtyCount, location, actorId } = req.body || {};
+      if (!name || !casualtyCount || !location) {
+        res.status(400).json({ error: 'name, casualtyCount, and location are required', code: 'MISSING_FIELD' });
+        return;
+      }
+      const crisisResult = await CrisisManagementService.activateCrisisMode({
+        incidentName: name,
+        incidentType: type || 'mass_casualty',
+        totalPatients: Number(casualtyCount),
+        location,
+        actorId: actorId || 'admin_user',
+      });
+
+      // Broadcast Crisis Mode notification
+      await NotificationRepository.create({
+        recipientRole: 'admin',
+        type: 'CRISIS_MODE_ACTIVATED',
+        severity: 'critical',
+        title: `CRISIS MODE ACTIVATED: ${name}`,
+        message: `${casualtyCount} casualties reported. Anti-concentration load balancing initiated.`,
+        metadata: { incidentId: crisisResult.incident.id, bottlenecks: crisisResult.bottlenecks.length },
+      });
+
+      await NotificationRepository.create({
+        recipientRole: 'hospital',
+        recipientId: 'all',
+        type: 'CRISIS_MODE_ACTIVATED',
+        severity: 'critical',
+        title: `CRISIS ALERT: ${name}`,
+        message: `Mass casualty incident declared. Regional trauma network on surge alert.`,
+      });
+
+      res.status(201).json(crisisResult);
+      return;
+    }
+
+    // 20. GET /incidents - List Incidents
+    if (method === 'GET' && pathParts[0] === 'incidents' && pathParts.length === 1) {
+      const incidents = await IncidentRepository.listAll();
+      res.status(200).json({ incidents });
+      return;
+    }
+
+    // 21. GET /incidents/:id - Get Incident Details
+    if (method === 'GET' && pathParts[0] === 'incidents' && pathParts.length === 2) {
+      const incident = await IncidentRepository.get(pathParts[1]);
+      if (!incident) {
+        res.status(404).json({ error: 'Incident not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ incident });
+      return;
+    }
+
+    // 22. POST /incidents/:id/briefing - AI Operational Incident Briefing
+    if (method === 'POST' && pathParts[0] === 'incidents' && pathParts[2] === 'briefing') {
+      const incident = await IncidentRepository.get(pathParts[1]);
+      if (!incident) {
+        res.status(404).json({ error: 'Incident not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const allCases = await CaseRepository.listAll();
+      const incidentCases = allCases.filter(c => incident.cases.includes(c.id));
+      const allocations = incidentCases.map(c => ({
+        caseId: c.id,
+        hospitalId: c.accepted_hospital_id || 'unassigned',
+        hospitalName: c.accepted_hospital_id || 'Pending Match',
+        severity: c.severity,
+      }));
+      const briefing = await AiOperationsService.generateIncidentBriefing(incident, allocations);
+      res.status(200).json({ briefing });
+      return;
+    }
+
+    // 23. POST /hospitals/register - Hospital Self-Service Intake
+    if (method === 'POST' && pathParts[0] === 'hospitals' && pathParts[1] === 'register') {
+      const record = await RegistrationRepository.submitHospital(req.body || {});
+      await NotificationRepository.create({
+        recipientRole: 'admin',
+        type: 'HOSPITAL_PENDING_APPROVAL',
+        severity: 'warning',
+        title: 'New Hospital Registration Pending',
+        message: `${record.name} submitted registration for clinical verification.`,
+        hospitalId: record.id,
+      });
+      res.status(201).json({ success: true, registration: record });
+      return;
+    }
+
+    // 24. GET /hospitals/pending - List Pending Hospital Registrations
+    if (method === 'GET' && pathParts[0] === 'hospitals' && pathParts[1] === 'pending') {
+      const pending = await RegistrationRepository.listHospitalRegistrations('pending');
+      res.status(200).json({ pending_hospitals: pending });
+      return;
+    }
+
+    // 25. POST /hospitals/:id/verify - Admin Verify / Approve Hospital
+    if (method === 'POST' && pathParts[0] === 'hospitals' && pathParts[2] === 'verify') {
+      const hospitalId = pathParts[1];
+      const { status, verifiedBy, rejectionReason } = req.body || {};
+      if (!status || !['approved', 'rejected'].includes(status)) {
+        res.status(400).json({ error: 'status must be "approved" or "rejected"', code: 'INVALID_STATUS' });
+        return;
+      }
+      const approved = status === 'approved';
+      const result = await RegistrationRepository.verifyHospital(
+        hospitalId,
+        approved,
+        rejectionReason || '',
+        verifiedBy || 'admin'
+      );
+
+      await NotificationRepository.create({
+        recipientRole: 'hospital',
+        recipientId: hospitalId,
+        type: 'REGISTRATION_STATUS_UPDATE',
+        severity: approved ? 'info' : 'warning',
+        title: `Hospital Registration ${status.toUpperCase()}`,
+        message: approved 
+          ? 'Your hospital has been accredited and activated in the Raahi Emergency Grid.'
+          : `Registration was rejected: ${rejectionReason || 'Did not meet requirements'}.`,
+        hospitalId,
+      });
+
+      res.status(200).json({ success: true, registration: result.registration, hospital: result.hospital });
+      return;
+    }
+
+    // 26. POST /ambulances/register - Ambulance Self-Service Intake
+    if (method === 'POST' && pathParts[0] === 'ambulances' && pathParts[1] === 'register') {
+      const record = await RegistrationRepository.submitAmbulance(req.body || {});
+      await NotificationRepository.create({
+        recipientRole: 'admin',
+        type: 'AMBULANCE_PENDING_APPROVAL',
+        severity: 'info',
+        title: 'Ambulance Registration Pending',
+        message: `Ambulance ${record.vehicle_number} (${record.organization}) submitted for verification.`,
+        ambulanceId: record.id,
+      });
+      res.status(201).json({ success: true, ambulance: record });
+      return;
+    }
+
+    // 27. GET /ambulances - List All Registered Ambulances
+    if (method === 'GET' && pathParts[0] === 'ambulances' && pathParts.length === 1) {
+      const ambulances = await RegistrationRepository.listAmbulances();
+      res.status(200).json({ ambulances });
+      return;
+    }
+
+    // 28. GET /ambulances/pending - List Pending Ambulances
+    if (method === 'GET' && pathParts[0] === 'ambulances' && pathParts[1] === 'pending') {
+      const pending = await RegistrationRepository.listAmbulances('pending');
+      res.status(200).json({ pending_ambulances: pending });
+      return;
+    }
+
+    // 29. POST /ambulances/:id/verify - Admin Verify Ambulance
+    if (method === 'POST' && pathParts[0] === 'ambulances' && pathParts[2] === 'verify') {
+      const ambulanceId = pathParts[1];
+      const { status, verifiedBy } = req.body || {};
+      if (!status || !['verified', 'rejected'].includes(status)) {
+        res.status(400).json({ error: 'status must be "verified" or "rejected"', code: 'INVALID_STATUS' });
+        return;
+      }
+      const approved = status === 'verified';
+      const updated = await RegistrationRepository.verifyAmbulance(ambulanceId, approved, verifiedBy || 'admin');
+      res.status(200).json({ success: true, ambulance: updated });
+      return;
+    }
+
+    // 30. POST /ambulances/:id/telemetry - Telemetry Push (Live GPS, Speed, Heading, ETA)
+    if (method === 'POST' && pathParts[0] === 'ambulances' && pathParts[2] === 'telemetry') {
+      const ambulanceId = pathParts[1];
+      const telemetry = await TrackingAndTransitService.updateTelemetry(ambulanceId, req.body || {});
+      res.status(200).json({ success: true, telemetry });
+      return;
+    }
+
+    // 31. GET /ambulances/:id/telemetry - Telemetry Query
+    if (method === 'GET' && pathParts[0] === 'ambulances' && pathParts[2] === 'telemetry') {
+      const ambulanceId = pathParts[1];
+      const telemetry = await TrackingAndTransitService.getTelemetry(ambulanceId);
+      if (!telemetry) {
+        res.status(404).json({ error: 'Telemetry not found for ambulance', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ telemetry });
+      return;
+    }
+
+    // 32. POST /cases/:id/transit-update - In-Transit Vitals & Condition Update
+    if (method === 'POST' && pathParts[0] === 'cases' && pathParts[2] === 'transit-update') {
+      const caseId = pathParts[1];
+      const { condition, vitals, notes, updatedBy } = req.body || {};
+      if (!condition || !['stable', 'deteriorating', 'critical'].includes(condition)) {
+        res.status(400).json({ error: 'condition must be "stable", "deteriorating", or "critical"', code: 'INVALID_CONDITION' });
+        return;
+      }
+
+      const record = await TrackingAndTransitService.recordTransitVitalsUpdate(
+        caseId,
+        condition,
+        vitals,
+        notes,
+        updatedBy || 'ambulance_paramedic'
+      );
+
+      // If deteriorating or critical, immediately notify the receiving hospital!
+      if (condition === 'deteriorating' || condition === 'critical') {
+        const caseDoc = await CaseRepository.get(caseId);
+        const hospitalId = caseDoc?.accepted_hospital_id;
+
+        await NotificationRepository.create({
+          recipientRole: 'hospital',
+          recipientId: hospitalId || 'all',
+          type: 'PATIENT_DETERIORATION_ALERT',
+          severity: 'critical',
+          title: `CRITICAL IN-TRANSIT ALERT: Patient Condition ${condition.toUpperCase()}`,
+          message: `Case ${caseId} reported ${condition} in transit. Notes: ${notes || 'Vitals shift'}. Prepare immediate resuscitation bay.`,
+          caseId,
+          hospitalId: hospitalId || undefined,
+        });
+
+        await NotificationRepository.create({
+          recipientRole: 'admin',
+          type: 'PATIENT_DETERIORATION_ALERT',
+          severity: 'warning',
+          title: `In-Transit Deterioration: Case ${caseId}`,
+          message: `Paramedics noted condition dropped to ${condition}.`,
+          caseId,
+        });
+      }
+
+      res.status(200).json({ success: true, transit_update: record });
+      return;
+    }
+
+    // 33. POST /cases/:id/journey-stage - Advance 7-Stage Patient Journey Timeline
+    if (method === 'POST' && pathParts[0] === 'cases' && pathParts[2] === 'journey-stage') {
+      const caseId = pathParts[1];
+      const { stage, actorId, actorRole, notes, location } = req.body || {};
+      if (!stage) {
+        res.status(400).json({ error: 'stage is required', code: 'MISSING_FIELD' });
+        return;
+      }
+
+      const transitDetails = await TrackingAndTransitService.updateJourneyStage(
+        caseId,
+        stage as JourneyStage,
+        actorId || 'operator',
+        actorRole || 'system',
+        notes,
+        location
+      );
+
+      // Notification on ARRIVED_AT_HOSPITAL or PATIENT_PICKED
+      if (stage === 'ARRIVED_AT_HOSPITAL') {
+        const caseDoc = await CaseRepository.get(caseId);
+        if (caseDoc?.accepted_hospital_id) {
+          await NotificationRepository.create({
+            recipientRole: 'hospital',
+            recipientId: caseDoc.accepted_hospital_id,
+            type: 'ARRIVED_AT_HOSPITAL',
+            severity: 'urgent',
+            title: 'Ambulance Arrived at ER Bay',
+            message: `Ambulance with patient for Case ${caseId} has arrived at the emergency entrance.`,
+            caseId,
+            hospitalId: caseDoc.accepted_hospital_id,
+          });
+        }
+        await NotificationRepository.create({
+          recipientRole: 'family',
+          type: 'ARRIVED_AT_HOSPITAL',
+          severity: 'info',
+          title: 'Arrived at Hospital',
+          message: 'The ambulance has arrived at the hospital emergency department.',
+          caseId,
+        });
+      } else if (stage === 'PATIENT_PICKED') {
+        await NotificationRepository.create({
+          recipientRole: 'family',
+          type: 'PATIENT_PICKED',
+          severity: 'info',
+          title: 'Patient Picked Up',
+          message: 'Paramedics have secured the patient and are en route to the medical facility.',
+          caseId,
+        });
+      }
+
+      res.status(200).json({ success: true, transit_details: transitDetails });
+      return;
+    }
+
+    // 34. GET /cases/:id/journey - Get Case Journey Timeline
+    if (method === 'GET' && pathParts[0] === 'cases' && pathParts[2] === 'journey') {
+      const caseId = pathParts[1];
+      const transitDetails = await TrackingAndTransitService.getCaseTransit(caseId);
+      if (!transitDetails) {
+        res.status(404).json({ error: 'Transit details not found for case', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ transit_details: transitDetails });
+      return;
+    }
+
+    // 35. GET /notifications - Query Role-Based Notifications
+    if (method === 'GET' && pathParts[0] === 'notifications' && pathParts.length === 1) {
+      const role = (req.query.role as RecipientRole) || 'admin';
+      const recipientId = req.query.recipientId as string | undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+
+      const notifications = await NotificationRepository.listForRole(role, recipientId, limit);
+      res.status(200).json({ notifications });
+      return;
+    }
+
+    // 36. POST /notifications/:id/read - Mark Notification Read
+    if (method === 'POST' && pathParts[0] === 'notifications' && pathParts[2] === 'read') {
+      const id = pathParts[1];
+      const marked = await NotificationRepository.markAsRead(id);
+      res.status(200).json({ success: marked });
+      return;
+    }
+
+    // 37. POST /notifications/read-all - Mark All Notifications Read
+    if (method === 'POST' && pathParts[0] === 'notifications' && pathParts[1] === 'read-all') {
+      const { role, recipientId } = req.body || {};
+      const count = await NotificationRepository.markAllAsRead(role || 'admin', recipientId);
+      res.status(200).json({ success: true, marked_count: count });
+      return;
+    }
+
+    // 38. GET /ai/network-briefing - Network-Wide AI Operational Overview
+    if ((method === 'GET' || method === 'POST') && pathParts[0] === 'ai' && pathParts[1] === 'network-briefing') {
+      const allHospitals = await HospitalRepository.listAll();
+      const allCases = await CaseRepository.listAll();
+      const activeCases = allCases.filter(c => c.status === 'routing' || c.status === 'accepted');
+      const incidents = await IncidentRepository.listAll();
+      const crisisActive = incidents.some(i => i.status === 'active');
+
+      const briefing = await AiOperationsService.generateNetworkBriefing(
+        allHospitals,
+        activeCases.length,
+        crisisActive
+      );
+      res.status(200).json({ briefing });
       return;
     }
 

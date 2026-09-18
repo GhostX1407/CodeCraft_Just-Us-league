@@ -1,0 +1,26 @@
+endpoints:
+  healthCheck:
+    platform: gcfv1
+    availableMemoryMb: null
+    timeoutSeconds: null
+    minInstances: null
+    maxInstances: null
+    ingressSettings: null
+    serviceAccountEmail: null
+    vpc: null
+    httpsTrigger: {}
+    entryPoint: healthCheck
+  api:
+    platform: gcfv1
+    availableMemoryMb: null
+    timeoutSeconds: null
+    minInstances: null
+    maxInstances: null
+    ingressSettings: null
+    serviceAccountEmail: null
+    vpc: null
+    httpsTrigger: {}
+    entryPoint: api
+specVersion: v1alpha1
+requiredAPIs: []
+extensions: {}

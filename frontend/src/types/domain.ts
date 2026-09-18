@@ -59,6 +59,13 @@ export interface Case {
   patient_basic_info: { age: number; sex: 'male' | 'female' | 'other'; name?: string };
   incident_group_id: string | null;
   ambulance_location: { lat: number; lng: number };
+  subcategory?: string;
+  vitals?: PatientVitals;
+  symptoms?: PatientSymptoms;
+  suggested_severity?: Severity;
+  clinical_justification?: string[];
+  journey_stage?: JourneyStage;
+  transit_condition?: PatientTransitStatus;
 }
 
 export interface MatchScoreBreakdown {
@@ -103,6 +110,175 @@ export interface CaseRouting {
   active_request_id: string | null;
   attempt_number: number;
   accepted_hospital_id: string | null;
+}
+
+export interface PatientVitals {
+  heart_rate?: number | null;
+  blood_pressure_sys?: number | null;
+  blood_pressure_dia?: number | null;
+  spo2?: number | null;
+  temperature?: number | null;
+  respiratory_rate?: number | null;
+  blood_sugar?: number | null;
+  gcs_score?: number | null;
+}
+
+export interface PatientSymptoms {
+  unconscious?: boolean;
+  bleeding?: boolean;
+  breathing_difficulty?: boolean;
+  chest_pain?: boolean;
+  seizure?: boolean;
+  fracture?: boolean;
+  burn?: boolean;
+  pregnant?: boolean;
+  altered_mental_status?: boolean;
+  respiratory_distress?: boolean;
+  severe_bleeding?: boolean;
+}
+
+export interface SeveritySuggestion {
+  suggested_severity: Severity;
+  confidence_score: number;
+  rationales: string[];
+  clinical_justification?: string[];
+  critical_flags: string[];
+  flags?: string[];
+}
+
+export interface EmergencySubcategory {
+  id: string;
+  name: string;
+  parentCategory: string;
+  defaultCapabilities: string[];
+  requiresBloodType?: boolean;
+}
+
+export type JourneyStage =
+  | 'CASE_CREATED'
+  | 'HOSPITAL_MATCHED'
+  | 'HOSPITAL_ACCEPTED'
+  | 'AMBULANCE_ASSIGNED'
+  | 'PATIENT_PICKED'
+  | 'TRANSIT_IN_PROGRESS'
+  | 'ARRIVED_AT_HOSPITAL'
+  | 'HANDOFF_COMPLETED';
+
+export type PatientTransitStatus = 'stable' | 'deteriorating' | 'critical';
+
+export interface VitalsTimelineEntry {
+  timestamp: string;
+  vitals: PatientVitals;
+  status: PatientTransitStatus;
+  logged_by: string;
+  notes?: string;
+}
+
+export interface PatientJourneyStep {
+  stage: JourneyStage;
+  label: string;
+  timestamp: string;
+  completed: boolean;
+  actor: string;
+  details?: string;
+}
+
+export interface CaseTransitDetails {
+  case_id: string;
+  journey_stage: JourneyStage;
+  journey_history: PatientJourneyStep[];
+  current_transit_status: PatientTransitStatus;
+  vitals_timeline: VitalsTimelineEntry[];
+  ambulance_id?: string | null;
+  assigned_hospital_id?: string | null;
+  current_location?: { lat: number; lng: number };
+  destination_location?: { lat: number; lng: number };
+  distance_remaining_km?: number;
+  eta_minutes?: number;
+  speed_kmh?: number;
+  heading_degrees?: number;
+  route_polyline?: string;
+  last_updated_at: string;
+}
+
+export interface Incident {
+  id: string;
+  name: string;
+  type: string;
+  location: { lat: number; lng: number };
+  createdAt: string;
+  status: 'active' | 'contained' | 'resolved';
+  cases: string[];
+  severityDistribution: { red: number; yellow: number; green: number };
+  hospitalAllocation: Record<string, any>;
+  bottlenecksDetected: string[];
+  incidentSummary: string;
+}
+
+export type VerificationStatus = 'pending' | 'verified' | 'approved' | 'rejected';
+export type AmbulanceType = 'BLS' | 'ALS' | 'Trauma' | 'Neonatal';
+export type AmbulanceFacility = 'oxygen' | 'ecg' | 'ventilator' | 'defibrillator' | 'stretcher';
+
+export interface HospitalRegistrationRecord {
+  id: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  contact_number: string;
+  capabilities: string[];
+  icu_beds: number;
+  ventilators: number;
+  blood_stock: Record<string, number>;
+  specialists_on_call: string[];
+  status: VerificationStatus;
+  submitted_at: string;
+  reviewed_at?: string | null;
+  reviewer_notes?: string | null;
+}
+
+export interface Ambulance {
+  id: string;
+  vehicle_number: string;
+  organization: string;
+  ambulance_type: AmbulanceType;
+  capacity_patients: number;
+  current_location: { lat: number; lng: number };
+  facilities: AmbulanceFacility[];
+  contact_number: string;
+  availability: 'available' | 'en_route' | 'busy' | 'maintenance';
+  status: VerificationStatus;
+  current_case_id?: string | null;
+  speed_kmh?: number;
+  heading_degrees?: number;
+  last_updated_at: string;
+}
+
+export interface AppNotification {
+  id: string;
+  recipientRole: 'ambulance' | 'hospital' | 'admin' | 'family';
+  recipientId?: string;
+  type: string;
+  severity: 'info' | 'warning' | 'critical' | 'urgent';
+  title: string;
+  message: string;
+  caseId?: string;
+  hospitalId?: string;
+  ambulanceId?: string;
+  timestamp: string;
+  read: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface OperationalBriefing {
+  summary: string;
+  keyObservations: string[];
+  bottlenecks: string[];
+  resourcePressures: string[];
+  operationalRecommendations: string[];
+  modelUsed: string;
+  disclaimer: string;
+  timestamp: string;
 }
 
 export interface AuditEvent {
@@ -155,3 +331,4 @@ export interface ApiErr {
 }
 
 export type ApiResponse<T> = ApiOk<T> | ApiErr;
+

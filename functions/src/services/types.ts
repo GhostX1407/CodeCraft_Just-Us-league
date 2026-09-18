@@ -70,6 +70,13 @@ export interface Case extends Omit<CanonicalCase, 'created_at'> {
   active_request_id?: string | null;
   attempt_number?: number;
   accepted_hospital_id?: string | null;
+  subcategory?: string;
+  vitals?: any;
+  symptoms?: any;
+  suggested_severity?: string;
+  clinical_justification?: string[];
+  journey_stage?: string;
+  transit_condition?: string;
 }
 
 

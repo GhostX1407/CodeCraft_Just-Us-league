@@ -5,6 +5,12 @@ import {
   AuditEvent,
   ReliabilityRow,
   CaseRouting,
+  Incident,
+  CaseTransitDetails,
+  Ambulance,
+  HospitalRegistrationRecord,
+  AppNotification,
+  JourneyStage,
 } from '../types/domain';
 import {
   SEED_HOSPITALS,
@@ -22,6 +28,12 @@ interface StoreState {
   requests: Record<string, Request>;
   auditLogs: AuditEvent[];
   reliability: Record<string, ReliabilityRow>;
+  incidents: Record<string, Incident>;
+  transits: Record<string, CaseTransitDetails>;
+  ambulances: Record<string, Ambulance>;
+  hospitalRegistrations: Record<string, HospitalRegistrationRecord>;
+  notifications: AppNotification[];
+  activeCrisis: Incident | null;
 }
 
 const STORAGE_KEY = 'raahi_store_v1';
@@ -29,6 +41,52 @@ const CHANNEL_NAME = 'raahi_broadcast_channel';
 
 // Initialize Initial State
 function getInitialState(): StoreState {
+  const seedAmbulances: Record<string, Ambulance> = {
+    'AMB-01': {
+      id: 'AMB-01',
+      vehicle_number: 'GJ-05-EM-1081',
+      organization: 'Gujarat EMS Surat Central',
+      ambulance_type: 'Trauma',
+      capacity_patients: 1,
+      current_location: { lat: 21.185, lng: 72.825 },
+      facilities: ['oxygen', 'defibrillator', 'ventilator', 'stretcher'],
+      contact_number: '+91 98250 11001',
+      availability: 'available',
+      status: 'verified',
+      speed_kmh: 0,
+      heading_degrees: 0,
+      last_updated_at: new Date().toISOString(),
+    },
+    'AMB-02': {
+      id: 'AMB-02',
+      vehicle_number: 'GJ-05-EM-1082',
+      organization: 'Gujarat EMS Adajan Post',
+      ambulance_type: 'ALS',
+      capacity_patients: 1,
+      current_location: { lat: 21.198, lng: 72.795 },
+      facilities: ['oxygen', 'ecg', 'defibrillator', 'stretcher'],
+      contact_number: '+91 98250 11002',
+      availability: 'available',
+      status: 'verified',
+      speed_kmh: 42,
+      heading_degrees: 95,
+      last_updated_at: new Date().toISOString(),
+    },
+  };
+
+  const seedNotifications: AppNotification[] = [
+    {
+      id: 'notif_welcome',
+      recipientRole: 'admin',
+      type: 'SYSTEM_READY',
+      severity: 'info',
+      title: 'Raahi Emergency Coordination Grid Online',
+      message: '12 Regional hospitals accredited. Real-time telemetry monitoring active.',
+      timestamp: new Date().toISOString(),
+      read: false,
+    },
+  ];
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -41,6 +99,12 @@ function getInitialState(): StoreState {
           requests: parsed.requests && Object.keys(parsed.requests).length > 0 ? parsed.requests : { ...SEED_REQUESTS },
           auditLogs: Array.isArray(parsed.auditLogs) && parsed.auditLogs.length > 0 ? parsed.auditLogs : [...SEED_AUDIT_LOGS],
           reliability: parsed.reliability || {},
+          incidents: parsed.incidents || {},
+          transits: parsed.transits || {},
+          ambulances: parsed.ambulances || seedAmbulances,
+          hospitalRegistrations: parsed.hospitalRegistrations || {},
+          notifications: Array.isArray(parsed.notifications) ? parsed.notifications : seedNotifications,
+          activeCrisis: parsed.activeCrisis || null,
         };
       }
     }
@@ -69,6 +133,12 @@ function getInitialState(): StoreState {
     requests: { ...SEED_REQUESTS },
     auditLogs: [...SEED_AUDIT_LOGS],
     reliability: initialReliability,
+    incidents: {},
+    transits: {},
+    ambulances: seedAmbulances,
+    hospitalRegistrations: {},
+    notifications: seedNotifications,
+    activeCrisis: null,
   };
 }
 
@@ -205,6 +275,10 @@ export const stateStore = {
     return state.requests[id];
   },
 
+  getRequests(): Request[] {
+    return Object.values(state.requests || {});
+  },
+
   setRequest(r: Request): void {
     state.requests[r.id] = r;
     persistAndBroadcast();
@@ -273,5 +347,134 @@ export const stateStore = {
     }
 
     persistAndBroadcast();
+  },
+
+  // Incidents & Crisis Mode
+  getIncidents(): Incident[] {
+    return Object.values(state.incidents || {});
+  },
+
+  getIncident(id: string): Incident | undefined {
+    return state.incidents?.[id];
+  },
+
+  setIncident(incident: Incident): void {
+    if (!state.incidents) state.incidents = {};
+    state.incidents[incident.id] = incident;
+    if (incident.status === 'active') {
+      state.activeCrisis = incident;
+    }
+    persistAndBroadcast();
+  },
+
+  getActiveCrisis(): Incident | null {
+    return state.activeCrisis;
+  },
+
+  setActiveCrisis(crisis: Incident | null): void {
+    state.activeCrisis = crisis;
+    if (crisis) {
+      if (!state.incidents) state.incidents = {};
+      state.incidents[crisis.id] = crisis;
+    }
+    persistAndBroadcast();
+  },
+
+  // Ambulances
+  getAmbulances(): Ambulance[] {
+    return Object.values(state.ambulances || {});
+  },
+
+  getAmbulance(id: string): Ambulance | undefined {
+    return state.ambulances?.[id];
+  },
+
+  setAmbulance(ambulance: Ambulance): void {
+    if (!state.ambulances) state.ambulances = {};
+    state.ambulances[ambulance.id] = ambulance;
+    persistAndBroadcast();
+  },
+
+  // Hospital Registrations
+  getHospitalRegistrations(): HospitalRegistrationRecord[] {
+    return Object.values(state.hospitalRegistrations || {});
+  },
+
+  setHospitalRegistration(reg: HospitalRegistrationRecord): void {
+    if (!state.hospitalRegistrations) state.hospitalRegistrations = {};
+    state.hospitalRegistrations[reg.id] = reg;
+    persistAndBroadcast();
+  },
+
+  // Case Transit & Journey Timeline
+  getTransit(caseId: string): CaseTransitDetails | undefined {
+    return state.transits?.[caseId];
+  },
+
+  setTransit(transit: CaseTransitDetails): void {
+    if (!state.transits) state.transits = {};
+    state.transits[transit.case_id] = transit;
+    persistAndBroadcast();
+  },
+
+  advanceJourneyStage(caseId: string, stage: JourneyStage, actor: string = 'emt_paramedic', details?: string): CaseTransitDetails {
+    if (!state.transits) state.transits = {};
+    let transit = state.transits[caseId];
+    const now = new Date().toISOString();
+
+    if (!transit) {
+      transit = {
+        case_id: caseId,
+        journey_stage: stage,
+        journey_history: [
+          { stage: 'CASE_CREATED', label: 'Emergency Intake Created', timestamp: now, completed: true, actor },
+          { stage, label: stage.replace('_', ' '), timestamp: now, completed: true, actor, details },
+        ],
+        current_transit_status: 'stable',
+        vitals_timeline: [],
+        last_updated_at: now,
+      };
+    } else {
+      transit = {
+        ...transit,
+        journey_stage: stage,
+        journey_history: [
+          ...transit.journey_history,
+          { stage, label: stage.replace('_', ' '), timestamp: now, completed: true, actor, details },
+        ],
+        last_updated_at: now,
+      };
+    }
+
+    state.transits[caseId] = transit;
+    persistAndBroadcast();
+    return transit;
+  },
+
+  // Role Notifications
+  getNotifications(role?: string, recipientId?: string): AppNotification[] {
+    let list = state.notifications || [];
+    if (role) {
+      list = list.filter((n) => n.recipientRole === role || n.recipientRole === 'admin');
+    }
+    if (recipientId && recipientId !== 'all') {
+      list = list.filter((n) => !n.recipientId || n.recipientId === 'all' || n.recipientId === recipientId);
+    }
+    return list;
+  },
+
+  addNotification(notif: AppNotification): void {
+    if (!state.notifications) state.notifications = [];
+    state.notifications = [notif, ...state.notifications].slice(0, 100);
+    persistAndBroadcast();
+  },
+
+  markNotificationRead(id: string): void {
+    if (!state.notifications) return;
+    const n = state.notifications.find((item) => item.id === id);
+    if (n) {
+      n.read = true;
+      persistAndBroadcast();
+    }
   },
 };

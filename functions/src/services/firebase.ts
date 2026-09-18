@@ -13,6 +13,7 @@ if (!admin.apps.length) {
 }
 
 let firestoreInstance: FirebaseFirestore.Firestore = admin.firestore();
+firestoreInstance.settings({ ignoreUndefinedProperties: true });
 
 /**
  * Returns the active Firestore instance
@@ -28,7 +29,8 @@ export function setDb(customDb: FirebaseFirestore.Firestore): void {
   firestoreInstance = customDb;
 }
 
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
+
 export const db = getDb();
-export { admin };
-export const Timestamp = admin.firestore.Timestamp;
-export const FieldValue = admin.firestore.FieldValue;
+export const getFirestore = getDb;
+export { admin, Timestamp, FieldValue };
