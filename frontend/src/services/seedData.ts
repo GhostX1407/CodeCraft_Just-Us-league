@@ -1,0 +1,86 @@
+import { Hospital } from '../types/domain';
+
+const NOW = Date.now();
+
+export const SEED_HOSPITALS: Hospital[] = [
+  {
+    id: 'hosp_apex',
+    name: 'Apex Trauma & Emergency Centre',
+    lat: 23.1245,
+    lng: 72.5412,
+    trauma_team_on_shift: true,
+    specialists_on_call: ['trauma_surgeon', 'orthopedist', 'anesthesiologist'],
+    icu_beds_free: 4,
+    ventilators_free: 2,
+    blood_stock: { 'O-': 8, 'O+': 14, 'A+': 10, 'B+': 12, 'AB+': 4 },
+    er_load_score: 2,
+    accepts_scheme_patients: true,
+    last_updated_at: NOW - 2 * 60 * 1000, // 2 min ago (fresh)
+    reliability_score: 0.94,
+    contact_number: '+91 79 2685 0101',
+  },
+  {
+    id: 'hosp_metro',
+    name: 'Metro Heart & Super Specialty',
+    lat: 23.1368,
+    lng: 72.5534,
+    trauma_team_on_shift: false,
+    specialists_on_call: ['cardiologist', 'cardiac_surgeon', 'intensivist'],
+    icu_beds_free: 3,
+    ventilators_free: 3,
+    blood_stock: { 'O-': 2, 'O+': 8, 'A+': 6, 'B+': 9, 'AB+': 3 },
+    er_load_score: 1,
+    accepts_scheme_patients: true,
+    last_updated_at: NOW - 4 * 60 * 1000, // 4 min ago (fresh)
+    reliability_score: 0.96,
+    contact_number: '+91 79 2744 0202',
+  },
+  {
+    id: 'hosp_citycare',
+    name: 'CityCare General Hospital',
+    lat: 23.1189,
+    lng: 72.5312,
+    trauma_team_on_shift: false,
+    specialists_on_call: ['general_physician', 'general_surgeon'],
+    icu_beds_free: 1,
+    ventilators_free: 0,
+    blood_stock: { 'O-': 0, 'O+': 4, 'A+': 3, 'B+': 5 },
+    er_load_score: 4,
+    accepts_scheme_patients: true,
+    last_updated_at: NOW - 47 * 60 * 1000, // 47 min ago — DELIBERATELY STALE (>30 min, unknown confidence)
+    reliability_score: 0.72,
+    contact_number: '+91 79 2650 0303',
+  },
+  {
+    id: 'hosp_lifeline',
+    name: "Lifeline Children & Maternity Hospital",
+    lat: 23.1415,
+    lng: 72.5385,
+    trauma_team_on_shift: false,
+    specialists_on_call: ['pediatrician', 'obgyn', 'neonatologist'],
+    icu_beds_free: 2,
+    ventilators_free: 1,
+    blood_stock: { 'O-': 4, 'O+': 7, 'A+': 5, 'B+': 6, 'AB-': 2 },
+    er_load_score: 2,
+    accepts_scheme_patients: true,
+    last_updated_at: NOW - 6 * 60 * 1000, // 6 min ago (fresh)
+    reliability_score: 0.92,
+    contact_number: '+91 79 2791 0404',
+  },
+  {
+    id: 'hosp_sterling',
+    name: 'Sterling Multispecialty Institute',
+    lat: 23.1092,
+    lng: 72.5621,
+    trauma_team_on_shift: true,
+    specialists_on_call: ['cardiologist', 'orthopedist', 'obgyn', 'intensivist'],
+    icu_beds_free: 5,
+    ventilators_free: 4,
+    blood_stock: { 'O-': 6, 'O+': 15, 'A+': 12, 'B+': 14, 'AB+': 5 },
+    er_load_score: 3,
+    accepts_scheme_patients: true,
+    last_updated_at: NOW - 8 * 60 * 1000, // 8 min ago (fresh)
+    reliability_score: 0.89,
+    contact_number: '+91 79 2630 0505',
+  },
+];
