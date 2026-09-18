@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockFirestore } from './mockFirestore';
 import { setDb } from '../src/services/firebase';
-import { DEMO_HOSPITALS, DEMO_CASES } from '../../scripts/seed/demoData';
-import { seedAllDemoData } from '../../scripts/seed/seedFirestore';
+import { DEMO_HOSPITALS, DEMO_CASES, seedAllDemoData } from '../src/data/seedData';
 import { HospitalRepository, CaseRepository, AuditRepository } from '../src/services/repositories';
 import { classifyFreshness } from '../src/services/timestampUtils';
 

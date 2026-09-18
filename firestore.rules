@@ -2,8 +2,38 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Initial development rules for prototype foundation
-    // Access security and collection-level rules to be refined in Phase 4
+    // Hospital Capability & Live Status
+    match /hospitals/{hospitalId} {
+      allow read, write: if true;
+
+      // Resource Holds subcollection
+      match /holds/{requestId} {
+        allow read, write: if true;
+      }
+    }
+
+    // Cases
+    match /cases/{caseId} {
+      allow read, write: if true;
+    }
+
+    // Requests
+    match /requests/{requestId} {
+      allow read, write: if true;
+    }
+
+    // Forensic Audit Trail - Append-only enforcement
+    match /audit_logs/{auditId} {
+      allow read, create: if true;
+      allow update, delete: if false; // Immutable audit log
+    }
+
+    // Hospital Reliability Aggregates
+    match /hospital_reliability/{hospitalId} {
+      allow read, write: if true;
+    }
+
+    // Default catch-all for development & test fixtures
     match /{document=**} {
       allow read, write: if true;
     }
