@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Initial development rules for prototype foundation
+    // Access security and collection-level rules to be refined in Phase 4
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

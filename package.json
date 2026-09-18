@@ -1,0 +1,22 @@
+{
+  "name": "rahi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rahi - Capability-Match Ambulance-Hospital Coordination System",
+  "workspaces": [
+    "frontend",
+    "functions"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:functions": "npm run build:watch --workspace=functions",
+    "build": "npm run build --workspace=functions && npm run build --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:functions": "npm run build --workspace=functions",
+    "test": "npm run test --workspace=functions && npm run test --workspace=frontend",
+    "test:frontend": "npm run test --workspace=frontend",
+    "test:functions": "npm run test --workspace=functions",
+    "lint": "npm run lint --workspace=frontend && npm run lint --workspace=functions"
+  }
+}
