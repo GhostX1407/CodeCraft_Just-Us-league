@@ -3,3 +3,4 @@
  */
 
 export * from './needProfile';
+export * from '../matching/invalidation';

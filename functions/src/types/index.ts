@@ -170,3 +170,33 @@ export interface MassCasualtyResult {
   concentration_penalties: Record<string, number>;
   unassigned_case_ids: string[];
 }
+
+// ============================================================================
+// 6. Commitment Invalidation & Mid-Transit Monitoring (T-P1-044)
+// ============================================================================
+
+export type InvalidationReasonType =
+  | 'missing_specialist'
+  | 'trauma_team_unavailable'
+  | 'icu_unavailable'
+  | 'ventilator_unavailable'
+  | 'blood_unavailable'
+  | 'missing_capability_flag';
+
+export interface InvalidationReason {
+  type: InvalidationReasonType;
+  detail: string;
+  required_item: string;
+}
+
+export interface CommitmentValidationResult {
+  is_valid: boolean;
+  is_invalid: boolean;
+  reasons: string[];
+  detailed_reasons: InvalidationReason[];
+}
+
+export interface CommitmentValidationOptions {
+  current_holds?: CommittedResourceHolds;
+  is_case_hold_allocated?: boolean;
+}
