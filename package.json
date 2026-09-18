@@ -2,7 +2,7 @@
   "name": "rahi",
   "version": "0.1.0",
   "private": true,
-  "description": "Rahi - Capability-Match Ambulance-Hospital Coordination System",
+  "description": "Raahi - Capability-Match Ambulance-Hospital Coordination System",
   "workspaces": [
     "frontend",
     "functions"

@@ -1,7 +1,7 @@
 /**
- * Rahi Backend Cloud Functions & Domain Entry Point
+ * Raahi Backend Cloud Functions & Domain Entry Point
  * 
- * Foundation scaffold for Rahi capability-match coordination system.
+ * Foundation scaffold for Raahi capability-match coordination system.
  * Domain modules (matching, routing, resources, audit, reliability, ai)
  * will be implemented in subsequent development phases.
  */
@@ -20,7 +20,7 @@ if (!admin.apps.length) {
 export const healthCheck = functions.https.onRequest((req, res) => {
   res.status(200).json({
     status: 'ok',
-    system: 'Rahi Coordination Engine',
+    system: 'Raahi Coordination Engine',
     timestamp: new Date().toISOString(),
     phase: 'foundation',
   });

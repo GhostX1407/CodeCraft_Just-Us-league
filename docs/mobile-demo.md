@@ -1,24 +1,24 @@
-# Rahi — Later-Stage Mobile Demo Specification
+# Raahi — Later-Stage Mobile Demo Specification
 
 ## 1. Purpose
 
-This document records a **later-stage demo requirement** for **Rahi**.
+This document records a **later-stage demo requirement** for **Raahi**.
 
 The mobile experience is **not a first-priority MVP feature**. The core desktop/web platform, backend, matching engine, hospital workflow, rerouting, concurrency safety, auditability, and other locked MVP capabilities must be completed and stable first.
 
 After the main platform is working, this document defines the small mobile-facing experience we can add specifically for an **ambulance driver** so the final hackathon demo can be shown from a phone.
 
-The objective is to demonstrate that Rahi can expose a **small, practical, driver-focused view** without turning the driver application into another full hospital/admin dashboard.
+The objective is to demonstrate that Raahi can expose a **small, practical, driver-focused view** without turning the driver application into another full hospital/admin dashboard.
 
 ---
 
 ## 2. Product Name
 
-**Project name:** Rahi
+**Project name:** Raahi
 
-**Mobile demo name:** Rahi Ambulance View
+**Mobile demo name:** Raahi Ambulance View
 
-The mobile view should use the same Rahi backend and realtime data as the main platform. It should not become a separate product or separate source of truth.
+The mobile view should use the same Raahi backend and realtime data as the main platform. It should not become a separate product or separate source of truth.
 
 ---
 
@@ -28,7 +28,7 @@ The mobile view should use the same Rahi backend and realtime data as the main p
 
 ### Do not build this before the core flow is stable
 
-The team should first complete and verify the critical Rahi workflow:
+The team should first complete and verify the critical Raahi workflow:
 
 ```text
 Case Created
@@ -52,7 +52,7 @@ Only after the above workflow is reliable should the team spend time on the mobi
 
 ### Scope-cut rule
 
-If the team is running short on hackathon time, the mobile demo is one of the features that may be reduced or omitted without affecting the core Rahi MVP.
+If the team is running short on hackathon time, the mobile demo is one of the features that may be reduced or omitted without affecting the core Raahi MVP.
 
 The mobile experience must never delay or destabilize:
 
@@ -88,7 +88,7 @@ The driver should **not** be given access to internal hospital operations or adm
 
 ### "Only what the ambulance driver needs."
 
-The mobile UI must be a **thin operational view**, not a compressed version of the entire Rahi dashboard.
+The mobile UI must be a **thin operational view**, not a compressed version of the entire Raahi dashboard.
 
 Do not expose unnecessary hospital-management or administrative information.
 
@@ -132,7 +132,7 @@ A compact dashboard showing the current case and routing status.
 Example information:
 
 ```text
-RAHI
+RAAHI
 Ambulance View
 
 CASE #R-1042
@@ -159,7 +159,7 @@ Moderate
 [ CONTACT HOSPITAL ]
 ```
 
-The exact information shown should depend on what is already available from the authoritative Rahi backend.
+The exact information shown should depend on what is already available from the authoritative Raahi backend.
 
 ---
 
@@ -216,7 +216,7 @@ Emergency Desk
 
 On a real mobile device, this can use the browser's phone-link mechanism (for example, a `tel:` link) so the driver can initiate a call.
 
-The contact information should come from the Rahi hospital record or configured demo data rather than being manually duplicated in the frontend.
+The contact information should come from the Raahi hospital record or configured demo data rather than being manually duplicated in the frontend.
 
 ---
 
@@ -241,7 +241,7 @@ or:
 ```text
 Hospital Rejected
         ↓
-Rahi is finding the next suitable hospital
+Raahi is finding the next suitable hospital
         ↓
 New Hospital Request Sent
 ```
@@ -254,7 +254,7 @@ Internal request-state details, scoring breakdowns, audit events, and implementa
 
 ## 7. Realtime Requirement
 
-The mobile demo should consume the **same realtime source of truth** as the main Rahi application.
+The mobile demo should consume the **same realtime source of truth** as the main Raahi application.
 
 Where appropriate, it should use the existing Firestore `onSnapshot` subscriptions already defined for the project rather than introducing a second synchronization mechanism.
 
@@ -267,7 +267,7 @@ Firestore update
         ↓
 onSnapshot
         ↓
-Rahi backend / existing state
+Raahi backend / existing state
         ↓
 Ambulance mobile view updates
 ```
@@ -286,7 +286,7 @@ The ambulance view may show:
 - current destination hospital
 - small availability summary
 - relevant bed/resource counts
-- approximate distance/ETA already produced by Rahi
+- approximate distance/ETA already produced by Raahi
 - freshness indicator when relevant
 - hospital contact information
 - simple accepted/rejected/rerouting status
@@ -312,12 +312,12 @@ The backend may continue to calculate and store these things, but the driver UI 
 
 ---
 
-## 9. Relationship to the Existing Rahi Architecture
+## 9. Relationship to the Existing Raahi Architecture
 
 The mobile demo is a **frontend surface**, not a new architecture.
 
 ```text
-                    RAHI BACKEND
+                    RAAHI BACKEND
                          │
               ┌──────────┼──────────┐
               │          │          │
@@ -371,7 +371,7 @@ The mobile view should support at least one clean hackathon demonstration.
 ```text
 1. Create emergency case
         ↓
-2. Rahi calculates suitable hospitals
+2. Raahi calculates suitable hospitals
         ↓
 3. Hospital receives request
         ↓
@@ -390,7 +390,7 @@ A second optional mobile demo can show:
 ```text
 1. Hospital rejects / times out
         ↓
-2. Rahi reroutes automatically
+2. Raahi reroutes automatically
         ↓
 3. Phone updates destination/status
         ↓
@@ -428,7 +428,7 @@ For example:
 - a trauma case may emphasize ICU/blood/trauma capability;
 - another case may show only the relevant capability/resource subset.
 
-The exact filtering should follow the authoritative case `need_profile` and the existing Rahi backend rules.
+The exact filtering should follow the authoritative case `need_profile` and the existing Raahi backend rules.
 
 ---
 
@@ -504,7 +504,7 @@ Do not add backend complexity merely for visual polish.
 ### Suggested implementation sequence
 
 ```text
-Core Rahi MVP stable
+Core Raahi MVP stable
         ↓
 Responsive /ambulance route
         ↓
@@ -529,12 +529,12 @@ Run live demo rehearsal
 
 The mobile demo is complete when all of the following are true:
 
-- Rahi has a usable `/ambulance` mobile route.
+- Raahi has a usable `/ambulance` mobile route.
 - The route works on a normal smartphone browser.
 - The screen shows the current destination hospital.
 - The screen shows a small relevant vacancy/bed/resource summary.
 - The screen shows the current high-level routing/request status.
-- The screen can reflect important realtime changes from the existing Rahi backend.
+- The screen can reflect important realtime changes from the existing Raahi backend.
 - The ambulance user can access the destination hospital contact.
 - The driver UI contains no hospital-admin or admin-only controls.
 - No separate source of truth is introduced for mobile data.
@@ -549,7 +549,7 @@ A compact single-page structure is sufficient:
 
 ```text
 ┌─────────────────────────────┐
-│ RAHI                        │
+│ RAAHI                       │
 │ Ambulance                   │
 ├─────────────────────────────┤
 │ CURRENT STATUS               │
@@ -578,16 +578,16 @@ The actual visual design can be improved during frontend polish, but the informa
 
 ## 19. What This Feature Is Supposed to Demonstrate
 
-The mobile demo is primarily a **presentation and usability layer** for the Rahi platform.
+The mobile demo is primarily a **presentation and usability layer** for the Raahi platform.
 
 It should help the final demo communicate that:
 
-- Rahi is not limited to a desktop dashboard.
+- Raahi is not limited to a desktop dashboard.
 - An ambulance-side user can access the current routing decision from a phone.
 - Hospital availability can be surfaced in a compact operational view.
 - Changes made in the platform can propagate to the ambulance view in realtime.
 - The driver receives useful information without being exposed to unnecessary internal hospital/admin functionality.
-- The same Rahi platform can support multiple role-specific interfaces while keeping one backend source of truth.
+- The same Raahi platform can support multiple role-specific interfaces while keeping one backend source of truth.
 
 ---
 
@@ -617,9 +617,9 @@ A responsive mobile web experience is sufficient for the hackathon demo.
 
 ## 21. Priority Statement
 
-> **Rahi mobile ambulance view = later-stage demo enhancement, not core MVP scope.**
+> **Raahi mobile ambulance view = later-stage demo enhancement, not core MVP scope.**
 
-Build it only after the core Rahi platform is working reliably.
+Build it only after the core Raahi platform is working reliably.
 
 The ideal final result is a small phone dashboard that answers the ambulance driver's immediate questions:
 

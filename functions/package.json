@@ -2,7 +2,7 @@
   "name": "functions",
   "private": true,
   "version": "0.1.0",
-  "description": "Rahi Backend Cloud Functions & Core Domain Engine",
+  "description": "Raahi Backend Cloud Functions & Core Domain Engine",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",

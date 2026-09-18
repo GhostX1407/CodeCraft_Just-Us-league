@@ -1,4 +1,4 @@
-# Rahi — Capability-Match Ambulance–Hospital Coordination System
+# Raahi — Capability-Match Ambulance–Hospital Coordination System
 
 > **Hackathon:** CodeCraft / Technofora '26  
 > **Track:** HealthTech — Accessible Care & Intelligent Patient Support  
@@ -17,11 +17,11 @@ Emergency medical transport frequently suffers from critical coordination gaps:
 
 ## 2. Solution
 
-**Rahi** transforms emergency medical routing from a passive bed-monitoring model into an active, deterministic **capability-match and commitment protocol**:
+**Raahi** transforms emergency medical routing from a passive bed-monitoring model into an active, deterministic **capability-match and commitment protocol**:
 1. **Deterministic Need Profiling:** Converts emergency patient assessments and vital signs into a structured clinical need profile.
 2. **Capability-Based Matching:** Ranks candidate hospitals using verifiable constraints: capability match score, real-time emergency department load, distance/travel time, and telemetry data freshness.
 3. **Active Commitment Handshake:** Dispatches a direct, time-bounded allocation request with an active countdown timer to the top-ranked hospital.
-4. **Automated Dynamic Rerouting:** If the primary hospital rejects or fails to respond before the timeout, Rahi instantly and automatically fails over to the next optimal candidate.
+4. **Automated Dynamic Rerouting:** If the primary hospital rejects or fails to respond before the timeout, Raahi instantly and automatically fails over to the next optimal candidate.
 5. **Atomic Resource Reservations:** Prevents duplicate allocation of contested emergency assets (ICU beds, surgical teams) via transactional state commits.
 6. **End-to-End Auditability & Accountability:** Preserves an immutable historical trail of every routing decision, state transition, and response latency.
 
@@ -93,7 +93,7 @@ Emergency medical transport frequently suffers from critical coordination gaps:
 ## 6. Monorepo Structure
 
 ```text
-rahi/
+raahi/
 ├── docs/                      # Authoritative engineering documentation
 │   ├── PRD_Final.md           # Master product requirements (Source of Truth)
 │   ├── architecture.md        # System architecture and layer boundaries
@@ -156,7 +156,7 @@ The data layer is built on four core top-level Firestore collections:
 
 ## 8. API & Coordination Contract
 
-Rahi separates asynchronous command invocations from realtime state subscriptions:
+Raahi separates asynchronous command invocations from realtime state subscriptions:
 
 - **Commands:**
   - `POST /api/cases`: Create emergency case and generate need profile.
@@ -223,9 +223,9 @@ Rahi separates asynchronous command invocations from realtime state subscription
 ## 11. Demonstration Scenarios
 
 The system is designed to demonstrate three primary clinical workflows during judging:
-1. **Scenario A — Single Acute Match & Instant Acceptance:** A severe cardiac trauma case is triaged; Rahi computes hospital scores, requests Hospital A, Hospital A accepts within countdown, and ICU inventory decreases atomically.
-2. **Scenario B — Rejection / Timeout with Dynamic Auto-Reroute:** Hospital A rejects or times out; Rahi automatically reroutes to Hospital B without manual dispatcher intervention; audit log captures the latency.
-3. **Scenario C — Mass Casualty Incident:** An incident with multiple victims is processed simultaneously; Rahi distributes patients across balanced regional facilities to prevent hospital saturation.
+1. **Scenario A — Single Acute Match & Instant Acceptance:** A severe cardiac trauma case is triaged; Raahi computes hospital scores, requests Hospital A, Hospital A accepts within countdown, and ICU inventory decreases atomically.
+2. **Scenario B — Rejection / Timeout with Dynamic Auto-Reroute:** Hospital A rejects or times out; Raahi automatically reroutes to Hospital B without manual dispatcher intervention; audit log captures the latency.
+3. **Scenario C — Mass Casualty Incident:** An incident with multiple victims is processed simultaneously; Raahi distributes patients across balanced regional facilities to prevent hospital saturation.
 
 ---
 
@@ -240,7 +240,7 @@ The system is designed to demonstrate three primary clinical workflows during ju
 
 - **Prototype Scope:** Designed for an 18-hour hackathon environment utilizing simulated traffic/distance calculations (Haversine formula).
 - **Authentication:** Uses lightweight role-based actor profiles for prototype demonstration rather than hospital enterprise SSO/EHR integration.
-- **Non-Clinical Device:** Rahi is an operational decision-support and dispatch coordination prototype; human medical direction remains authoritative.
+- **Non-Clinical Device:** Raahi is an operational decision-support and dispatch coordination prototype; human medical direction remains authoritative.
 
 ---
 
