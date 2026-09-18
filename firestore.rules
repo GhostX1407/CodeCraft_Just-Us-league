@@ -2,40 +2,41 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Hospital Capability & Live Status
+    // Hospital Capability & Live Status - Public Read, Server Write Only
     match /hospitals/{hospitalId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
 
-      // Resource Holds subcollection
+      // Resource Holds subcollection - Read for UI state, Server Write Only
       match /holds/{requestId} {
-        allow read, write: if true;
+        allow read: if true;
+        allow write: if false;
       }
     }
 
-    // Cases
+    // Emergency Cases - Read for Dispatcher/Hospital, Server Write Only
     match /cases/{caseId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
 
-    // Requests
+    // Routing Requests - Read for Dispatcher/Hospital, Server Write Only
     match /requests/{requestId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
 
-    // Forensic Audit Trail - Append-only enforcement
+    // Forensic Audit Trail - Append-only enforcement, Server Created Only
     match /audit_logs/{auditId} {
-      allow read, create: if true;
-      allow update, delete: if false; // Immutable audit log
+      allow read: if true;
+      allow write: if false; // Only backend Admin SDK can append audit logs
     }
 
-    // Hospital Reliability Aggregates
+    // Hospital Reliability Aggregates - Public Read, Server Write Only
     match /hospital_reliability/{hospitalId} {
-      allow read, write: if true;
-    }
-
-    // Default catch-all for development & test fixtures
-    match /{document=**} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
+

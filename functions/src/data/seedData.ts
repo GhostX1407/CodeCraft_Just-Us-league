@@ -10,6 +10,7 @@ import { Hospital, Case } from '../services/types';
 import { HospitalRepository, CaseRepository } from '../services/repositories';
 import { getDb } from '../services/firebase';
 import { AuditLogger } from '../audit/auditLogger';
+import { generateNeedProfile } from '../domain/needProfile';
 
 const now = Date.now();
 const minutesAgo = (mins: number) => new Date(now - mins * 60 * 1000).toISOString();
@@ -24,6 +25,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['cardiologist', 'orthopedist', 'general_surgeon', 'anesthetist'],
     icu_beds_free: 4,
     ventilators_free: 2,
+    capabilities: ['ecg', 'icu', 'ventilator', 'trauma_team'],
     blood_stock: {
       'O-': 3,
       'O+': 14,
@@ -48,6 +50,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['orthopedist', 'general_surgeon', 'anesthetist', 'neurosurgeon'],
     icu_beds_free: 6,
     ventilators_free: 4,
+    capabilities: ['trauma_team', 'icu', 'ventilator', 'ecg'],
     blood_stock: {
       'O-': 5,
       'O+': 18,
@@ -72,6 +75,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['obgyn', 'pediatrician', 'anesthetist'],
     icu_beds_free: 3,
     ventilators_free: 2,
+    capabilities: ['maternity', 'pediatric_emergency', 'icu', 'ventilator'],
     blood_stock: {
       'O-': 2,
       'O+': 8,
@@ -96,6 +100,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['cardiologist', 'anesthetist'],
     icu_beds_free: 5,
     ventilators_free: 3,
+    capabilities: ['ecg', 'icu', 'ventilator'],
     blood_stock: {
       'O-': 2,
       'O+': 10,
@@ -120,6 +125,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['cardiologist', 'general_surgeon'],
     icu_beds_free: 2,
     ventilators_free: 1,
+    capabilities: ['trauma_team', 'icu', 'ventilator', 'ecg'],
     blood_stock: {
       'O-': 1,
       'O+': 5,
@@ -140,6 +146,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['general_surgeon'],
     icu_beds_free: 1,
     ventilators_free: 0,
+    capabilities: ['icu'],
     blood_stock: {
       'O+': 3,
       'A+': 2,
@@ -158,6 +165,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['pediatrician', 'anesthetist'],
     icu_beds_free: 4,
     ventilators_free: 2,
+    capabilities: ['pediatric_emergency', 'icu', 'ventilator'],
     blood_stock: {
       'O-': 2,
       'O+': 6,
@@ -178,6 +186,7 @@ export const DEMO_HOSPITALS: Hospital[] = [
     specialists_on_call: ['cardiologist', 'orthopedist', 'obgyn', 'pediatrician'],
     icu_beds_free: 8,
     ventilators_free: 5,
+    capabilities: ['ecg', 'maternity', 'pediatric_emergency', 'trauma_team', 'icu', 'ventilator'],
     blood_stock: {
       'O-': 4,
       'O+': 20,
@@ -199,11 +208,7 @@ export const DEMO_CASES: Case[] = [
     created_at: minutesAgo(10),
     category: 'cardiac',
     severity: 'red',
-    need_profile: {
-      specialists_needed: ['cardiologist'],
-      capability_flags: ['ecg', 'icu'],
-      blood_type_needed: null,
-    },
+    need_profile: generateNeedProfile('cardiac', 'red'),
     vitals_summary: 'Severe radiating retrosternal chest pain, ST elevation, SpO2 91%, pulse 118',
     onset_time: '25 minutes ago',
     treatment_administered: 'Aspirin 300mg given, high-flow oxygen started',
@@ -227,11 +232,7 @@ export const DEMO_CASES: Case[] = [
     created_at: minutesAgo(8),
     category: 'trauma',
     severity: 'red',
-    need_profile: {
-      specialists_needed: ['orthopedist'],
-      capability_flags: ['trauma_team', 'icu'],
-      blood_type_needed: 'O-',
-    },
+    need_profile: generateNeedProfile('trauma', 'red'),
     vitals_summary: 'Open pelvic fracture, active haemorrhage, BP 82/50, pulse 135',
     onset_time: '15 minutes ago',
     treatment_administered: 'Pelvic binder placed, 2x wide-bore IV access, 1L normal saline running',
@@ -255,11 +256,7 @@ export const DEMO_CASES: Case[] = [
     created_at: minutesAgo(5),
     category: 'obstetric',
     severity: 'red',
-    need_profile: {
-      specialists_needed: ['obgyn'],
-      capability_flags: ['maternity', 'icu'],
-      blood_type_needed: null,
-    },
+    need_profile: generateNeedProfile('obstetric', 'red'),
     vitals_summary: 'Severe pre-eclampsia, visual disturbance, BP 190/115, fetal bradycardia',
     onset_time: '35 minutes ago',
     treatment_administered: 'Magnesium sulfate IV loading dose given, left lateral tilt position',
@@ -283,11 +280,7 @@ export const DEMO_CASES: Case[] = [
     created_at: minutesAgo(12),
     category: 'cardiac',
     severity: 'red',
-    need_profile: {
-      specialists_needed: ['cardiologist'],
-      capability_flags: ['ecg', 'icu'],
-      blood_type_needed: null,
-    },
+    need_profile: generateNeedProfile('cardiac', 'red'),
     vitals_summary: 'Blunt chest trauma, myocardial contusion, arrhythmia',
     onset_time: '20 minutes ago',
     treatment_administered: 'Oxygen, cardiac monitoring',
@@ -303,11 +296,7 @@ export const DEMO_CASES: Case[] = [
     created_at: minutesAgo(12),
     category: 'trauma',
     severity: 'red',
-    need_profile: {
-      specialists_needed: [],
-      capability_flags: ['trauma_team', 'icu'],
-      blood_type_needed: 'O-',
-    },
+    need_profile: generateNeedProfile('trauma', 'red'),
     vitals_summary: 'Severe polytrauma, pneumothorax, shock',
     onset_time: '20 minutes ago',
     treatment_administered: 'Chest decompression, tourniquet, crystalloids',
@@ -323,11 +312,7 @@ export const DEMO_CASES: Case[] = [
     created_at: minutesAgo(12),
     category: 'obstetric',
     severity: 'yellow',
-    need_profile: {
-      specialists_needed: ['obgyn'],
-      capability_flags: ['maternity'],
-      blood_type_needed: null,
-    },
+    need_profile: generateNeedProfile('obstetric', 'yellow'),
     vitals_summary: 'Pregnant passenger (32 weeks), abdominal pain following seatbelt impact',
     onset_time: '20 minutes ago',
     treatment_administered: 'Spinal precautions, vitals monitoring',
@@ -343,11 +328,7 @@ export const DEMO_CASES: Case[] = [
     created_at: minutesAgo(12),
     category: 'pediatric',
     severity: 'yellow',
-    need_profile: {
-      specialists_needed: ['pediatrician'],
-      capability_flags: ['pediatric_emergency'],
-      blood_type_needed: null,
-    },
+    need_profile: generateNeedProfile('pediatric', 'yellow'),
     vitals_summary: 'Pediatric passenger, clavicle fracture, minor head laceration, Glasgow Coma Scale 15',
     onset_time: '20 minutes ago',
     treatment_administered: 'Immobilization, wound dressing',
@@ -359,6 +340,7 @@ export const DEMO_CASES: Case[] = [
     attempt_number: 0,
   },
 ];
+
 
 export async function seedAllDemoData(): Promise<{
   hospitalsCount: number;

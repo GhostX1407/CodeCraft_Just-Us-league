@@ -12,16 +12,20 @@ import {
   HospitalRepository,
   RequestRepository,
 } from '../services/repositories';
-import { Case, Request } from '../services/types';
+import { Case, Hospital, Request, CommitmentValidationResult } from '../services/types';
 import { MatchingAdapter } from '../services/matchingAdapter';
 import { RequestLifecycleService } from './requestLifecycleService';
+import { ReliabilityService } from '../reliability/reliabilityService';
 import { AuditLogger } from '../audit/auditLogger';
+import { isCommitmentStillValid } from '../matching';
 
 export interface RerouteResult {
   exhausted: boolean;
   newRequest: Request | null;
   caseData: Case;
   attemptedHospitalIds: string[];
+  invalidated?: boolean;
+  validation?: CommitmentValidationResult;
 }
 
 export class RerouteService {
@@ -123,19 +127,79 @@ export class RerouteService {
 
   /**
    * Handles mid-transit capability invalidation (spec.md §14, §106)
-   * Supersedes active commitment, releases holds, and reroutes immediately.
+   * Evaluates current hospital state against canonical P1 invalidation rules (isCommitmentStillValid).
+   * If invalid:
+   * 1. Supersedes active request (transactionally releasing hold back to hospital availability)
+   * 2. Idempotently records reliability commitment outcome as 'breached'
+   * 3. Clears accepted destination on case
+   * 4. Excludes previously attempted hospitals (including breached hospital)
+   * 5. Reranks remaining hospitals via canonical matching engine
+   * 6. Creates next sequential routing request
+   * 7. Audits COMMITMENT_INVALIDATED and REROUTE_TRIGGERED
    */
   static async handleMidTransitInvalidation(
     caseId: string,
-    reason: string = 'Destination hospital capability degraded in transit'
+    hospitalOrReason?: string | Hospital,
+    actorId: string = 'system'
   ): Promise<RerouteResult> {
     const caseData = await CaseRepository.get(caseId);
     if (!caseData) {
       throw new Error(`Case ${caseId} not found`);
     }
 
-    if (caseData.active_request_id) {
-      await RequestLifecycleService.supersedeRequest(caseData.active_request_id, reason);
+    const acceptedHospitalId = caseData.accepted_hospital_id;
+    let hospital: Hospital | null = null;
+    let reasonText =
+      typeof hospitalOrReason === 'string'
+        ? hospitalOrReason
+        : 'Destination hospital operational capability degraded';
+
+    if (typeof hospitalOrReason === 'object' && hospitalOrReason !== null) {
+      hospital = hospitalOrReason;
+    } else if (typeof hospitalOrReason === 'string' && hospitalOrReason.startsWith('hosp')) {
+      hospital = await HospitalRepository.get(hospitalOrReason);
+    }
+
+    if (!hospital && acceptedHospitalId) {
+      hospital = await HospitalRepository.get(acceptedHospitalId);
+    }
+
+    let validation: CommitmentValidationResult | undefined;
+    if (hospital) {
+      validation = isCommitmentStillValid(caseData, hospital, {
+        is_case_hold_allocated: true,
+      });
+
+      // If explicit hospital state was provided and commitment is STILL VALID:
+      // do not supersede or reroute
+      if (validation.is_valid && typeof hospitalOrReason === 'object') {
+        return {
+          exhausted: false,
+          newRequest: null,
+          caseData,
+          attemptedHospitalIds: [],
+          invalidated: false,
+          validation,
+        };
+      }
+
+      if (validation.is_invalid && validation.reasons.length > 0) {
+        reasonText = validation.reasons.join('; ');
+      }
+    }
+
+    const activeRequestId = caseData.active_request_id;
+    if (activeRequestId) {
+      await RequestLifecycleService.supersedeRequest(activeRequestId, reasonText, actorId);
+      if (acceptedHospitalId) {
+        await ReliabilityService.recordCommitmentOutcome(
+          acceptedHospitalId,
+          activeRequestId,
+          caseId,
+          'breached',
+          actorId
+        );
+      }
     }
 
     await CaseRepository.update(caseId, {
@@ -143,6 +207,30 @@ export class RerouteService {
       accepted_hospital_id: null,
     });
 
-    return this.rerouteCase(caseId, reason);
+    await AuditLogger.log({
+      caseId,
+      hospitalId: acceptedHospitalId || null,
+      requestId: activeRequestId || null,
+      eventType: 'COMMITMENT_INVALIDATED',
+      actorType: 'system',
+      actorId,
+      metadata: {
+        reason: reasonText,
+        validation_reasons: validation?.reasons || [],
+      },
+    });
+
+    const rerouteRes = await this.rerouteCase(
+      caseId,
+      `Mid-transit commitment invalidated: ${reasonText}`,
+      actorId
+    );
+
+    return {
+      ...rerouteRes,
+      invalidated: true,
+      validation,
+    };
   }
 }
+

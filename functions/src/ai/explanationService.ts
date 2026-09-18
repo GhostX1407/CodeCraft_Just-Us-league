@@ -12,6 +12,14 @@
 
 import { MatchScoreBreakdown } from '../services/types';
 
+export interface ExplanationCandidateComparison {
+  hospitalName: string;
+  eligible: boolean;
+  reason?: string;
+  finalScore?: number;
+  distanceKm?: number;
+}
+
 export interface ExplanationRequest {
   hospitalName: string;
   category: string;
@@ -22,12 +30,41 @@ export interface ExplanationRequest {
   distanceKm: number;
   erLoadScore: number;
   freshness: string;
+  ageMinutes?: number;
+  comparisonCandidates?: ExplanationCandidateComparison[];
+}
+
+export interface RichExplanationBreakdown {
+  selectedHospital: string;
+  requiredCapabilities: {
+    label: string;
+    satisfied: boolean;
+  }[];
+  operationalFactors: {
+    distanceKm: number;
+    erLoadScore: number;
+    freshness: string;
+    ageMinutes?: number;
+  };
+  matchScore: {
+    capabilityMatchPct: number;
+    distanceFactor: number;
+    loadFactor: number;
+    freshnessFactor: number;
+    finalScore: number;
+  };
+  whyOthersNotSelected?: {
+    hospitalName: string;
+    reason: string;
+  }[];
+  summaryText: string;
 }
 
 export interface ExplanationResult {
   explanation: string;
   source: 'deterministic' | 'ai';
   latencyMs: number;
+  richBreakdown?: RichExplanationBreakdown;
 }
 
 export interface AiProvider {
@@ -81,10 +118,71 @@ export class DeterministicExplanationGenerator {
 
     return `${parts.join('. ')}. (Score: ${req.breakdown.final_score})`;
   }
+
+  /**
+   * Generates a rich, structured, fact-based breakdown conforming to spec.md §29-34.
+   */
+  static generateRichBreakdown(req: ExplanationRequest): RichExplanationBreakdown {
+    const requiredCaps: { label: string; satisfied: boolean }[] = [];
+
+    for (const spec of req.specialistsMatched) {
+      requiredCaps.push({
+        label: `${spec.charAt(0).toUpperCase() + spec.slice(1).replace(/_/g, ' ')} available`,
+        satisfied: true,
+      });
+    }
+
+    for (const cap of req.capabilitiesMatched) {
+      requiredCaps.push({
+        label: `${cap.toUpperCase()} available`,
+        satisfied: true,
+      });
+    }
+
+    const whyOthers: { hospitalName: string; reason: string }[] = [];
+    if (req.comparisonCandidates) {
+      for (const other of req.comparisonCandidates) {
+        if (!other.eligible) {
+          whyOthers.push({
+            hospitalName: other.hospitalName,
+            reason: `Ineligible: ${other.reason || 'Missing required capability'}`,
+          });
+        } else {
+          whyOthers.push({
+            hospitalName: other.hospitalName,
+            reason: `Lower ranking score (${other.finalScore ?? 'N/A'}) or farther (${other.distanceKm ?? 'N/A'} km)`,
+          });
+        }
+      }
+    }
+
+    const summaryText = this.generate(req);
+
+    return {
+      selectedHospital: req.hospitalName,
+      requiredCapabilities: requiredCaps,
+      operationalFactors: {
+        distanceKm: req.distanceKm,
+        erLoadScore: req.erLoadScore,
+        freshness: req.freshness,
+        ageMinutes: req.ageMinutes,
+      },
+      matchScore: {
+        capabilityMatchPct: req.breakdown.capability_match_pct,
+        distanceFactor: req.breakdown.distance_factor,
+        loadFactor: req.breakdown.load_factor,
+        freshnessFactor: req.breakdown.freshness_factor,
+        finalScore: req.breakdown.final_score,
+      },
+      whyOthersNotSelected: whyOthers.length > 0 ? whyOthers : undefined,
+      summaryText,
+    };
+  }
 }
 
 /**
- * Mockable / Pluggable AI Provider for demonstration
+ * Mockable / Pluggable AI Provider for demonstration.
+ * AI output is strictly explanatory and uses neutral language.
  */
 export class MockAiProvider implements AiProvider {
   constructor(private readonly shouldFail: boolean = false, private readonly delayMs: number = 20) {}
@@ -96,7 +194,8 @@ export class MockAiProvider implements AiProvider {
 
     await new Promise((resolve) => setTimeout(resolve, this.delayMs));
 
-    return `AI Summary: ${req.hospitalName} is currently the optimal facility for this ${req.severity} ${req.category} emergency, located ${req.distanceKm} km out with confirmed ${req.specialistsMatched.join(', ')} availability.`;
+    // Neutral deterministic language (no biased claims of "optimal facility")
+    return `AI Summary: ${req.hospitalName} was selected by the deterministic matching engine based on the verified match factors: located ${req.distanceKm} km away with confirmed ${req.specialistsMatched.join(', ')} availability and load score ${req.erLoadScore}/5.`;
   }
 }
 
@@ -115,6 +214,7 @@ export class ExplanationService {
    */
   static async explainMatch(request: ExplanationRequest): Promise<ExplanationResult> {
     const startTime = Date.now();
+    const richBreakdown = DeterministicExplanationGenerator.generateRichBreakdown(request);
 
     // If AI provider is present, attempt AI explanation with strict timeout
     if (activeAiProvider) {
@@ -130,6 +230,7 @@ export class ExplanationService {
             explanation: aiExplanation.trim(),
             source: 'ai',
             latencyMs: Date.now() - startTime,
+            richBreakdown,
           };
         }
       } catch {
@@ -143,6 +244,8 @@ export class ExplanationService {
       explanation: fallbackText,
       source: 'deterministic',
       latencyMs: Date.now() - startTime,
+      richBreakdown,
     };
   }
 }
+

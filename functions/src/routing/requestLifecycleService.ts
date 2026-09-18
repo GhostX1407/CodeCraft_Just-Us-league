@@ -29,6 +29,7 @@ import {
   REQUEST_TIMEOUT_SECONDS,
 } from '../services/timestampUtils';
 import { ResourceHoldService } from '../resources/resourceHoldService';
+import { ReliabilityService } from '../reliability/reliabilityService';
 import { AuditLogger } from '../audit/auditLogger';
 
 export interface CreateRequestInput {
@@ -43,6 +44,14 @@ export interface CreateRequestInput {
   actorId?: string;
   actorType?: 'system' | 'ambulance_user';
 }
+
+export interface HandoffResult {
+  success: boolean;
+  request: Request;
+  caseData: Case;
+  hold: ResourceHold | null;
+}
+
 
 export interface AcceptRequestResult {
   success: boolean;
@@ -469,4 +478,98 @@ export class RequestLifecycleService {
       return request;
     });
   }
+
+  /**
+   * Finalizes successful patient arrival and handoff at the accepting hospital.
+   * Atomically:
+   * 1. Verifies request is accepted
+   * 2. Transitions resource hold to 'consumed' (without returning resources to hospital availability)
+   * 3. Updates case status to 'completed'
+   * 4. Idempotently records reliability commitment outcome as 'honored'
+   * 5. Audits HANDOFF_COMPLETED
+   */
+  static async completeHandoff(
+    requestId: string,
+    actorId: string = 'hospital_user',
+    actorType: 'hospital_user' | 'system' = 'hospital_user'
+  ): Promise<HandoffResult> {
+    const db = getDb();
+
+    const result = await db.runTransaction(async (transaction) => {
+      const requestRef = RequestRepository.getDocRef(requestId);
+      const requestSnap = await transaction.get(requestRef);
+
+      if (!requestSnap.exists) {
+        throw new RequestLifecycleError('REQUEST_NOT_FOUND', `Request ${requestId} not found`);
+      }
+
+      const request = requestSnap.data() as Request;
+
+      // Handoff requires that the request was accepted
+      if (request.status !== 'accepted') {
+        throw new RequestLifecycleError(
+          'STATE_CONFLICT',
+          `Cannot complete handoff for request ${requestId}: status is '${request.status}' (expected 'accepted')`
+        );
+      }
+
+      const caseRef = CaseRepository.getDocRef(request.case_id);
+      const caseSnap = await transaction.get(caseRef);
+      if (!caseSnap.exists) {
+        throw new RequestLifecycleError('CASE_NOT_FOUND', `Case ${request.case_id} not found`);
+      }
+      const caseData = caseSnap.data() as Case;
+
+      // 1. Consume hold in transaction (does NOT restore resources)
+      const hold = await ResourceHoldService.consumeHoldInTransaction(
+        transaction,
+        request.hospital_id,
+        requestId,
+        request.case_id,
+        actorId,
+        actorType
+      );
+
+      // 2. Update case status to 'completed'
+      transaction.update(caseRef, {
+        status: 'completed',
+      });
+      caseData.status = 'completed';
+
+      // 3. Write audit log
+      const audit = AuditLogger.buildAuditLog({
+        caseId: request.case_id,
+        hospitalId: request.hospital_id,
+        requestId,
+        eventType: 'HANDOFF_COMPLETED',
+        actorType,
+        actorId,
+        metadata: {
+          hold_status: 'consumed',
+          completed_at: nowTimestamp(),
+        },
+      });
+      const auditRef = db.collection('audit_logs').doc(audit.id);
+      transaction.set(auditRef, audit);
+
+      return {
+        success: true,
+        request,
+        caseData,
+        hold,
+      };
+    });
+
+    // Record reliability outcome as 'honored'
+    await ReliabilityService.recordCommitmentOutcome(
+      result.request.hospital_id,
+      result.request.id,
+      result.request.case_id,
+      'honored',
+      actorId
+    );
+
+    return result;
+  }
 }
+

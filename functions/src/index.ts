@@ -21,51 +21,25 @@ import {
 } from './services/repositories';
 import {
   Case,
-  NeedProfile,
+  Hospital,
   CaseCategory,
   CaseSeverity,
 } from './services/types';
+
 import { nowTimestamp } from './services/timestampUtils';
 import { RequestLifecycleService, RequestLifecycleError } from './routing/requestLifecycleService';
 import { TimeoutService } from './routing/timeoutService';
 import { RerouteService } from './routing/rerouteService';
 import { MatchingAdapter } from './services/matchingAdapter';
+import { MassCasualtyService } from './services/massCasualtyService';
 import { AdminService } from './services/adminService';
 import { ExplanationService, ExplanationRequest } from './ai/explanationService';
 import { AuditLogger } from './audit/auditLogger';
 import { seedAllDemoData } from './data/seedData';
+import { generateNeedProfile } from './domain/needProfile';
 
-/**
- * Deterministic need profile lookup rule according to docs/spec.md §19
- */
-export function generateNeedProfile(category: CaseCategory): NeedProfile {
-  switch (category) {
-    case 'cardiac':
-      return {
-        specialists_needed: ['cardiologist'],
-        capability_flags: ['ecg', 'icu'],
-        blood_type_needed: null,
-      };
-    case 'trauma':
-      return {
-        specialists_needed: [],
-        capability_flags: ['trauma_team', 'icu'],
-        blood_type_needed: 'O-',
-      };
-    case 'obstetric':
-      return {
-        specialists_needed: ['obgyn'],
-        capability_flags: ['maternity'],
-        blood_type_needed: null,
-      };
-    case 'pediatric':
-      return {
-        specialists_needed: ['pediatrician'],
-        capability_flags: ['pediatric_emergency'],
-        blood_type_needed: null,
-      };
-  }
-}
+// Re-export canonical P1 need profile generator for consumers
+export { generateNeedProfile };
 
 /**
  * Health check endpoint for verifying backend deployment & connectivity
@@ -73,6 +47,7 @@ export function generateNeedProfile(category: CaseCategory): NeedProfile {
 export const healthCheck = functions.https.onRequest((req, res) => {
   res.status(200).json({
     status: 'ok',
+
     system: 'Raahi Coordination Engine',
     timestamp: new Date().toISOString(),
     phase: 'full_integration',
@@ -104,7 +79,27 @@ export const api = functions.https.onRequest(async (req, res) => {
       const body = req.body || {};
       const category: CaseCategory = body.category || 'cardiac';
       const severity: CaseSeverity = body.severity || 'red';
-      const needProfile = body.need_profile || generateNeedProfile(category);
+
+      // Strict location validation: no silent fallback to Surat coordinates!
+      const location = body.ambulance_location;
+      if (
+        !location ||
+        typeof location !== 'object' ||
+        typeof location.lat !== 'number' ||
+        typeof location.lng !== 'number' ||
+        !Number.isFinite(location.lat) ||
+        !Number.isFinite(location.lng)
+      ) {
+        res.status(400).json({
+          error: 'Valid ambulance_location with numeric lat and lng is required',
+          code: 'INVALID_LOCATION',
+        });
+        return;
+      }
+
+      // Canonical need profile derived deterministically from category + severity.
+      // Arbitrary client-supplied need_profile is NOT accepted as authoritative.
+      const needProfile = generateNeedProfile(category, severity);
       const caseId = body.id || `case_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
       const newCase: Case = {
@@ -118,11 +113,12 @@ export const api = functions.https.onRequest(async (req, res) => {
         treatment_administered: body.treatment_administered || '',
         patient_basic_info: body.patient_basic_info,
         incident_group_id: body.incident_group_id || null,
-        ambulance_location: body.ambulance_location || { lat: 21.1632, lng: 72.8398 },
+        ambulance_location: { lat: location.lat, lng: location.lng },
         status: 'routing',
         active_request_id: null,
         attempt_number: 0,
       };
+
 
       await CaseRepository.create(newCase);
 
@@ -309,7 +305,78 @@ export const api = functions.https.onRequest(async (req, res) => {
       return;
     }
 
+    // 12. POST /requests/:requestId/complete - Patient Handoff & Hold Consumption (docs/spec.md §14, §105)
+    if (method === 'POST' && pathParts[0] === 'requests' && pathParts[2] === 'complete') {
+      const requestId = pathParts[1];
+      const actorId = req.body?.actor_id || 'hospital_user';
+      const result = await RequestLifecycleService.completeHandoff(requestId, actorId);
+      res.status(200).json(result);
+      return;
+    }
+
+    // 13. PATCH /hospitals/:hospitalId/status - Operational Status Update & Mid-Transit Invalidation Check (spec.md §14, §106)
+    if (method === 'PATCH' && pathParts[0] === 'hospitals' && pathParts[2] === 'status') {
+      const hospitalId = pathParts[1];
+      const currentHosp = await HospitalRepository.get(hospitalId);
+      if (!currentHosp) {
+        res.status(404).json({ error: 'Hospital not found', code: 'NOT_FOUND' });
+        return;
+      }
+
+      const body = req.body || {};
+      const updatedFields: Partial<Hospital> = {
+        ...body,
+        last_updated_at: nowTimestamp(),
+      };
+      await HospitalRepository.update(hospitalId, updatedFields);
+      const updatedHospital = (await HospitalRepository.get(hospitalId))!;
+
+      // Check all active accepted cases committed to this hospital for capability invalidation
+      const allCases = await CaseRepository.listAll();
+      const activeAcceptedCases = allCases.filter(
+        (c) => c.status === 'accepted' && c.accepted_hospital_id === hospitalId
+      );
+
+      const invalidations = [];
+      for (const c of activeAcceptedCases) {
+        const invRes = await RerouteService.handleMidTransitInvalidation(c.id, updatedHospital);
+        if (invRes.invalidated) {
+          invalidations.push({
+            case_id: c.id,
+            reasons: invRes.validation?.reasons || [],
+            reroute_status: invRes.exhausted ? 'exhausted' : 'rerouted',
+            new_request_id: invRes.newRequest?.id || null,
+            new_hospital_id: invRes.newRequest?.hospital_id || null,
+          });
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        hospital: updatedHospital,
+        invalidations_triggered: invalidations.length,
+        invalidations,
+      });
+      return;
+    }
+
+    // 14. POST /mci/distribute - Mass Casualty Regional Joint Distribution (docs/spec.md §63-70)
+    if (method === 'POST' && pathParts[0] === 'mci' && pathParts[1] === 'distribute') {
+      const incidentGroupId = req.body?.incident_group_id;
+      if (!incidentGroupId) {
+        res.status(400).json({ error: 'incident_group_id is required', code: 'MISSING_FIELD' });
+        return;
+      }
+
+      const result = await MassCasualtyService.distributeIncident(incidentGroupId, {
+        actorId: req.body?.actor_id || 'system',
+      });
+      res.status(200).json(result);
+      return;
+    }
+
     res.status(404).json({ error: 'Endpoint not found', path: req.path });
+
   } catch (error: any) {
     if (error instanceof RequestLifecycleError) {
       res.status(400).json({

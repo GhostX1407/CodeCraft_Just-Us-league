@@ -72,18 +72,6 @@ export class ReliabilityService {
       const data = statsDoc.data()!;
       accepted = data.accepted_commitments || 0;
       honored = data.honored_commitments || 0;
-    } else if (hospital.reliability_score !== undefined && hospital.reliability_score !== null) {
-      // Fallback to pre-seeded hospital score if detailed logs not present
-      const score = hospital.reliability_score;
-      return {
-        hospital_id: hospital.id,
-        hospital_name: hospital.name,
-        has_history: true,
-        accepted_commitments: 10,
-        honored_commitments: Math.round(score * 10),
-        reliability_score: score,
-        reliability_display: `${Math.round(score * 100)}%`,
-      };
     }
 
     const computed = this.computeScore(accepted, honored);
@@ -100,7 +88,8 @@ export class ReliabilityService {
   }
 
   /**
-   * Records whether an accepted commitment was honored or breached
+   * Records whether an accepted commitment was honored or breached.
+   * Strictly IDEMPOTENT per requestId: Calling twice for the same request does NOT increment counters.
    */
   static async recordCommitmentOutcome(
     hospitalId: string,
@@ -124,17 +113,35 @@ export class ReliabilityService {
 
       let accepted = 0;
       let honored = 0;
+      let recordedRequests: Record<string, string> = {};
 
       if (relSnap.exists) {
         const data = relSnap.data()!;
         accepted = data.accepted_commitments || 0;
         honored = data.honored_commitments || 0;
+        recordedRequests = data.recorded_requests || {};
       }
 
+      // IDEMPOTENCY CHECK: If already recorded for this requestId, do not increment again
+      if (recordedRequests[requestId]) {
+        const existingComputed = this.computeScore(accepted, honored);
+        return {
+          hospital_id: hospital.id,
+          hospital_name: hospital.name,
+          has_history: existingComputed.hasHistory,
+          accepted_commitments: accepted,
+          honored_commitments: honored,
+          reliability_score: existingComputed.score,
+          reliability_display: existingComputed.display,
+        };
+      }
+
+      // Record new outcome
       accepted += 1;
       if (outcome === 'honored') {
         honored += 1;
       }
+      recordedRequests[requestId] = outcome;
 
       const computed = this.computeScore(accepted, honored);
 
@@ -146,6 +153,7 @@ export class ReliabilityService {
           accepted_commitments: accepted,
           honored_commitments: honored,
           reliability_score: computed.score,
+          recorded_requests: recordedRequests,
           updated_at: new Date().toISOString(),
         },
         { merge: true }
@@ -157,6 +165,7 @@ export class ReliabilityService {
           reliability_score: computed.score,
         });
       }
+
 
       // Record audit event
       const audit = AuditLogger.buildAuditLog({

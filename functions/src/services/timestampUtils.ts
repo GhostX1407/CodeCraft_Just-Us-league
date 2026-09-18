@@ -17,8 +17,10 @@ export const REQUEST_TIMEOUT_SECONDS = 30;
 /**
  * Converts a Timestamp, Date, or string into a Firestore Timestamp
  */
-export function toTimestamp(value: FirebaseFirestore.Timestamp | Date | string | undefined | null): FirebaseFirestore.Timestamp {
-  if (!value) {
+export function toTimestamp(
+  value: FirebaseFirestore.Timestamp | Date | string | number | undefined | null
+): FirebaseFirestore.Timestamp {
+  if (value === undefined || value === null) {
     return Timestamp.now();
   }
   if (value instanceof Timestamp) {
@@ -26,6 +28,9 @@ export function toTimestamp(value: FirebaseFirestore.Timestamp | Date | string |
   }
   if (typeof (value as any).toDate === 'function') {
     return value as any as FirebaseFirestore.Timestamp;
+  }
+  if (typeof value === 'number') {
+    return Timestamp.fromMillis(value);
   }
   if (typeof value === 'object' && value !== null) {
     const seconds = (value as any)._seconds ?? (value as any).seconds;
@@ -47,11 +52,16 @@ export function toTimestamp(value: FirebaseFirestore.Timestamp | Date | string |
 }
 
 /**
- * Converts a Timestamp, Date, or string into a JavaScript Date
+ * Converts a Timestamp, Date, string, or number into a JavaScript Date
  */
-export function toDate(value: FirebaseFirestore.Timestamp | Date | string | undefined | null): Date {
-  if (!value) {
+export function toDate(
+  value: FirebaseFirestore.Timestamp | Date | string | number | undefined | null
+): Date {
+  if (value === undefined || value === null) {
     return new Date();
+  }
+  if (typeof value === 'number') {
+    return new Date(value);
   }
   if (typeof (value as any).toDate === 'function') {
     return (value as FirebaseFirestore.Timestamp).toDate();
@@ -83,7 +93,7 @@ export function nowTimestamp(): FirebaseFirestore.Timestamp {
  * Calculates deadline Timestamp from a start timestamp and duration
  */
 export function calculateExpirationTimestamp(
-  sentAt: FirebaseFirestore.Timestamp | Date | string,
+  sentAt: FirebaseFirestore.Timestamp | Date | string | number,
   timeoutSeconds: number = REQUEST_TIMEOUT_SECONDS
 ): FirebaseFirestore.Timestamp {
   const startDate = toDate(sentAt);
@@ -95,8 +105,8 @@ export function calculateExpirationTimestamp(
  * Evaluates whether a request has expired given the authoritative server time
  */
 export function isRequestExpired(
-  expiresAt: FirebaseFirestore.Timestamp | Date | string,
-  serverTime: FirebaseFirestore.Timestamp | Date | string = nowTimestamp()
+  expiresAt: FirebaseFirestore.Timestamp | Date | string | number,
+  serverTime: FirebaseFirestore.Timestamp | Date | string | number = nowTimestamp()
 ): boolean {
   const expiry = toDate(expiresAt).getTime();
   const current = toDate(serverTime).getTime();
@@ -107,8 +117,8 @@ export function isRequestExpired(
  * Calculates elapsed minutes from an update timestamp to current time
  */
 export function calculateElapsedMinutes(
-  timestamp: FirebaseFirestore.Timestamp | Date | string,
-  now: FirebaseFirestore.Timestamp | Date | string = nowTimestamp()
+  timestamp: FirebaseFirestore.Timestamp | Date | string | number,
+  now: FirebaseFirestore.Timestamp | Date | string | number = nowTimestamp()
 ): number {
   const pastMs = toDate(timestamp).getTime();
   const nowMs = toDate(now).getTime();
@@ -118,22 +128,23 @@ export function calculateElapsedMinutes(
 
 /**
  * Classifies data freshness according to docs/spec.md §72 & docs/team-tech-stack-and-work-distribution.md §9:
- * - <= 10 min      -> fresh
- * - > 10–30 min   -> stale
- * - > 30 min      -> unknown
+ * - FRESH: age <= 10 minutes (factor = 1.0)
+ * - STALE: 10 < age <= 30 minutes (factor = 0.85)
+ * - UNKNOWN: age > 30 minutes (factor = 0.70)
  */
 export function classifyFreshness(
-  lastUpdatedAt: FirebaseFirestore.Timestamp | Date | string,
-  now: FirebaseFirestore.Timestamp | Date | string = nowTimestamp()
+  lastUpdatedAt: FirebaseFirestore.Timestamp | Date | string | number,
+  now: FirebaseFirestore.Timestamp | Date | string | number = nowTimestamp()
 ): FreshnessClassification {
-  const minutes = calculateElapsedMinutes(lastUpdatedAt, now);
-  if (minutes <= 10) {
+  const elapsedMinutes = calculateElapsedMinutes(lastUpdatedAt, now);
+
+  if (elapsedMinutes <= 10) {
     return 'fresh';
-  }
-  if (minutes <= 30) {
+  } else if (elapsedMinutes <= 30) {
     return 'stale';
+  } else {
+    return 'unknown';
   }
-  return 'unknown';
 }
 
 /**

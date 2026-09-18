@@ -79,13 +79,23 @@ export class CaseRepository {
     await this.getDocRef(caseId).update(updates as any);
   }
 
+  static async listAll(): Promise<Case[]> {
+    const snapshot = await this.getCollection().get();
+    return snapshot.docs.map((doc) => doc.data() as Case);
+  }
+
   static async listByIncident(incidentGroupId: string): Promise<Case[]> {
     const snapshot = await this.getCollection()
       .where('incident_group_id', '==', incidentGroupId)
       .get();
     return snapshot.docs.map((doc) => doc.data() as Case);
   }
+
+  static async listByIncidentGroup(incidentGroupId: string): Promise<Case[]> {
+    return this.listByIncident(incidentGroupId);
+  }
 }
+
 
 /**
  * Repository for /requests collection

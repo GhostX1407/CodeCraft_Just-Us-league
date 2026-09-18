@@ -1,80 +1,81 @@
 /**
  * Canonical Data Model & Contract Types for Raahi Backend Services
  * 
- * Conforms strictly to docs/data-model.md, docs/spec.md, and docs/api-contract.md.
- * Owned by Person 2 within the services layer.
+ * Reconciled in Person 2 Integration Pass.
+ * Re-exports and consumes canonical domain structures from functions/src/types/index.ts
+ * while declaring service-specific orchestration models (Request, ResourceHold, AuditLog, etc.).
+ * 
+ * Grounded in docs/data-model.md, docs/spec.md, and docs/api-contract.md.
  */
 
-export interface BloodStock {
-  'O-'?: number;
-  'O+'?: number;
-  'A+'?: number;
-  'A-'?: number;
-  'B+'?: number;
-  'B-'?: number;
-  'AB+'?: number;
-  'AB-'?: number;
-  [key: string]: number | undefined;
+import type {
+  Hospital as CanonicalHospital,
+  Case as CanonicalCase,
+  NeedProfile as CanonicalNeedProfile,
+  MatchScoreBreakdown as CanonicalMatchScoreBreakdown,
+  BloodStock as CanonicalBloodStock,
+  EmergencyCategory,
+  SeverityLevel,
+  Coordinates,
+  SpecialistType,
+  CapabilityFlag,
+  MatchResult,
+  EligibilityResult,
+  FreshnessInfo,
+  RankingOptions,
+  MassCasualtyResult,
+  MassCasualtyAssignment,
+  CommitmentValidationResult,
+  InvalidationReason,
+} from '../types';
+
+// ============================================================================
+// 1. Re-export Canonical Domain Types from P1
+// ============================================================================
+
+export type {
+  EmergencyCategory,
+  SeverityLevel,
+  Coordinates,
+  SpecialistType,
+  CapabilityFlag,
+  MatchResult,
+  EligibilityResult,
+  FreshnessInfo,
+  RankingOptions,
+  MassCasualtyResult,
+  MassCasualtyAssignment,
+  CommitmentValidationResult,
+  InvalidationReason,
+};
+
+export type BloodStock = CanonicalBloodStock;
+export type NeedProfile = CanonicalNeedProfile;
+export type Hospital = CanonicalHospital;
+
+// Aliases for emergency category and severity
+export type CaseCategory = EmergencyCategory;
+export type CaseSeverity = SeverityLevel;
+export type CaseRoutingStatus = 'routing' | 'accepted' | 'exhausted' | 'completed';
+
+// Extended MatchScoreBreakdown supporting both canonical freshness_factor and backwards-compatible staleness_factor
+export interface MatchScoreBreakdown extends CanonicalMatchScoreBreakdown {
+  staleness_factor?: number;
 }
 
-export interface Hospital {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  trauma_team_on_shift: boolean;
-  specialists_on_call: string[];
-  icu_beds_free: number;
-  ventilators_free: number;
-  blood_stock: BloodStock;
-  er_load_score: number; // 1 = low, 2 = mod-low, 3 = med, 4 = high, 5 = very high
-  accepts_scheme_patients: boolean;
-  last_updated_at: FirebaseFirestore.Timestamp | Date | string;
-  reliability_score: number; // 0.0 to 1.0
-}
-
-export interface NeedProfile {
-  specialists_needed: string[];
-  capability_flags: string[];
-  blood_type_needed: string | null;
-}
-
-export type CaseCategory = 'cardiac' | 'trauma' | 'obstetric' | 'pediatric';
-export type CaseSeverity = 'red' | 'yellow' | 'green';
-export type CaseRoutingStatus = 'routing' | 'accepted' | 'exhausted';
-
-export interface Case {
-  id: string;
-  created_at: FirebaseFirestore.Timestamp | Date | string;
-  category: CaseCategory;
-  severity: CaseSeverity;
-  need_profile: NeedProfile;
-  vitals_summary?: string;
-  onset_time?: string;
-  treatment_administered?: string;
-  patient_basic_info?: {
-    age?: number;
-    sex?: 'male' | 'female' | 'other';
-  };
-  incident_group_id: string | null;
-  ambulance_location: {
-    lat: number;
-    lng: number;
-  };
+// Service-layer Case model extending canonical Case with live routing state
+export interface Case extends Omit<CanonicalCase, 'created_at'> {
+  created_at?: any;
   status?: CaseRoutingStatus;
   active_request_id?: string | null;
   attempt_number?: number;
   accepted_hospital_id?: string | null;
 }
 
-export interface MatchScoreBreakdown {
-  capability_match_pct: number;
-  distance_km: number;
-  distance_factor: number;
-  load_factor: number;
-  staleness_factor: number;
-  final_score: number;
-}
+
+// ============================================================================
+// 2. Service-Specific Orchestration Structures (P2 Owned)
+// ============================================================================
 
 export interface HospitalCapabilitySnapshot {
   trauma_team_on_shift: boolean;
@@ -82,7 +83,7 @@ export interface HospitalCapabilitySnapshot {
   icu_beds_free: number;
   ventilators_free: number;
   er_load_score: number;
-  last_updated_at: FirebaseFirestore.Timestamp | Date | string;
+  last_updated_at: any;
 }
 
 export type RequestStatus = 'pending' | 'accepted' | 'rejected' | 'timed_out' | 'superseded';
@@ -92,9 +93,9 @@ export interface Request {
   case_id: string;
   hospital_id: string;
   status: RequestStatus;
-  sent_at: FirebaseFirestore.Timestamp | Date | string;
-  responded_at: FirebaseFirestore.Timestamp | Date | string | null;
-  expires_at: FirebaseFirestore.Timestamp | Date | string;
+  sent_at: any;
+  responded_at: any;
+  expires_at: any;
   attempt_number: number;
   match_score_breakdown: MatchScoreBreakdown;
   reason_shown_to_dispatcher: string;
@@ -114,7 +115,8 @@ export interface ResourceHold {
   request_id: string;
   case_id: string;
   hospital_id: string;
-  created_at: FirebaseFirestore.Timestamp | Date | string;
+  created_at: any;
+  consumed_at?: any;
   status: HoldStatus;
   resources: HoldResources;
 }
@@ -132,6 +134,10 @@ export type AuditEventType =
   | 'REROUTE_TRIGGERED'
   | 'RESOURCE_HELD'
   | 'RESOURCE_RELEASED'
+  | 'RESOURCE_CONSUMED'
+  | 'HANDOFF_COMPLETED'
+  | 'COMMITMENT_INVALIDATED'
+  | 'MCI_DISTRIBUTED'
   | 'HOSPITAL_STATUS_UPDATED';
 
 export interface AuditSnapshot {
@@ -147,7 +153,7 @@ export interface AuditLog {
   case_id: string;
   hospital_id: string | null;
   event_type: AuditEventType;
-  timestamp: FirebaseFirestore.Timestamp | Date | string;
+  timestamp: any;
   actor_type: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user';
   actor_id: string;
   snapshot_of_data_at_decision_time?: AuditSnapshot;
@@ -159,4 +165,5 @@ export interface CandidateScore {
   breakdown: MatchScoreBreakdown;
   reason: string;
   eligible: boolean;
+  rank?: number;
 }

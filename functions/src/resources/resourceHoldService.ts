@@ -169,4 +169,69 @@ export class ResourceHoldService {
       return this.releaseHoldInTransaction(tx, hospitalId, requestId, caseId, actorId, actorType);
     });
   }
+
+  /**
+   * Consumes an active resource hold upon successful patient handoff.
+   * CRITICAL: Does NOT release resources back to availability (patient is actively using them).
+   */
+  static async consumeHoldInTransaction(
+    transaction: any,
+    hospitalId: string,
+    requestId: string,
+    caseId: string,
+    actorId: string = 'hospital_user',
+    actorType: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'hospital_user'
+  ): Promise<ResourceHold | null> {
+    const holdRef = HoldRepository.getDocRef(hospitalId, requestId);
+    const holdSnap = await transaction.get(holdRef);
+
+    if (!holdSnap.exists) {
+      return null;
+    }
+
+    const hold = holdSnap.data() as ResourceHold;
+    if (hold.status === 'consumed') {
+      return hold; // Idempotent: already consumed
+    }
+
+    const now = nowTimestamp();
+    transaction.update(holdRef, {
+      status: 'consumed',
+      consumed_at: now,
+    });
+
+    hold.status = 'consumed';
+    hold.consumed_at = now;
+
+    // Record audit event
+    const auditRecord = AuditLogger.buildAuditLog({
+      caseId,
+      hospitalId,
+      requestId,
+      eventType: 'RESOURCE_CONSUMED',
+      actorType,
+      actorId,
+      metadata: { resources: hold.resources, consumed_at: now },
+    });
+    const auditRef = getDb().collection('audit_logs').doc(auditRecord.id);
+    transaction.set(auditRef, auditRecord);
+
+    return hold;
+  }
+
+  /**
+   * Standalone hold consume helper outside an existing transaction
+   */
+  static async consumeHold(
+    hospitalId: string,
+    requestId: string,
+    caseId: string,
+    actorId: string = 'hospital_user',
+    actorType: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'hospital_user'
+  ): Promise<ResourceHold | null> {
+    return getDb().runTransaction(async (tx) => {
+      return this.consumeHoldInTransaction(tx, hospitalId, requestId, caseId, actorId, actorType);
+    });
+  }
 }
+
