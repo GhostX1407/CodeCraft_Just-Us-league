@@ -84,3 +84,160 @@ export const SEED_HOSPITALS: Hospital[] = [
     contact_number: '+91 79 2630 0505',
   },
 ];
+
+export const SEED_CASES: Record<string, import('../types/domain').Case> = {
+  case_cardiac_01: {
+    id: 'case_cardiac_01',
+    created_at: NOW - 25 * 1000,
+    category: 'cardiac',
+    severity: 'red',
+    need_profile: {
+      specialists_needed: ['cardiologist'],
+      capability_flags: ['ecg', 'icu'],
+      blood_type_needed: null,
+    },
+    vitals_summary: 'Crushing chest tightness, ST elevation V1-V4, SpO2 91%, Pulse 118, BP 144/92',
+    onset_time: '25 minutes ago',
+    treatment_administered: 'Aspirin 300mg chewed, Nitroglycerin sublingual, 4L/min O2',
+    patient_basic_info: { age: 58, sex: 'male', name: 'R. K. Sharma' },
+    incident_group_id: null,
+    ambulance_location: { lat: 23.118, lng: 72.545 },
+  },
+  case_trauma_02: {
+    id: 'case_trauma_02',
+    created_at: NOW - 8 * 60 * 1000,
+    category: 'trauma',
+    severity: 'red',
+    need_profile: {
+      specialists_needed: ['trauma_surgeon', 'orthopedist'],
+      capability_flags: ['trauma_team', 'icu'],
+      blood_type_needed: 'O-',
+    },
+    vitals_summary: 'Open pelvic fracture, active haemorrhage, BP 84/50 (Hypotensive), Pulse 130',
+    onset_time: '20 minutes ago',
+    treatment_administered: 'Pelvic binder placed, 2x large-bore IVs, 1L normal saline running',
+    patient_basic_info: { age: 34, sex: 'female', name: 'Pooja V.' },
+    incident_group_id: null,
+    ambulance_location: { lat: 23.112, lng: 72.558 },
+  },
+};
+
+export const SEED_ROUTINGS: Record<string, import('../types/domain').CaseRouting> = {
+  case_cardiac_01: {
+    status: 'pending',
+    active_request_id: 'req_apex_01',
+    attempt_number: 1,
+    accepted_hospital_id: null,
+  },
+  case_trauma_02: {
+    status: 'accepted',
+    active_request_id: 'req_sterling_02',
+    attempt_number: 1,
+    accepted_hospital_id: 'hosp_sterling',
+  },
+};
+
+export const SEED_REQUESTS: Record<string, import('../types/domain').Request> = {
+  req_apex_01: {
+    id: 'req_apex_01',
+    case_id: 'case_cardiac_01',
+    hospital_id: 'hosp_apex',
+    status: 'pending',
+    sent_at: NOW - 15 * 1000,
+    expires_at: NOW + 45 * 1000, // 45s remaining on initial load
+    responded_at: null,
+    attempt_number: 1,
+    match_score_breakdown: {
+      capability_match_pct: 100,
+      distance_km: 2.1,
+      distance_factor: 0.94,
+      load_factor: 0.88,
+      staleness_factor: 1.0,
+      final_score: 95.2,
+    },
+    reason_shown_to_dispatcher: 'Rank 1 • Cath lab operational, interventional cardiologist on-call, 4 ICU beds ready',
+  },
+  req_sterling_02: {
+    id: 'req_sterling_02',
+    case_id: 'case_trauma_02',
+    hospital_id: 'hosp_sterling',
+    status: 'accepted',
+    sent_at: NOW - 7 * 60 * 1000,
+    expires_at: NOW - 6 * 60 * 1000,
+    responded_at: NOW - 6 * 60 * 1000 - 35 * 1000,
+    attempt_number: 1,
+    match_score_breakdown: {
+      capability_match_pct: 100,
+      distance_km: 1.8,
+      distance_factor: 0.96,
+      load_factor: 0.80,
+      staleness_factor: 1.0,
+      final_score: 93.8,
+    },
+    reason_shown_to_dispatcher: 'Rank 1 • Trauma team activated, 6 units O- blood reserved, OR-3 standing by',
+  },
+};
+
+export const SEED_AUDIT_LOGS: import('../types/domain').AuditEvent[] = [
+  {
+    id: 'audit_001',
+    request_id: null,
+    case_id: 'case_cardiac_01',
+    hospital_id: null,
+    event_type: 'CASE_CREATED',
+    timestamp: NOW - 25 * 1000,
+    actor_type: 'ambulance',
+    snapshot_of_data_at_decision_time: { category: 'cardiac', severity: 'red', age: 58 },
+  },
+  {
+    id: 'audit_002',
+    request_id: null,
+    case_id: 'case_cardiac_01',
+    hospital_id: null,
+    event_type: 'NEED_PROFILE_GENERATED',
+    timestamp: NOW - 24 * 1000,
+    actor_type: 'system',
+    snapshot_of_data_at_decision_time: { specialists: ['cardiologist'], capabilities: ['ecg', 'icu'] },
+  },
+  {
+    id: 'audit_003',
+    request_id: null,
+    case_id: 'case_cardiac_01',
+    hospital_id: 'hosp_apex',
+    event_type: 'MATCH_COMPUTED',
+    timestamp: NOW - 20 * 1000,
+    actor_type: 'system',
+    snapshot_of_data_at_decision_time: { rank1: 'Apex Trauma & Emergency Centre', score: 95.2 },
+  },
+  {
+    id: 'audit_004',
+    request_id: 'req_apex_01',
+    case_id: 'case_cardiac_01',
+    hospital_id: 'hosp_apex',
+    event_type: 'REQUEST_SENT',
+    timestamp: NOW - 15 * 1000,
+    actor_type: 'ambulance',
+    snapshot_of_data_at_decision_time: { countdown_sec: 45, timeout: '30s circuit' },
+  },
+  {
+    id: 'audit_005',
+    request_id: 'req_sterling_02',
+    case_id: 'case_trauma_02',
+    hospital_id: 'hosp_sterling',
+    event_type: 'REQUEST_ACCEPTED',
+    timestamp: NOW - 6 * 60 * 1000,
+    actor_type: 'hospital',
+    snapshot_of_data_at_decision_time: { status: 'committed', unit: 'OR-3 Reserved' },
+  },
+  {
+    id: 'audit_006',
+    request_id: null,
+    case_id: 'case_trauma_02',
+    hospital_id: 'hosp_sterling',
+    event_type: 'TELEMETRY_HEARTBEAT',
+    timestamp: NOW - 3 * 60 * 1000,
+    actor_type: 'system',
+    snapshot_of_data_at_decision_time: { eta_minutes: 4, speed_kmh: 58, route: 'Ring Road Corridor' },
+  },
+];
+

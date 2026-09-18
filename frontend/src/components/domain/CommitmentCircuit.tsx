@@ -31,13 +31,24 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
 
   useEffect(() => {
     if (status === 'rejected' || status === 'timed_out') {
+      setLockedSweep(false);
       setFracturing(true);
       const timer = setTimeout(() => setFracturing(false), 900);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        setFracturing(false);
+      };
     } else if (status === 'accepted') {
+      setFracturing(false);
       setLockedSweep(true);
       const timer = setTimeout(() => setLockedSweep(false), 700);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        setLockedSweep(false);
+      };
+    } else {
+      setFracturing(false);
+      setLockedSweep(false);
     }
   }, [status]);
 
@@ -72,6 +83,14 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
           </filter>
 
           <filter id="fractureGlow" x="-20%" y="-50%" width="140%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          <filter id="cautionGlow" x="-20%" y="-50%" width="140%" height="200%">
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
@@ -184,49 +203,59 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
         )}
 
         {/* 3. REJECTED / TIMED OUT: Mid-Span Fracture with Drifting Shards */}
-        {(status === 'rejected' || status === 'timed_out' || fracturing) && (
-          <g filter="url(#fractureGlow)">
+        {(status === 'rejected' || status === 'timed_out') && (
+          <g filter={status === 'timed_out' ? 'url(#cautionGlow)' : 'url(#fractureGlow)'}>
             {/* Left Shattered Segment drifting upward */}
-            <line
-              x1={x1}
-              y1={y}
-              x2={x1 + 150}
-              y2={y - 8}
-              stroke="var(--critical)"
-              strokeWidth="3"
-              strokeDasharray="5 3"
+            <g
               style={{
                 transform: fracturing ? 'translateY(-6px) rotate(-1.5deg)' : 'none',
-                opacity: fracturing ? 0.9 : 0.45,
-                transition: 'all 240ms ease-out',
+                transformOrigin: `${x1 + 75}px ${y}px`,
+                transition: 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)',
               }}
-            />
+            >
+              <line
+                x1={x1}
+                y1={y}
+                x2={x1 + 150}
+                y2={y - 8}
+                stroke={status === 'timed_out' ? 'var(--caution)' : 'var(--critical)'}
+                strokeWidth="3.5"
+                strokeDasharray="5 3"
+                strokeLinecap="round"
+                opacity={fracturing ? 0.95 : 0.55}
+              />
+            </g>
 
             {/* Broken Center Gap Core */}
             <circle
               cx={(x1 + x2) / 2}
               cy={y}
               r="4"
-              fill="var(--critical)"
-              opacity={fracturing ? 0.8 : 0.4}
+              fill={status === 'timed_out' ? 'var(--caution)' : 'var(--critical)'}
+              opacity={fracturing ? 0.85 : 0.45}
               className="animate-ping"
             />
 
             {/* Right Shattered Segment drifting downward */}
-            <line
-              x1={x1 + 185}
-              y1={y + 8}
-              x2={x2}
-              y2={y}
-              stroke="var(--critical)"
-              strokeWidth="3"
-              strokeDasharray="5 3"
+            <g
               style={{
                 transform: fracturing ? 'translateY(6px) rotate(1.5deg)' : 'none',
-                opacity: fracturing ? 0.9 : 0.45,
-                transition: 'all 240ms ease-out',
+                transformOrigin: `${x1 + 260}px ${y}px`,
+                transition: 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)',
               }}
-            />
+            >
+              <line
+                x1={x1 + 185}
+                y1={y + 8}
+                x2={x2}
+                y2={y}
+                stroke={status === 'timed_out' ? 'var(--caution)' : 'var(--critical)'}
+                strokeWidth="3.5"
+                strokeDasharray="5 3"
+                strokeLinecap="round"
+                opacity={fracturing ? 0.95 : 0.55}
+              />
+            </g>
           </g>
         )}
 
@@ -281,7 +310,9 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
             stroke={
               status === 'accepted'
                 ? 'var(--commit)'
-                : status === 'rejected' || status === 'timed_out'
+                : status === 'timed_out'
+                ? 'var(--caution)'
+                : status === 'rejected'
                 ? 'var(--critical)'
                 : 'var(--signal)'
             }
@@ -289,7 +320,9 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
             filter={
               status === 'accepted'
                 ? 'url(#commitGlow)'
-                : status === 'rejected' || status === 'timed_out'
+                : status === 'timed_out'
+                ? 'url(#cautionGlow)'
+                : status === 'rejected'
                 ? 'url(#fractureGlow)'
                 : 'url(#signalGlow)'
             }
@@ -302,7 +335,9 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
             fill={
               status === 'accepted'
                 ? 'var(--commit)'
-                : status === 'rejected' || status === 'timed_out'
+                : status === 'timed_out'
+                ? 'var(--caution)'
+                : status === 'rejected'
                 ? 'var(--critical)'
                 : '#FFFFFF'
             }

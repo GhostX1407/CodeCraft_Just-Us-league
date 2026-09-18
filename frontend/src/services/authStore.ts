@@ -49,7 +49,7 @@ export const DEMO_ACCOUNTS: Record<UserRole, DemoAccount> = {
       role: 'hospital',
       badge: 'ER Charge Officer',
       facilityOrUnit: 'Apex Heart & Trauma Center',
-      redirectPath: '/hospital/hosp_apex_01',
+      redirectPath: '/hospital/hosp_apex',
     },
   },
   admin: {
