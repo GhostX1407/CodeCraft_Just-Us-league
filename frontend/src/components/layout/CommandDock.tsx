@@ -58,8 +58,8 @@ export const CommandDock: React.FC = () => {
     { path: '/ambulance/mass-casualty', label: 'Mass-Casualty', icon: Users },
   ];
 
-  // Hidden on family track to keep pure reassurance posture
-  if (location.pathname.startsWith('/track/')) {
+  // Hidden on login page and family tracking to keep pure dedicated posture
+  if (location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/track/')) {
     return null;
   }
 

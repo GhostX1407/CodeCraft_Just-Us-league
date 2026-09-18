@@ -1,0 +1,281 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { DEMO_ACCOUNTS, UserRole } from '../../services/authStore';
+import {
+  Ambulance,
+  Building2,
+  Shield,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldAlert,
+  Check,
+} from 'lucide-react';
+import clsx from 'clsx';
+
+export const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const [selectedRole, setSelectedRole] = useState<'ambulance' | 'hospital' | 'admin'>('ambulance');
+  // Inputs start empty - not hardcoded
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [applied, setApplied] = useState(false);
+
+  const activeRoles: { key: 'ambulance' | 'hospital' | 'admin'; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { key: 'ambulance', label: 'Ambulance Dispatch', icon: Ambulance },
+    { key: 'hospital', label: 'Hospital Reception', icon: Building2 },
+    { key: 'admin', label: 'Regional Oversight', icon: Shield },
+  ];
+
+  // Role switch handler - changes role and clears inputs for clean entry
+  const handleSelectRole = (role: 'ambulance' | 'hospital' | 'admin') => {
+    setSelectedRole(role);
+    setError(null);
+    setUsername('');
+    setPassword('');
+    setApplied(false);
+  };
+
+  // Form submit handler
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim()) {
+      setError('Please enter your identity / email address.');
+      return;
+    }
+    if (!password.trim()) {
+      setError('Please enter your access password.');
+      return;
+    }
+
+    setLoading(true);
+    setTimeout(() => {
+      const res = login(username, password, selectedRole);
+      setLoading(false);
+      if (res.success && res.user) {
+        navigate(res.user.redirectPath);
+      } else {
+        setError(res.message || 'Authentication failed. Please verify your credentials.');
+      }
+    }, 300);
+  };
+
+  // Helper to click-to-apply credentials into inputs
+  const handleApplyCredentials = () => {
+    const creds = DEMO_ACCOUNTS[selectedRole];
+    setUsername(creds.username);
+    setPassword(creds.password);
+    setError(null);
+    setApplied(true);
+    setTimeout(() => setApplied(false), 2000);
+  };
+
+  const currentRoleMeta = activeRoles.find((r) => r.key === selectedRole) || activeRoles[0];
+  const ActiveIcon = currentRoleMeta.icon;
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col justify-between p-4 sm:p-6 font-sans select-none relative z-10">
+      {/* Top Header */}
+      <header className="w-full flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#E6F7F7] border border-[#149B9E]/30 flex items-center justify-center text-[#149B9E] font-mono font-black text-lg shadow-xs">
+            R
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-display font-black text-[#0F172A] tracking-tight">
+                Raahi
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-[#E6F7F7] text-[#0D7C7E] border border-[#149B9E]/30">
+                EMS Gateway
+              </span>
+            </div>
+            <p className="text-xs font-mono font-bold text-[#64748B]">
+              Capability-Match Emergency Medical Routing Platform
+            </p>
+          </div>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#0D9488] animate-pulse" />
+          <span className="text-xs font-mono font-bold text-[#0F766E] uppercase tracking-wider">
+            Network Operations Online
+          </span>
+        </div>
+      </header>
+
+      {/* Main Login Card Section */}
+      <main className="max-w-md mx-auto w-full my-auto py-6">
+        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 sm:p-8 shadow-sm">
+          {/* 3 Clean Role Segmented Switcher */}
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#F1F5F9] rounded-2xl border border-[#E2E8F0] mb-6">
+            {activeRoles.map((roleItem) => {
+              const Icon = roleItem.icon;
+              const isActive = selectedRole === roleItem.key;
+              return (
+                <button
+                  key={roleItem.key}
+                  type="button"
+                  onClick={() => handleSelectRole(roleItem.key)}
+                  className={clsx(
+                    'py-2 px-1 rounded-xl text-xs font-mono font-bold flex flex-col items-center justify-center gap-1 transition-all duration-150 select-none',
+                    isActive
+                      ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
+                  )}
+                >
+                  <Icon className={clsx('w-4 h-4', isActive ? 'text-[#149B9E]' : 'text-[#64748B]')} />
+                  <span className="text-[10px] truncate max-w-full">
+                    {roleItem.key === 'ambulance' ? 'Ambulance' : roleItem.key === 'hospital' ? 'Hospital' : 'Admin'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Form Header */}
+          <div className="flex items-center gap-3 pb-5 border-b border-[#E2E8F0] mb-5">
+            <div className="w-10 h-10 rounded-2xl bg-[#E6F7F7] border border-[#149B9E]/30 flex items-center justify-center text-[#149B9E]">
+              <ActiveIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-display font-black text-[#0F172A] tracking-tight">
+                {DEMO_ACCOUNTS[selectedRole].title} Sign In
+              </h1>
+              <p className="text-xs font-mono font-semibold text-[#64748B]">
+                {DEMO_ACCOUNTS[selectedRole].subtitle}
+              </p>
+            </div>
+          </div>
+
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-[#FFE4E6] border border-[#FECDD3] text-[#E11D48] text-xs font-bold flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            {/* Username */}
+            <div>
+              <label className="block text-xs font-mono font-bold uppercase text-[#475569] mb-1.5">
+                Username / Email
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#64748B]">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter authorized username or email"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-medium text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#149B9E]/30 focus:border-[#149B9E] transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs font-mono font-bold uppercase text-[#475569] mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#64748B]">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter access password"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-mono text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#149B9E]/30 focus:border-[#149B9E] transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#64748B] hover:text-[#0F172A] transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Sign In CTA */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 rounded-xl bg-[#149B9E] hover:bg-[#0D7C7E] active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all disabled:opacity-60"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <span>Signing in…</span>
+                  </span>
+                ) : (
+                  <>
+                    <span>Sign In to {DEMO_ACCOUNTS[selectedRole].title} Console</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+
+      {/* Bottom Area: Left-Corner Credentials & Right-Corner Compliance */}
+      <footer className="w-full flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 pt-4 border-t border-[#E2E8F0]">
+        {/* Full Left Side Corner at Bottom: Shows ONLY the Selected Role's Credential */}
+        <div className="text-left font-mono">
+          <div className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider mb-1">
+            {selectedRole === 'ambulance' ? 'Ambulance' : selectedRole === 'hospital' ? 'Hospital' : 'Admin'} Demo Credentials:
+          </div>
+          <div
+            onClick={handleApplyCredentials}
+            className="text-xs text-[#64748B] bg-white border border-[#E2E8F0] px-3.5 py-2 rounded-xl shadow-2xs cursor-pointer hover:border-[#149B9E]/50 hover:text-[#0F172A] transition-all flex items-center gap-2.5 group"
+            title="Click to auto-enter credentials"
+          >
+            <div>
+              <span className="font-semibold text-[#64748B]">Username:</span>{' '}
+              <span className="text-[#475569] font-medium select-all">{DEMO_ACCOUNTS[selectedRole].username}</span>
+            </div>
+            <span className="text-[#CBD5E1]">•</span>
+            <div>
+              <span className="font-semibold text-[#64748B]">Password:</span>{' '}
+              <span className="text-[#475569] font-medium select-all">{DEMO_ACCOUNTS[selectedRole].password}</span>
+            </div>
+            {applied ? (
+              <span className="flex items-center gap-1 text-[10px] font-bold text-[#0D9488] bg-[#E6F7F7] px-1.5 py-0.5 rounded-md ml-1">
+                <Check className="w-3 h-3" />
+                Applied
+              </span>
+            ) : (
+              <span className="text-[10px] text-[#94A3B8] group-hover:text-[#149B9E] transition-colors ml-1">
+                (click to enter)
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Full Right Side Corner at Bottom: DISHA & HIPAA Architecture */}
+        <div className="text-left sm:text-right text-xs font-mono text-[#64748B]">
+          <div className="font-semibold text-[#475569]">DISHA &amp; HIPAA Compliant Architecture</div>
+          <div className="mt-0.5 text-[11px] text-[#94A3B8]">Raahi Emergency Medical Network • 256-bit Encryption</div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useActiveRequests } from '../../hooks/useSubscriptions';
+import { useAuth } from '../../hooks/useAuth';
 import { isAudioUnlocked, unlockAudio, playAlertSound } from '../../utils/sound';
 import { stateStore } from '../../services/stateStore';
 import {
@@ -13,14 +14,15 @@ import {
   Volume2,
   VolumeX,
   RotateCcw,
-  Radio,
-  ExternalLink,
+  LogOut,
+  UserCheck,
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export const AppHeader: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { data: activeRequests } = useActiveRequests();
   const [audioActive, setAudioActive] = useState(isAudioUnlocked());
 
@@ -37,6 +39,11 @@ export const AppHeader: React.FC = () => {
     window.location.reload();
   };
 
+  const handleSignOut = () => {
+    logout();
+    navigate('/login');
+  };
+
   const navItems = [
     { path: '/ambulance', label: 'Ambulance Dispatch', icon: Ambulance },
     { path: '/hospital', label: 'Hospital Console', icon: Building2 },
@@ -45,8 +52,8 @@ export const AppHeader: React.FC = () => {
     { path: '/dev/components', label: 'Component Gallery', icon: Layers },
   ];
 
-  // Don't show top nav on family tracking page to maintain plain reassurance posture
-  if (location.pathname.startsWith('/track/')) {
+  // Don't show top nav on login page or family tracking page to maintain plain reassurance posture
+  if (location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/track/')) {
     return null;
   }
 
@@ -133,6 +140,36 @@ export const AppHeader: React.FC = () => {
               {audioActive ? 'Audio Live' : 'Enable Tone'}
             </span>
           </button>
+
+          {/* User Session Badge & Switch Role */}
+          {user ? (
+            <div className="flex items-center gap-2 pl-2 border-l border-[#E2E8F0]">
+              <div className="hidden sm:flex flex-col text-right">
+                <span className="text-xs font-bold text-[#0F172A] truncate max-w-[140px]">
+                  {user.name}
+                </span>
+                <span className="text-[10px] font-mono text-[#149B9E] font-bold uppercase">
+                  {user.badge}
+                </span>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="px-2.5 py-1.5 rounded-xl border border-[#E2E8F0] hover:border-[#149B9E]/50 bg-white hover:bg-[#F8FAFC] text-xs font-mono font-bold text-[#475569] hover:text-[#0F172A] flex items-center gap-1.5 transition-all shadow-xs"
+                title="Switch role / sign in as another user"
+              >
+                <LogOut className="w-3.5 h-3.5 text-[#149B9E]" />
+                <span className="hidden md:inline">Switch Role</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="px-3 py-1.5 rounded-xl bg-[#E6F7F7] border border-[#149B9E]/40 text-[#0D7C7E] hover:bg-[#149B9E] hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-xs"
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
 
           {/* Reset Demo State Button */}
           <button
