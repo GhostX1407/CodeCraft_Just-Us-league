@@ -42,22 +42,47 @@ export class ResourceHoldService {
     hospital: Hospital,
     requirements: HoldResources
   ): { available: boolean; reason?: string } {
-    if (requirements.icu > 0 && hospital.icu_beds_free < requirements.icu) {
-      return {
-        available: false,
-        reason: `Insufficient ICU beds: required ${requirements.icu}, available ${hospital.icu_beds_free}`,
-      };
+    // Invariant L: Operational status and numeric capacity must not contradict
+    if (requirements.icu > 0) {
+      if (hospital.operational_status?.icu === false) {
+        return {
+          available: false,
+          reason: 'ICU facility is marked operationally offline',
+        };
+      }
+      const icuFree = Math.max(0, hospital.icu_beds_free ?? 0);
+      if (icuFree < requirements.icu) {
+        return {
+          available: false,
+          reason: `Insufficient ICU beds: required ${requirements.icu}, available ${icuFree}`,
+        };
+      }
     }
 
-    if (requirements.ventilator > 0 && hospital.ventilators_free < requirements.ventilator) {
-      return {
-        available: false,
-        reason: `Insufficient ventilators: required ${requirements.ventilator}, available ${hospital.ventilators_free}`,
-      };
+    if (requirements.ventilator > 0) {
+      if (hospital.operational_status?.ventilator === false) {
+        return {
+          available: false,
+          reason: 'Ventilator equipment is marked operationally offline',
+        };
+      }
+      const ventFree = Math.max(0, hospital.ventilators_free ?? 0);
+      if (ventFree < requirements.ventilator) {
+        return {
+          available: false,
+          reason: `Insufficient ventilators: required ${requirements.ventilator}, available ${ventFree}`,
+        };
+      }
     }
 
-    for (const [bloodType, count] of Object.entries(requirements.blood)) {
-      const stock = hospital.blood_stock[bloodType] || 0;
+    for (const [bloodType, count] of Object.entries(requirements.blood || {})) {
+      if (count > 0 && (hospital.operational_status?.blood === false || (hospital.operational_status as any)?.blood_bank === false)) {
+        return {
+          available: false,
+          reason: 'Blood bank is marked operationally offline',
+        };
+      }
+      const stock = Math.max(0, (hospital.blood_stock && hospital.blood_stock[bloodType]) ?? 0);
       if (stock < count) {
         return {
           available: false,
@@ -70,29 +95,54 @@ export class ResourceHoldService {
   }
 
   /**
-   * Decrements countable resources on a hospital object
+   * Decrements countable resources on a hospital object.
+   * Invariant A: No resource count may become negative.
    */
   static applyDecrement(hospital: Hospital, requirements: HoldResources): void {
-    hospital.icu_beds_free -= requirements.icu;
-    hospital.ventilators_free -= requirements.ventilator;
+    hospital.icu_beds_free = Math.max(0, (hospital.icu_beds_free ?? 0) - (requirements.icu || 0));
+    hospital.ventilators_free = Math.max(0, (hospital.ventilators_free ?? 0) - (requirements.ventilator || 0));
 
-    for (const [bloodType, count] of Object.entries(requirements.blood)) {
-      const current = hospital.blood_stock[bloodType] || 0;
-      hospital.blood_stock[bloodType] = Math.max(0, current - count);
+    if (!hospital.blood_stock) {
+      hospital.blood_stock = {};
+    }
+    for (const [bloodType, count] of Object.entries(requirements.blood || {})) {
+      const current = hospital.blood_stock[bloodType] ?? 0;
+      hospital.blood_stock[bloodType] = Math.max(0, current - (count || 0));
     }
   }
 
   /**
-   * Restores/increments countable resources on a hospital object upon hold release
+   * Restores/increments countable resources on a hospital object upon hold release.
    */
   static applyRelease(hospital: Hospital, requirements: HoldResources): void {
-    hospital.icu_beds_free += requirements.icu;
-    hospital.ventilators_free += requirements.ventilator;
+    hospital.icu_beds_free = Math.max(0, (hospital.icu_beds_free ?? 0) + (requirements.icu || 0));
+    hospital.ventilators_free = Math.max(0, (hospital.ventilators_free ?? 0) + (requirements.ventilator || 0));
 
-    for (const [bloodType, count] of Object.entries(requirements.blood)) {
-      const current = hospital.blood_stock[bloodType] || 0;
-      hospital.blood_stock[bloodType] = current + count;
+    if (!hospital.blood_stock) {
+      hospital.blood_stock = {};
     }
+    for (const [bloodType, count] of Object.entries(requirements.blood || {})) {
+      const current = hospital.blood_stock[bloodType] ?? 0;
+      hospital.blood_stock[bloodType] = Math.max(0, current + (count || 0));
+    }
+  }
+
+  /**
+   * Computes effective capacity taking into account unpersisted virtual holds.
+   * Invariant G: Prevents double subtraction when holds are already persisted in Firestore.
+   */
+  static getEffectiveCapacity(
+    hospital: Hospital,
+    options?: { unpersistedHolds?: HoldResources }
+  ): { icu: number; ventilator: number; blood: Record<string, number> } {
+    const unpersisted = options?.unpersistedHolds;
+    const icu = Math.max(0, (hospital.icu_beds_free ?? 0) - (unpersisted?.icu || 0));
+    const ventilator = Math.max(0, (hospital.ventilators_free ?? 0) - (unpersisted?.ventilator || 0));
+    const blood: Record<string, number> = {};
+    for (const [bt, count] of Object.entries(hospital.blood_stock || {})) {
+      blood[bt] = Math.max(0, (count ?? 0) - ((unpersisted?.blood && unpersisted.blood[bt]) || 0));
+    }
+    return { icu, ventilator, blood };
   }
 
   /**

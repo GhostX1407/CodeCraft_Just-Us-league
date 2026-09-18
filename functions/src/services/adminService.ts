@@ -9,7 +9,7 @@
 
 import { AuditRepository, HospitalRepository } from './repositories';
 import { AuditLog, Hospital } from './types';
-import { classifyFreshness, FreshnessClassification } from './timestampUtils';
+import { classifyFreshness, FreshnessClassification, toISOString } from './timestampUtils';
 import { ReliabilityService, HospitalReliabilityStats } from '../reliability/reliabilityService';
 
 export interface HospitalNetworkStatusItem {
@@ -70,7 +70,10 @@ export class AdminService {
       }
 
       items.push({
-        hospital,
+        hospital: {
+          ...hospital,
+          last_updated_at: toISOString(hospital.last_updated_at),
+        },
         freshness,
         reliability,
       });
