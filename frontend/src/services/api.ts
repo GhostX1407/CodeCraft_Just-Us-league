@@ -46,6 +46,49 @@ export function deriveNeedProfile(category: CaseCategory): NeedProfile {
         capability_flags: ['pediatric_emergency'],
         blood_type_needed: null,
       };
+    case 'respiratory':
+      return {
+        specialists_needed: ['pulmonologist'],
+        capability_flags: ['ventilator', 'icu'],
+        blood_type_needed: null,
+      };
+    case 'stroke':
+      return {
+        specialists_needed: ['neurologist'],
+        capability_flags: ['ct_scanner', 'icu'],
+        blood_type_needed: null,
+      };
+    case 'burn':
+      return {
+        specialists_needed: ['plastic_surgeon'],
+        capability_flags: ['burn_unit', 'icu'],
+        blood_type_needed: null,
+      };
+    case 'hemorrhage':
+      return {
+        specialists_needed: ['general_surgeon'],
+        capability_flags: ['blood_bank', 'or'],
+        blood_type_needed: 'O-',
+      };
+    case 'poisoning':
+      return {
+        specialists_needed: ['toxicologist'],
+        capability_flags: ['dialysis', 'icu'],
+        blood_type_needed: null,
+      };
+    case 'sepsis':
+      return {
+        specialists_needed: ['intensivist'],
+        capability_flags: ['icu'],
+        blood_type_needed: null,
+      };
+    case 'other':
+    default:
+      return {
+        specialists_needed: [],
+        capability_flags: [],
+        blood_type_needed: null,
+      };
   }
 }
 

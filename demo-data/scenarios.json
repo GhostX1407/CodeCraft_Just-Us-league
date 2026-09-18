@@ -1,0 +1,171 @@
+[
+  {
+    "id": "scenario_01_successful_cardiac",
+    "name": "Scenario 1: Acute STEMI Clean Match & Acceptance",
+    "case_id": "case_demo_cardiac_01",
+    "category": "cardiac",
+    "severity": "red",
+    "ambulance_id": "AMB-01",
+    "expected_top_hospital": "hospital_001",
+    "expected_flow": [
+      { "step": 1, "action": "Generate Need Profile", "result": "cardiologist, ecg, cath_lab, icu" },
+      { "step": 2, "action": "Rank Hospitals", "result": "Apex Trauma (Score 95.8, Rank 1)" },
+      { "step": 3, "action": "Send Request", "hospital_id": "hospital_001", "result": "Countdown 60s started" },
+      { "step": 4, "action": "Accept Commitment", "hospital_id": "hospital_001", "result": "Accepted, ICU bed held" }
+    ],
+    "purpose": "Demonstrates high-fidelity single-patient matching, capability ranking, and active commitment protocol."
+  },
+  {
+    "id": "scenario_02_rejection_reroute",
+    "name": "Scenario 2: Hospital Rejection & Immediate Reroute",
+    "case_id": "case_demo_reroute_reject",
+    "category": "trauma",
+    "severity": "red",
+    "ambulance_id": "AMB-04",
+    "expected_flow": [
+      { "step": 1, "action": "Send Request", "hospital_id": "hospital_005", "result": "Request sent" },
+      { "step": 2, "action": "Hospital Rejection", "hospital_id": "hospital_005", "result": "Rejected: 'Zero units O- blood in stock'" },
+      { "step": 3, "action": "Automatic Reroute", "result": "Reroute triggered to Rank 2 candidate" },
+      { "step": 4, "action": "Send Request", "hospital_id": "hospital_001", "result": "Request sent to Apex Trauma" },
+      { "step": 5, "action": "Accept Commitment", "hospital_id": "hospital_001", "result": "Accepted, trauma team activated" }
+    ],
+    "purpose": "Exercises automatic reroute upon hospital rejection, preserving paramedic attention."
+  },
+  {
+    "id": "scenario_03_timeout_reroute",
+    "name": "Scenario 3: Hospital Timeout & Automatic Candidate Progression",
+    "case_id": "case_demo_reroute_timeout",
+    "category": "cardiac",
+    "severity": "red",
+    "ambulance_id": "AMB-03",
+    "expected_flow": [
+      { "step": 1, "action": "Send Request", "hospital_id": "hospital_010", "result": "Countdown 60s starts" },
+      { "step": 2, "action": "Timer Expiry", "hospital_id": "hospital_010", "result": "Timed out without reception action" },
+      { "step": 3, "action": "Automatic Reroute", "result": "Advances automatically to next eligible candidate" },
+      { "step": 4, "action": "Send Request", "hospital_id": "hospital_002", "result": "Request sent to Metro Heart" },
+      { "step": 5, "action": "Accept Commitment", "hospital_id": "hospital_002", "result": "Accepted, ICU held" }
+    ],
+    "purpose": "Proves that unresponsive emergency departments do not block patient care."
+  },
+  {
+    "id": "scenario_04_critical_icu_gate",
+    "name": "Scenario 4: Critical ICU Hard Capability Gating",
+    "case_id": "case_demo_trauma_01",
+    "category": "trauma",
+    "severity": "red",
+    "ambulance_id": "AMB-02",
+    "expected_flow": [
+      { "step": 1, "action": "Evaluate Hard Eligibility", "result": "hospital_006 (0 ICU beds) marked ineligible" },
+      { "step": 2, "action": "Filter Candidates", "result": "Only hospitals with free ICU beds > active holds scored" },
+      { "step": 3, "action": "Match Top Candidate", "hospital_id": "hospital_001", "result": "Apex Trauma selected" }
+    ],
+    "purpose": "Verifies that facilities without free physical beds are strictly disqualified before ranking."
+  },
+  {
+    "id": "scenario_05_ventilator_gate",
+    "name": "Scenario 5: Ventilator Constraint & Operational Status",
+    "case_id": "case_demo_respiratory_01",
+    "category": "respiratory",
+    "severity": "red",
+    "ambulance_id": "AMB-01",
+    "expected_flow": [
+      { "step": 1, "action": "Evaluate Ventilator Requirement", "result": "hospital_004 has 0 ventilators and operational_status.ventilator=false" },
+      { "step": 2, "action": "Disqualify Inadequate Facilities", "result": "CityCare General strictly disqualified" },
+      { "step": 3, "action": "Rank Compliant Facilities", "result": "Metro Heart (4 ventilators) ranked top" }
+    ],
+    "purpose": "Tests countable ventilator resource gating and explicit operational status invalidation."
+  },
+  {
+    "id": "scenario_06_blood_dependence",
+    "name": "Scenario 6: Rare Blood Stock (O- Universal Donor) Gating",
+    "case_id": "case_demo_hemorrhage_01",
+    "category": "hemorrhage",
+    "severity": "red",
+    "ambulance_id": "AMB-04",
+    "expected_flow": [
+      { "step": 1, "action": "Check O- Inventory", "result": "hospital_005 (0 units O-) marked ineligible" },
+      { "step": 2, "action": "Rank Stocked Facilities", "result": "hospital_001 (6 units O-) ranked top" }
+    ],
+    "purpose": "Ensures hemorrhagic patients are never routed to hospitals lacking critical uncrossmatched blood."
+  },
+  {
+    "id": "scenario_07_stale_telemetry_penalized",
+    "name": "Scenario 7: Freshness De-weighting of Stale Hospital Updates",
+    "case_id": "case_demo_cardiac_02",
+    "category": "cardiac",
+    "severity": "yellow",
+    "ambulance_id": "AMB-03",
+    "expected_flow": [
+      { "step": 1, "action": "Compute Freshness Factors", "result": "hospital_003 (updated 48m ago) classified as unknown (factor 0.70)" },
+      { "step": 2, "action": "Score Adjustments", "result": "Sterling Multispecialty penalized in final score ranking" },
+      { "step": 3, "action": "Rank Fresh Hospitals First", "result": "Fresh verified hospitals ranked higher" }
+    ],
+    "purpose": "Demonstrates temporal confidence scoring and de-weighting of unconfirmed hospital capacity."
+  },
+  {
+    "id": "scenario_08_mid_transit_invalidation",
+    "name": "Scenario 8: Mid-Transit Capability Invalidation & Re-routing",
+    "case_id": "case_demo_mid_transit_invalid",
+    "category": "trauma",
+    "severity": "red",
+    "ambulance_id": "AMB-02",
+    "expected_flow": [
+      { "step": 1, "action": "Commitment Accepted", "hospital_id": "hospital_010", "result": "Ambulance en route" },
+      { "step": 2, "action": "Mid-Transit State Change", "hospital_id": "hospital_010", "result": "Trauma surgeon goes off shift" },
+      { "step": 3, "action": "Invalidation Engine Detection", "result": "isCommitmentStillValid returns false (missing_specialist)" },
+      { "step": 4, "action": "Hold Release & Supersede", "result": "Previous hold released, request superseded" },
+      { "step": 5, "action": "Dynamic Reroute", "hospital_id": "hospital_001", "result": "Rerouted to Apex Trauma and accepted" }
+    ],
+    "purpose": "Verifies deterministic mid-transit commitment invalidation and dynamic re-routing."
+  },
+  {
+    "id": "scenario_09_mci_expressway_distribution",
+    "name": "Scenario 9: Mass Casualty Incident Joint Distribution (Expressway Pileup)",
+    "incident_group_id": "incident_expressway_mci_01",
+    "ambulance_id": "AMB-06",
+    "expected_flow": [
+      { "step": 1, "action": "Group Cases by Incident", "result": "4 patients (2 Red, 2 Yellow)" },
+      { "step": 2, "action": "Joint Optimization", "result": "Red cases prioritized, concentration penalties applied" },
+      { "step": 3, "action": "Distribute Load", "result": "Patients distributed across distinct facilities (hospital_001, 002, 003, 007)" }
+    ],
+    "purpose": "Demonstrates multi-patient joint assignment preventing single-hospital emergency room collapse."
+  },
+  {
+    "id": "scenario_10_mci_industrial_burn_triage",
+    "name": "Scenario 10: Mass Casualty Incident Chemical Plant Explosion",
+    "incident_group_id": "incident_industrial_mci_02",
+    "ambulance_id": "AMB-06",
+    "expected_flow": [
+      { "step": 1, "action": "Triage Diverse Injuries", "result": "Severe burn, toxic inhalation, crush trauma, and walking wounded" },
+      { "step": 2, "action": "Clinical Matching", "result": "Burn victim routed to trauma/burn surgical center, inhalation to ventilator facility" }
+    ],
+    "purpose": "Demonstrates capability-directed triage matching during multi-trauma disaster events."
+  },
+  {
+    "id": "scenario_11_low_resource_network",
+    "name": "Scenario 11: Regional Overload & Constrained Network",
+    "case_id": "case_demo_low_resource_net",
+    "category": "respiratory",
+    "severity": "red",
+    "ambulance_id": "AMB-01",
+    "expected_flow": [
+      { "step": 1, "action": "Assess Regional Saturation", "result": "High ER loads across multiple facilities" },
+      { "step": 2, "action": "Identify Sole Compliant Node", "result": "Finds resilient facility with active ventilator buffer" }
+    ],
+    "purpose": "Exercises system resilience and graceful degradation under extreme regional health burden."
+  },
+  {
+    "id": "scenario_12_non_cardiac_stroke_neuro",
+    "name": "Scenario 12: Hyperacute Ischemic Stroke (Time-Critical Neuro)",
+    "case_id": "case_demo_stroke_01",
+    "category": "stroke",
+    "severity": "red",
+    "ambulance_id": "AMB-01",
+    "expected_flow": [
+      { "step": 1, "action": "Derive Need Profile", "result": "neurosurgeon, ct_scan, icu" },
+      { "step": 2, "action": "Match Comprehensive Stroke Center", "result": "Apex Trauma (active CT scan + neurosurgeon)" },
+      { "step": 3, "action": "Direct Pre-Alert", "result": "CT scanner reserved before ambulance arrival" }
+    ],
+    "purpose": "Shows capability match flexibility across neurological, surgical, and multi-disciplinary categories."
+  }
+]

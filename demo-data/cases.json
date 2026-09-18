@@ -1,0 +1,728 @@
+[
+  {
+    "id": "case_demo_cardiac_01",
+    "created_at": 1773999400000,
+    "category": "cardiac",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["cardiologist"],
+      "capability_flags": ["ecg", "cath_lab", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Acute anterior wall STEMI, crushing chest pain, ST elevation V1-V4, SpO2 91%, Pulse 118, BP 144/92",
+    "onset_time": "25 minutes ago",
+    "treatment_administered": "Aspirin 300mg chewed, Nitroglycerin sublingual, high-flow oxygen 4L/min",
+    "patient_basic_info": { "age": 58, "sex": "male", "name": "Patient C-101" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.118, "lng": 72.545 },
+    "status": "routing",
+    "active_request_id": "req_demo_001",
+    "attempt_number": 1
+  },
+  {
+    "id": "case_demo_trauma_01",
+    "created_at": 1773999520000,
+    "category": "trauma",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["orthopedist", "general_surgeon"],
+      "capability_flags": ["trauma_team", "icu"],
+      "blood_type_needed": "O-"
+    },
+    "vitals_summary": "High-velocity road collision, open unstable pelvic fracture, active haemorrhage, BP 82/50, pulse 135",
+    "onset_time": "18 minutes ago",
+    "treatment_administered": "Pelvic binder placed, 2x large-bore IVs, 1L normal saline running under pressure",
+    "patient_basic_info": { "age": 34, "sex": "female", "name": "Patient T-102" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.112, "lng": 72.558 },
+    "status": "accepted",
+    "active_request_id": "req_demo_002",
+    "attempt_number": 1,
+    "accepted_hospital_id": "hospital_001"
+  },
+  {
+    "id": "case_demo_obstetric_01",
+    "created_at": 1773999700000,
+    "category": "obstetric",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["obgyn"],
+      "capability_flags": ["maternity", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Severe pre-eclampsia with visual scotoma, BP 192/116, fetal bradycardia 95 bpm",
+    "onset_time": "35 minutes ago",
+    "treatment_administered": "Magnesium sulfate IV loading dose given, left lateral tilt position, O2 via mask",
+    "patient_basic_info": { "age": 28, "sex": "female", "name": "Patient O-103" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.168, "lng": 72.522 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_pediatric_01",
+    "created_at": 1773999600000,
+    "category": "pediatric",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["pediatrician"],
+      "capability_flags": ["pediatric_emergency", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Pediatric prolonged convulsive status epilepticus >15 min, SpO2 88%, cyanotic",
+    "onset_time": "20 minutes ago",
+    "treatment_administered": "Midazolam buccal 10mg given, bag-valve mask ventilation, IV access secured",
+    "patient_basic_info": { "age": 5, "sex": "male", "name": "Patient P-104" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.155, "lng": 72.548 },
+    "status": "accepted",
+    "active_request_id": "req_demo_004",
+    "attempt_number": 1,
+    "accepted_hospital_id": "hospital_007"
+  },
+  {
+    "id": "case_demo_respiratory_01",
+    "created_at": 1773999650000,
+    "category": "respiratory",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["ventilator", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Acute severe respiratory failure, bilateral pneumonia with ARDS, SpO2 78% on ambient air",
+    "onset_time": "40 minutes ago",
+    "treatment_administered": "CPAP trial failed, endotracheal intubation performed in-transit, mechanical bag ventilation",
+    "patient_basic_info": { "age": 64, "sex": "male", "name": "Patient R-105" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.125, "lng": 72.535 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_stroke_01",
+    "created_at": 1773999750000,
+    "category": "stroke",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["neurosurgeon"],
+      "capability_flags": ["ct_scan", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Acute right-sided dense hemiplegia, expressive aphasia, onset 45 min ago (within tPA window)",
+    "onset_time": "45 minutes ago",
+    "treatment_administered": "Airway protected, head elevated 30 degrees, blood glucose confirmed 110 mg/dL",
+    "patient_basic_info": { "age": 71, "sex": "female", "name": "Patient S-106" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.13, "lng": 72.542 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_burn_01",
+    "created_at": 1773999450000,
+    "category": "burn",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["icu", "ventilator"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Flash industrial fire, 42% TBSA full-thickness burns including face, neck, and upper chest, suspected inhalation injury",
+    "onset_time": "30 minutes ago",
+    "treatment_administered": "Parkland formula fluid resuscitation initiated, sterile dry burn dressings, prophylactic intubation",
+    "patient_basic_info": { "age": 41, "sex": "male", "name": "Patient B-107" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.148, "lng": 72.552 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_hemorrhage_01",
+    "created_at": 1773999550000,
+    "category": "hemorrhage",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["icu"],
+      "blood_type_needed": "O-"
+    },
+    "vitals_summary": "Massive upper gastrointestinal bleeding, hematemesis 800ml, profound hemorrhagic shock, BP 76/42, pulse 142",
+    "onset_time": "25 minutes ago",
+    "treatment_administered": "2x 14G IV lines, tranexamic acid 1g IV, rapid crystalloid push, blood warming setup",
+    "patient_basic_info": { "age": 52, "sex": "male", "name": "Patient H-108" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.12, "lng": 72.538 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_poisoning_01",
+    "created_at": 1773999350000,
+    "category": "poisoning",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["anesthetist"],
+      "capability_flags": ["icu", "ventilator"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Agricultural organophosphate ingestion, miosis, profuse bronchorrhea, bradycardia 38 bpm, fasciculations",
+    "onset_time": "50 minutes ago",
+    "treatment_administered": "Atropine 2mg IV repeated x3, suctioning, 100% O2 via non-rebreather",
+    "patient_basic_info": { "age": 39, "sex": "male", "name": "Patient X-109" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.172, "lng": 72.53 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_sepsis_01",
+    "created_at": 1773999300000,
+    "category": "sepsis",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_physician"],
+      "capability_flags": ["icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Urosepsis progressing to refractory septic shock, temp 39.8C, BP 78/46 despite 2L fluid, lactate 5.2",
+    "onset_time": "2 hours ago",
+    "treatment_administered": "Broad spectrum antibiotics initiated, peripheral noradrenaline infusion titrated",
+    "patient_basic_info": { "age": 68, "sex": "female", "name": "Patient S-110" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.135, "lng": 72.565 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_cardiac_02",
+    "created_at": 1773999800000,
+    "category": "cardiac",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["cardiologist"],
+      "capability_flags": ["ecg"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Recurrent anginal chest discomfort at rest, dynamic T-wave inversions V4-V6, troponin elevated, BP 138/84",
+    "onset_time": "1 hour ago",
+    "treatment_administered": "Sublingual nitrates, oral beta-blocker administered, continuous telemetry",
+    "patient_basic_info": { "age": 62, "sex": "male", "name": "Patient C-111" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.128, "lng": 72.548 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_trauma_02",
+    "created_at": 1773999820000,
+    "category": "trauma",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["orthopedist"],
+      "capability_flags": ["trauma_team"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Motorcycle slip-and-fall, Gustilo grade II open tibial fracture, distal pulse palpable, BP 122/78",
+    "onset_time": "30 minutes ago",
+    "treatment_administered": "Wound irrigated with saline and dressed, Thomas splint applied, IV analgesia given",
+    "patient_basic_info": { "age": 26, "sex": "male", "name": "Patient T-112" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.14, "lng": 72.55 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_obstetric_02",
+    "created_at": 1773999850000,
+    "category": "obstetric",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["obgyn"],
+      "capability_flags": ["maternity"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Primigravida at 39 weeks with active labor, fetal heart rate 140 bpm, non-reassuring descent progression",
+    "onset_time": "3 hours ago",
+    "treatment_administered": "IV hydration, continuous maternal-fetal vitals monitoring",
+    "patient_basic_info": { "age": 24, "sex": "female", "name": "Patient O-113" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.102, "lng": 72.538 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_pediatric_02",
+    "created_at": 1773999870000,
+    "category": "pediatric",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["pediatrician"],
+      "capability_flags": ["pediatric_emergency"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Acute status asthmaticus in 7yo, intercostal retractions, expiratory wheeze, SpO2 93% on salbutamol neb",
+    "onset_time": "45 minutes ago",
+    "treatment_administered": "Continuous nebulized salbutamol + ipratropium, oral prednisolone given, humidified O2",
+    "patient_basic_info": { "age": 7, "sex": "female", "name": "Patient P-114" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.16, "lng": 72.544 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_respiratory_02",
+    "created_at": 1773999890000,
+    "category": "respiratory",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["general_physician"],
+      "capability_flags": ["ventilator"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Acute exacerbation of COPD, respiratory rate 28, SpO2 87% rising to 91% on venturi mask, drowsy",
+    "onset_time": "2 hours ago",
+    "treatment_administered": "Non-invasive BiPAP ventilation initiated in-transit, bronchodilators, hydrocortisone IV",
+    "patient_basic_info": { "age": 69, "sex": "male", "name": "Patient R-115" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.115, "lng": 72.532 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_stroke_02",
+    "created_at": 1773999900000,
+    "category": "stroke",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["neurosurgeon"],
+      "capability_flags": ["ct_scan"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Transient cerebral ischemic episode with left facial droop and pronator drift, improving, BP 152/88",
+    "onset_time": "1 hour ago",
+    "treatment_administered": "Blood pressure monitoring, stroke pathway pre-alert activated, IV line placed",
+    "patient_basic_info": { "age": 67, "sex": "male", "name": "Patient S-116" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.122, "lng": 72.54 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_burn_02",
+    "created_at": 1773999910000,
+    "category": "burn",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": [],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Domestic boiling water scald, 14% TBSA superficial partial thickness to arms and thighs, severe pain",
+    "onset_time": "40 minutes ago",
+    "treatment_administered": "Cooling with sterile saline, silver sulfadiazine dressing, IV paracetamol",
+    "patient_basic_info": { "age": 21, "sex": "female", "name": "Patient B-117" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.134, "lng": 72.556 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_hemorrhage_02",
+    "created_at": 1773999920000,
+    "category": "hemorrhage",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": [],
+      "blood_type_needed": "A+"
+    },
+    "vitals_summary": "Day 6 post-operative wound hematoma with continuous oozing, BP 114/72, mild tachycardia",
+    "onset_time": "1 hour ago",
+    "treatment_administered": "Pressure compression bandage applied, IV fluid bolus 500ml",
+    "patient_basic_info": { "age": 44, "sex": "female", "name": "Patient H-118" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.11, "lng": 72.56 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_poisoning_02",
+    "created_at": 1773999930000,
+    "category": "poisoning",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["general_physician"],
+      "capability_flags": [],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Accidental high-dose ingestion of antihypertensive tablets (amlodipine 50mg), asymptomatic, BP 106/68",
+    "onset_time": "90 minutes ago",
+    "treatment_administered": "Activated charcoal oral suspension 50g given within 1 hour of ingestion, vitals logged",
+    "patient_basic_info": { "age": 31, "sex": "male", "name": "Patient X-119" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.15, "lng": 72.525 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_cardiac_03",
+    "created_at": 1773999940000,
+    "category": "cardiac",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["cardiologist"],
+      "capability_flags": ["ecg"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Paroxysmal supraventricular tachycardia, narrow complex rate 192 bpm, palpitation, BP 118/76",
+    "onset_time": "25 minutes ago",
+    "treatment_administered": "Modified Valsalva maneuver performed without conversion, adenosine 6mg IV push administered",
+    "patient_basic_info": { "age": 29, "sex": "female", "name": "Patient C-120" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.126, "lng": 72.544 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_trauma_03",
+    "created_at": 1773999950000,
+    "category": "trauma",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["ct_scan"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Cyclist hit by rickshaw, right upper quadrant abdominal tenderness, FAST positive for trace fluid in Morison's pouch",
+    "onset_time": "35 minutes ago",
+    "treatment_administered": "C-spine immobilized, IV access established, abdominal binder, vitals serial logging",
+    "patient_basic_info": { "age": 37, "sex": "male", "name": "Patient T-121" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.138, "lng": 72.552 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_pediatric_03",
+    "created_at": 1773999960000,
+    "category": "pediatric",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["pediatrician"],
+      "capability_flags": ["pediatric_emergency"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Toddler 2yo with acute viral croup, barking cough, mild inspiratory stridor at rest, SpO2 96%",
+    "onset_time": "2 hours ago",
+    "treatment_administered": "Dexamethasone 0.15mg/kg oral, cool humidified oxygen, calm parental presence",
+    "patient_basic_info": { "age": 2, "sex": "female", "name": "Patient P-122" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.162, "lng": 72.542 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_cardiac_04",
+    "created_at": 1773999970000,
+    "category": "cardiac",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["cardiologist"],
+      "capability_flags": ["ecg", "cath_lab", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Complete 3rd degree atrioventricular heart block, ventricular escape rate 28 bpm, recurrent syncope, BP 84/48",
+    "onset_time": "20 minutes ago",
+    "treatment_administered": "Transcutaneous pacing pads attached, pacing captured at 60 bpm, IV atropine 1mg given",
+    "patient_basic_info": { "age": 75, "sex": "male", "name": "Patient C-123" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.129, "lng": 72.538 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_demo_reroute_reject",
+    "created_at": 1773999100000,
+    "category": "trauma",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["trauma_team", "icu"],
+      "blood_type_needed": "O-"
+    },
+    "vitals_summary": "Multiple blunt injuries, flail chest, active hemorrhage, BP 86/54, pulse 128",
+    "onset_time": "40 minutes ago",
+    "treatment_administered": "Chest seal, pelvic wrap, hypertonic saline bolus",
+    "patient_basic_info": { "age": 38, "sex": "male", "name": "Patient R-124" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.125, "lng": 72.548 },
+    "status": "accepted",
+    "active_request_id": "req_demo_reroute_02",
+    "attempt_number": 2,
+    "accepted_hospital_id": "hospital_001"
+  },
+  {
+    "id": "case_demo_reroute_timeout",
+    "created_at": 1773999200000,
+    "category": "cardiac",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["cardiologist"],
+      "capability_flags": ["ecg", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Inferior wall MI with cardiogenic shock, BP 78/50, pulmonary crackles",
+    "onset_time": "30 minutes ago",
+    "treatment_administered": "Dopamine infusion started, O2 via mask, aspirin given",
+    "patient_basic_info": { "age": 59, "sex": "female", "name": "Patient T-125" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.132, "lng": 72.554 },
+    "status": "accepted",
+    "active_request_id": "req_demo_timeout_02",
+    "attempt_number": 2,
+    "accepted_hospital_id": "hospital_002"
+  },
+  {
+    "id": "case_demo_mid_transit_invalid",
+    "created_at": 1773999050000,
+    "category": "trauma",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon", "orthopedist"],
+      "capability_flags": ["trauma_team", "icu"],
+      "blood_type_needed": "O-"
+    },
+    "vitals_summary": "Compound fracture with hemorrhagic shock, accepted at Hosp 10 then facility failure mid-transit",
+    "onset_time": "45 minutes ago",
+    "treatment_administered": "Tourniquet, blood volume expansion, immobilization",
+    "patient_basic_info": { "age": 42, "sex": "male", "name": "Patient I-126" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.142, "lng": 72.558 },
+    "status": "accepted",
+    "active_request_id": "req_demo_mid_02",
+    "attempt_number": 2,
+    "accepted_hospital_id": "hospital_001"
+  },
+  {
+    "id": "case_demo_completed_handoff",
+    "created_at": 1773998000000,
+    "category": "cardiac",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["cardiologist"],
+      "capability_flags": ["ecg", "cath_lab", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "STEMI successfully coordinated, received by interventional cardiologist, handoff verified",
+    "onset_time": "90 minutes ago",
+    "treatment_administered": "Pre-hospital thrombolysis prep, telemetry transfer, bedside handoff completed",
+    "patient_basic_info": { "age": 60, "sex": "male", "name": "Patient H-127" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.1245, "lng": 72.5412 },
+    "status": "completed",
+    "active_request_id": "req_demo_completed_01",
+    "attempt_number": 1,
+    "accepted_hospital_id": "hospital_001"
+  },
+  {
+    "id": "case_demo_low_resource_net",
+    "created_at": 1773999980000,
+    "category": "respiratory",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["ventilator", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Acute respiratory decompensation during peak regional overload",
+    "onset_time": "15 minutes ago",
+    "treatment_administered": "Mechanical bag ventilation, O2 saturation logging",
+    "patient_basic_info": { "age": 55, "sex": "female", "name": "Patient L-128" },
+    "incident_group_id": null,
+    "ambulance_location": { "lat": 23.17, "lng": 72.56 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci_patient_1",
+    "created_at": 1773999280000,
+    "category": "cardiac",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["cardiologist"],
+      "capability_flags": ["ecg", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Blunt chest trauma, myocardial contusion, arrhythmia, BP 90/60, pulse 124",
+    "onset_time": "25 minutes ago",
+    "treatment_administered": "Oxygen 10L/min, cardiac monitoring, IV fluid support",
+    "patient_basic_info": { "age": 52, "sex": "male", "name": "MCI-1 Victim Alpha" },
+    "incident_group_id": "incident_expressway_mci_01",
+    "ambulance_location": { "lat": 23.192, "lng": 72.515 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci_patient_2",
+    "created_at": 1773999280000,
+    "category": "trauma",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": [],
+      "capability_flags": ["trauma_team", "icu"],
+      "blood_type_needed": "O-"
+    },
+    "vitals_summary": "Severe polytrauma, tension pneumothorax, hemorrhagic shock, BP 80/50",
+    "onset_time": "25 minutes ago",
+    "treatment_administered": "Needle chest decompression, tourniquet, crystalloids under pressure",
+    "patient_basic_info": { "age": 29, "sex": "male", "name": "MCI-1 Victim Bravo" },
+    "incident_group_id": "incident_expressway_mci_01",
+    "ambulance_location": { "lat": 23.192, "lng": 72.515 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci_patient_3",
+    "created_at": 1773999280000,
+    "category": "obstetric",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["obgyn"],
+      "capability_flags": ["maternity"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Pregnant passenger (32 weeks), seatbelt compression contusion, abdominal pain",
+    "onset_time": "25 minutes ago",
+    "treatment_administered": "Spinal precautions, left lateral tilt, continuous vitals monitoring",
+    "patient_basic_info": { "age": 26, "sex": "female", "name": "MCI-1 Victim Charlie" },
+    "incident_group_id": "incident_expressway_mci_01",
+    "ambulance_location": { "lat": 23.192, "lng": 72.515 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci_patient_4",
+    "created_at": 1773999280000,
+    "category": "pediatric",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["pediatrician"],
+      "capability_flags": ["pediatric_emergency"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Pediatric passenger, clavicle fracture, minor scalp laceration, GCS 15",
+    "onset_time": "25 minutes ago",
+    "treatment_administered": "Arm sling, scalp compression dressing, reassurance",
+    "patient_basic_info": { "age": 7, "sex": "female", "name": "MCI-1 Victim Delta" },
+    "incident_group_id": "incident_expressway_mci_01",
+    "ambulance_location": { "lat": 23.192, "lng": 72.515 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci2_patient_1",
+    "created_at": 1773999380000,
+    "category": "burn",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["icu", "ventilator"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Industrial boiler blast, 40% thermal and chemical burn with blast lung",
+    "onset_time": "20 minutes ago",
+    "treatment_administered": "High-flow O2, fluid resuscitation protocol, burn dressings",
+    "patient_basic_info": { "age": 45, "sex": "male", "name": "MCI-2 Worker Echo" },
+    "incident_group_id": "incident_industrial_mci_02",
+    "ambulance_location": { "lat": 23.175, "lng": 72.535 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci2_patient_2",
+    "created_at": 1773999380000,
+    "category": "respiratory",
+    "severity": "red",
+    "need_profile": {
+      "specialists_needed": ["general_surgeon"],
+      "capability_flags": ["ventilator", "icu"],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Toxic chlorine/ammonia vapor inhalation, acute pulmonary edema, SpO2 76%",
+    "onset_time": "20 minutes ago",
+    "treatment_administered": "Immediate decontamination, nebulized salbutamol, CPAP applied",
+    "patient_basic_info": { "age": 36, "sex": "male", "name": "MCI-2 Worker Foxtrot" },
+    "incident_group_id": "incident_industrial_mci_02",
+    "ambulance_location": { "lat": 23.175, "lng": 72.535 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci2_patient_3",
+    "created_at": 1773999380000,
+    "category": "trauma",
+    "severity": "yellow",
+    "need_profile": {
+      "specialists_needed": ["orthopedist", "general_surgeon"],
+      "capability_flags": ["trauma_team"],
+      "blood_type_needed": "O-"
+    },
+    "vitals_summary": "Traumatic crush injury to right lower extremity from collapsed boiler panel, distal pulse weak",
+    "onset_time": "20 minutes ago",
+    "treatment_administered": "Crush syndrome prophylaxis, tourniquet standby, IV crystalloids",
+    "patient_basic_info": { "age": 48, "sex": "female", "name": "MCI-2 Worker Golf" },
+    "incident_group_id": "incident_industrial_mci_02",
+    "ambulance_location": { "lat": 23.175, "lng": 72.535 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  },
+  {
+    "id": "case_mci2_patient_4",
+    "created_at": 1773999380000,
+    "category": "trauma",
+    "severity": "green",
+    "need_profile": {
+      "specialists_needed": [],
+      "capability_flags": [],
+      "blood_type_needed": null
+    },
+    "vitals_summary": "Chemical conjunctivitis and multiple superficial blast fragment cuts, ambulatory, stable",
+    "onset_time": "20 minutes ago",
+    "treatment_administered": "Eye irrigation with 1L normal saline, wound cleansing, tetanus toxoid",
+    "patient_basic_info": { "age": 30, "sex": "male", "name": "MCI-2 Worker Hotel" },
+    "incident_group_id": "incident_industrial_mci_02",
+    "ambulance_location": { "lat": 23.175, "lng": 72.535 },
+    "status": "routing",
+    "active_request_id": null,
+    "attempt_number": 0
+  }
+]

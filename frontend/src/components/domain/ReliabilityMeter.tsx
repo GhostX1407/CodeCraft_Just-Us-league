@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { ReliabilityRow } from '../../types/domain';
 
 interface ReliabilityMeterProps {
-  score: number; // 0–1
+  score: number | null; // 0–1 or null (no history)
   metrics?: ReliabilityRow['response_metrics'];
   animateOnChange?: boolean;
   className?: string;
@@ -17,6 +17,24 @@ export const ReliabilityMeter: React.FC<ReliabilityMeterProps> = ({
   className,
   size = 'md',
 }) => {
+  if (score === null || score === undefined) {
+    return (
+      <div className={clsx('select-none font-mono', className)}>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <span className="text-[11px] uppercase tracking-wider text-[#2D231C] font-bold">
+            Commitment Reliability
+          </span>
+          <span className="text-xs font-bold text-[#7D7067] italic">
+            No history
+          </span>
+        </div>
+        <div className="text-[10px] text-[#7D7067]">
+          New facility • No accepted commitments recorded yet
+        </div>
+      </div>
+    );
+  }
+
   const percentage = Math.round(score * 100);
   const totalSegments = 10;
   const activeSegments = Math.round((percentage / 100) * totalSegments);

@@ -117,7 +117,7 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
                       ICU Free: <span className="text-[#2D231C]">{hosp.icu_beds_free}</span> • Vents: <span className="text-[#2D231C]">{hosp.ventilators_free}</span>
                     </div>
                     <div className="font-mono font-bold text-[#C2410C]">
-                      Reliability: {Math.round(hosp.reliability_score * 100)}%
+                      Reliability: {hosp.reliability_score !== null ? `${Math.round(hosp.reliability_score * 100)}%` : 'No history'}
                     </div>
                   </div>
                 </Popup>

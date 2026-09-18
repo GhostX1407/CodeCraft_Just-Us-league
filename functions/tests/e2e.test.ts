@@ -163,7 +163,7 @@ describe('Part 8: End-to-End Vertical Slice Integration', () => {
   it('Slice 4 (Admin Oversight & Explanation): Overview & Forensic Logs', async () => {
     // 1. Admin overview reflects hospitals
     const overview = await AdminService.getHospitalNetworkOverview();
-    expect(overview.length).toBe(8);
+    expect(overview.length).toBe(12);
 
     // 2. Audit logs exist
     const recentLogs = await AuditRepository.listRecent(10);

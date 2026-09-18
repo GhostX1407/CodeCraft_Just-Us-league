@@ -93,7 +93,7 @@ export interface Hospital {
   er_load_score: number; // 1 to 5
   accepts_scheme_patients: boolean;
   last_updated_at: string | number | Date;
-  reliability_score: number; // 0.0 to 1.0
+  reliability_score: number | null; // 0.0 to 1.0 or null (no history)
   capabilities?: CapabilityFlag[]; // Optional non-specialist capability flags
   operational_status?: HospitalOperationalStatus;
 }

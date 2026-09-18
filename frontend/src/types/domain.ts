@@ -1,6 +1,17 @@
 // TypeScript Domain Types — exact contract matching Part C.1 of MASTER_FRONTEND_PROMPT.md
 
-export type CaseCategory = 'cardiac' | 'trauma' | 'obstetric' | 'pediatric';
+export type CaseCategory =
+  | 'cardiac'
+  | 'trauma'
+  | 'obstetric'
+  | 'pediatric'
+  | 'respiratory'
+  | 'stroke'
+  | 'burn'
+  | 'hemorrhage'
+  | 'poisoning'
+  | 'sepsis'
+  | string;
 export type Severity = 'red' | 'yellow' | 'green';
 export type RequestStatus = 'pending' | 'accepted' | 'rejected' | 'timed_out' | 'superseded';
 export type Freshness = 'fresh' | 'stale' | 'unknown';
@@ -21,8 +32,13 @@ export interface Hospital {
   er_load_score: number;                  // 1 (light) – 5 (overloaded), self-reported
   accepts_scheme_patients: boolean;
   last_updated_at: Timestamp;             // drives freshness
-  reliability_score: number;              // 0–1, computed by backend
+  reliability_score: number | null;       // 0–1, computed by backend, null for no history
   contact_number?: string;                // used by the mobile "Contact hospital" action
+  operational_status?: {
+    icu?: boolean;
+    ventilator?: boolean;
+    blood?: boolean;
+  };
 }
 
 export interface NeedProfile {
@@ -106,7 +122,7 @@ export interface AuditEvent {
 export interface ReliabilityRow {
   hospital_id: string;
   hospital_name: string;
-  reliability_score: number;
+  reliability_score: number | null;
   response_metrics: {
     accepted_count: number;
     successful_commitment_count: number;

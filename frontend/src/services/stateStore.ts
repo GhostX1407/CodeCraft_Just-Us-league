@@ -141,7 +141,11 @@ export const stateStore = {
   },
 
   getHospital(id: string): Hospital | undefined {
-    return state.hospitals.find((h) => h.id === id || (id.startsWith('hosp_apex') && h.id === 'hosp_apex'));
+    return state.hospitals.find(
+      (h) =>
+        h.id === id ||
+        ((id === 'hosp_apex' || id.startsWith('hosp_apex')) && (h.id === 'hospital_001' || h.id === 'hosp_apex'))
+    );
   },
 
   getHospitals(): Hospital[] {
@@ -149,7 +153,10 @@ export const stateStore = {
   },
 
   updateHospital(id: string, patch: Partial<Hospital>): Hospital {
-    const resolvedId = (id.startsWith('hosp_apex') && !state.hospitals.some(h => h.id === id)) ? 'hosp_apex' : id;
+    const resolvedId =
+      id === 'hosp_apex' || id.startsWith('hosp_apex')
+        ? (state.hospitals.some((h) => h.id === 'hospital_001') ? 'hospital_001' : 'hosp_apex')
+        : id;
     const idx = state.hospitals.findIndex((h) => h.id === resolvedId);
     if (idx === -1) throw new Error(`Hospital not found: ${id}`);
     

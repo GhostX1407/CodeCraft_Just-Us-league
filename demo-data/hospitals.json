@@ -1,0 +1,343 @@
+[
+  {
+    "id": "hospital_001",
+    "name": "Apex Trauma & Emergency Centre",
+    "lat": 23.1245,
+    "lng": 72.5412,
+    "trauma_team_on_shift": true,
+    "specialists_on_call": ["cardiologist", "orthopedist", "general_surgeon", "anesthetist", "neurosurgeon"],
+    "icu_beds_free": 4,
+    "ventilators_free": 2,
+    "capabilities": ["trauma_team", "icu", "ventilator", "ecg", "cath_lab", "ct_scan"],
+    "blood_stock": {
+      "O-": 6,
+      "O+": 14,
+      "A+": 12,
+      "A-": 3,
+      "B+": 10,
+      "B-": 2,
+      "AB+": 4,
+      "AB-": 1
+    },
+    "er_load_score": 2,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.96,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2685 0101"
+  },
+  {
+    "id": "hospital_002",
+    "name": "Metro Heart & Vascular Institute",
+    "lat": 23.1368,
+    "lng": 72.5534,
+    "trauma_team_on_shift": false,
+    "specialists_on_call": ["cardiologist", "anesthetist", "general_physician"],
+    "icu_beds_free": 6,
+    "ventilators_free": 4,
+    "capabilities": ["ecg", "cath_lab", "icu", "ventilator"],
+    "blood_stock": {
+      "O-": 2,
+      "O+": 10,
+      "A+": 8,
+      "A-": 2,
+      "B+": 7,
+      "B-": 1,
+      "AB+": 5,
+      "AB-": 1
+    },
+    "er_load_score": 5,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.94,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2744 0202"
+  },
+  {
+    "id": "hospital_003",
+    "name": "Sterling Multispecialty Hospital",
+    "lat": 23.1092,
+    "lng": 72.5621,
+    "trauma_team_on_shift": true,
+    "specialists_on_call": ["cardiologist", "orthopedist", "obgyn", "pediatrician", "general_surgeon", "anesthetist"],
+    "icu_beds_free": 5,
+    "ventilators_free": 3,
+    "capabilities": ["trauma_team", "icu", "ventilator", "ecg", "maternity", "pediatric_emergency"],
+    "blood_stock": {
+      "O-": 5,
+      "O+": 16,
+      "A+": 14,
+      "A-": 3,
+      "B+": 12,
+      "B-": 2,
+      "AB+": 6,
+      "AB-": 2
+    },
+    "er_load_score": 2,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1773997000000,
+    "reliability_score": 0.88,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2630 0505"
+  },
+  {
+    "id": "hospital_004",
+    "name": "CityCare General Hospital",
+    "lat": 23.1189,
+    "lng": 72.5312,
+    "trauma_team_on_shift": false,
+    "specialists_on_call": ["general_surgeon", "anesthetist", "general_physician"],
+    "icu_beds_free": 3,
+    "ventilators_free": 0,
+    "capabilities": ["icu", "ecg"],
+    "blood_stock": {
+      "O-": 1,
+      "O+": 6,
+      "A+": 4,
+      "B+": 5,
+      "AB+": 2
+    },
+    "er_load_score": 3,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.82,
+    "operational_status": {
+      "icu": true,
+      "ventilator": false,
+      "blood": true
+    },
+    "contact_number": "+91 79 2650 0303"
+  },
+  {
+    "id": "hospital_005",
+    "name": "Lifeline Emergency Hospital",
+    "lat": 23.155,
+    "lng": 72.522,
+    "trauma_team_on_shift": true,
+    "specialists_on_call": ["general_surgeon", "orthopedist", "anesthetist"],
+    "icu_beds_free": 2,
+    "ventilators_free": 2,
+    "capabilities": ["trauma_team", "icu", "ventilator"],
+    "blood_stock": {
+      "O-": 0,
+      "O+": 8,
+      "A+": 6,
+      "B+": 7,
+      "AB+": 3
+    },
+    "er_load_score": 2,
+    "accepts_scheme_patients": false,
+    "last_updated_at": 1773998500000,
+    "reliability_score": 0.85,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2791 0404"
+  },
+  {
+    "id": "hospital_006",
+    "name": "Sunrise Community Hospital",
+    "lat": 23.1415,
+    "lng": 72.5685,
+    "trauma_team_on_shift": false,
+    "specialists_on_call": ["general_physician", "general_surgeon"],
+    "icu_beds_free": 0,
+    "ventilators_free": 1,
+    "capabilities": ["ventilator", "ecg"],
+    "blood_stock": {
+      "O+": 3,
+      "A+": 2,
+      "B+": 3
+    },
+    "er_load_score": 4,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.78,
+    "operational_status": {
+      "icu": false,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2810 0606"
+  },
+  {
+    "id": "hospital_007",
+    "name": "Diamond Children & Pediatric Pavilion",
+    "lat": 23.1612,
+    "lng": 72.545,
+    "trauma_team_on_shift": false,
+    "specialists_on_call": ["pediatrician", "anesthetist"],
+    "icu_beds_free": 4,
+    "ventilators_free": 3,
+    "capabilities": ["pediatric_emergency", "icu", "ventilator", "neonatal_icu"],
+    "blood_stock": {
+      "O-": 3,
+      "O+": 7,
+      "A+": 5,
+      "B+": 6,
+      "AB-": 2
+    },
+    "er_load_score": 1,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.95,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2855 0707"
+  },
+  {
+    "id": "hospital_008",
+    "name": "Mother & Child Care Specialty Hospital",
+    "lat": 23.098,
+    "lng": 72.535,
+    "trauma_team_on_shift": false,
+    "specialists_on_call": ["obgyn", "pediatrician", "anesthetist"],
+    "icu_beds_free": 3,
+    "ventilators_free": 2,
+    "capabilities": ["maternity", "pediatric_emergency", "icu", "ventilator"],
+    "blood_stock": {
+      "O-": 2,
+      "O+": 9,
+      "A+": 8,
+      "A-": 2,
+      "B+": 8,
+      "B-": 1,
+      "AB+": 3
+    },
+    "er_load_score": 2,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.92,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2890 0808"
+  },
+  {
+    "id": "hospital_009",
+    "name": "St. Jude Acute Care Clinic",
+    "lat": 23.128,
+    "lng": 72.518,
+    "trauma_team_on_shift": false,
+    "specialists_on_call": ["general_surgeon", "cardiologist", "anesthetist"],
+    "icu_beds_free": 1,
+    "ventilators_free": 1,
+    "capabilities": ["ecg", "icu", "ventilator"],
+    "blood_stock": {
+      "O-": 1,
+      "O+": 4,
+      "A+": 3,
+      "B+": 4
+    },
+    "er_load_score": 1,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.99,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2920 0909"
+  },
+  {
+    "id": "hospital_010",
+    "name": "Royal Crest Medical Center",
+    "lat": 23.175,
+    "lng": 72.56,
+    "trauma_team_on_shift": true,
+    "specialists_on_call": ["orthopedist", "general_surgeon", "anesthetist"],
+    "icu_beds_free": 4,
+    "ventilators_free": 3,
+    "capabilities": ["trauma_team", "icu", "ventilator"],
+    "blood_stock": {
+      "O-": 2,
+      "O+": 10,
+      "A+": 8,
+      "B+": 9
+    },
+    "er_load_score": 3,
+    "accepts_scheme_patients": false,
+    "last_updated_at": 1773999000000,
+    "reliability_score": 0.62,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2950 1010"
+  },
+  {
+    "id": "hospital_011",
+    "name": "Greenfield District Hospital",
+    "lat": 23.085,
+    "lng": 72.555,
+    "trauma_team_on_shift": true,
+    "specialists_on_call": ["cardiologist", "orthopedist", "general_surgeon", "obgyn", "anesthetist"],
+    "icu_beds_free": 5,
+    "ventilators_free": 3,
+    "capabilities": ["trauma_team", "ecg", "icu", "ventilator", "maternity"],
+    "blood_stock": {
+      "O-": 4,
+      "O+": 12,
+      "A+": 10,
+      "A-": 2,
+      "B+": 11,
+      "AB+": 4
+    },
+    "er_load_score": 3,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1774000000000,
+    "reliability_score": 0.89,
+    "operational_status": {
+      "icu": true,
+      "ventilator": true,
+      "blood": true
+    },
+    "contact_number": "+91 79 2980 1111"
+  },
+  {
+    "id": "hospital_012",
+    "name": "Navjeevan Charitable Hospital",
+    "lat": 23.19,
+    "lng": 72.53,
+    "trauma_team_on_shift": false,
+    "specialists_on_call": ["general_physician"],
+    "icu_beds_free": 0,
+    "ventilators_free": 0,
+    "capabilities": [],
+    "blood_stock": {
+      "O+": 2,
+      "A+": 1
+    },
+    "er_load_score": 4,
+    "accepts_scheme_patients": true,
+    "last_updated_at": 1773990000000,
+    "reliability_score": null,
+    "operational_status": {
+      "icu": false,
+      "ventilator": false,
+      "blood": true
+    },
+    "contact_number": "+91 79 2999 1212"
+  }
+]

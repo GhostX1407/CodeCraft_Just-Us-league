@@ -476,7 +476,7 @@ export const AmbulanceHomePage: React.FC = () => {
                       <div className="bg-white p-2.5 rounded-xl text-center border border-[#E8E2D9] shadow-xs">
                         <span className="text-[9px] text-[#7D7067] font-bold block">RELIABILITY</span>
                         <span className="font-extrabold text-[#52796F]">
-                          {Math.round(hosp.reliability_score * 100)}%
+                          {hosp.reliability_score !== null ? `${Math.round(hosp.reliability_score * 100)}%` : 'New'}
                         </span>
                       </div>
                     </div>

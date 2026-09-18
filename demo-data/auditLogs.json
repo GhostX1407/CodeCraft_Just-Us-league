@@ -1,0 +1,236 @@
+[
+  {
+    "id": "audit_demo_001",
+    "request_id": null,
+    "case_id": "case_demo_cardiac_01",
+    "hospital_id": null,
+    "event_type": "CASE_CREATED",
+    "timestamp": 1773999400000,
+    "actor_type": "ambulance_user",
+    "actor_id": "paramedic_alpha_1",
+    "snapshot_of_data_at_decision_time": {
+      "case": {
+        "id": "case_demo_cardiac_01",
+        "category": "cardiac",
+        "severity": "red"
+      }
+    }
+  },
+  {
+    "id": "audit_demo_002",
+    "request_id": null,
+    "case_id": "case_demo_cardiac_01",
+    "hospital_id": null,
+    "event_type": "NEED_PROFILE_GENERATED",
+    "timestamp": 1773999402000,
+    "actor_type": "system",
+    "actor_id": "deterministic_rules_engine",
+    "snapshot_of_data_at_decision_time": {
+      "need_profile": {
+        "specialists_needed": ["cardiologist"],
+        "capability_flags": ["ecg", "cath_lab", "icu"],
+        "blood_type_needed": null
+      }
+    }
+  },
+  {
+    "id": "audit_demo_003",
+    "request_id": null,
+    "case_id": "case_demo_cardiac_01",
+    "hospital_id": "hospital_001",
+    "event_type": "MATCH_COMPUTED",
+    "timestamp": 1773999405000,
+    "actor_type": "system",
+    "actor_id": "scoring_engine",
+    "snapshot_of_data_at_decision_time": {
+      "match": {
+        "final_score": 95.8,
+        "capability_match_pct": 100,
+        "distance_km": 1.2
+      }
+    }
+  },
+  {
+    "id": "audit_demo_004",
+    "request_id": "req_demo_001",
+    "case_id": "case_demo_cardiac_01",
+    "hospital_id": "hospital_001",
+    "event_type": "REQUEST_SENT",
+    "timestamp": 1773999980000,
+    "actor_type": "ambulance_user",
+    "actor_id": "paramedic_alpha_1",
+    "metadata": {
+      "countdown_seconds": 60,
+      "attempt_number": 1
+    }
+  },
+  {
+    "id": "audit_demo_005",
+    "request_id": "req_demo_002",
+    "case_id": "case_demo_trauma_01",
+    "hospital_id": "hospital_001",
+    "event_type": "REQUEST_ACCEPTED",
+    "timestamp": 1773999575000,
+    "actor_type": "hospital_user",
+    "actor_id": "er_triage_officer_01",
+    "metadata": {
+      "unit": "OR-1 Trauma Bay Reserved",
+      "hold_confirmed": true
+    }
+  },
+  {
+    "id": "audit_demo_006",
+    "request_id": "req_demo_002",
+    "case_id": "case_demo_trauma_01",
+    "hospital_id": "hospital_001",
+    "event_type": "RESOURCE_HELD",
+    "timestamp": 1773999576000,
+    "actor_type": "system",
+    "actor_id": "hold_manager",
+    "metadata": {
+      "held_resources": { "icu": 1, "ventilator": 0, "blood": { "O-": 2 } }
+    }
+  },
+  {
+    "id": "audit_demo_007",
+    "request_id": "req_demo_reroute_01",
+    "case_id": "case_demo_reroute_reject",
+    "hospital_id": "hospital_005",
+    "event_type": "REQUEST_REJECTED",
+    "timestamp": 1773999130000,
+    "actor_type": "hospital_user",
+    "actor_id": "er_charge_nurse_05",
+    "metadata": {
+      "reason": "Zero units O- blood in stock and sudden influx of acute cases"
+    }
+  },
+  {
+    "id": "audit_demo_008",
+    "request_id": "req_demo_reroute_01",
+    "case_id": "case_demo_reroute_reject",
+    "hospital_id": "hospital_005",
+    "event_type": "REROUTE_TRIGGERED",
+    "timestamp": 1773999131000,
+    "actor_type": "system",
+    "actor_id": "reroute_service",
+    "metadata": {
+      "trigger": "rejection",
+      "attempt_incremented_to": 2
+    }
+  },
+  {
+    "id": "audit_demo_009",
+    "request_id": "req_demo_timeout_01",
+    "case_id": "case_demo_reroute_timeout",
+    "hospital_id": "hospital_010",
+    "event_type": "REQUEST_TIMED_OUT",
+    "timestamp": 1773999265000,
+    "actor_type": "system",
+    "actor_id": "timeout_watchdog",
+    "metadata": {
+      "reason": "60s countdown expired without reception response"
+    }
+  },
+  {
+    "id": "audit_demo_010",
+    "request_id": "req_demo_timeout_01",
+    "case_id": "case_demo_reroute_timeout",
+    "hospital_id": "hospital_010",
+    "event_type": "REROUTE_TRIGGERED",
+    "timestamp": 1773999266000,
+    "actor_type": "system",
+    "actor_id": "reroute_service",
+    "metadata": {
+      "trigger": "timeout",
+      "attempt_incremented_to": 2
+    }
+  },
+  {
+    "id": "audit_demo_011",
+    "request_id": "req_demo_mid_01",
+    "case_id": "case_demo_mid_transit_invalid",
+    "hospital_id": "hospital_010",
+    "event_type": "COMMITMENT_INVALIDATED",
+    "timestamp": 1773999095000,
+    "actor_type": "system",
+    "actor_id": "mid_transit_monitor",
+    "metadata": {
+      "invalidation_reasons": ["Required specialist 'general_surgeon' is no longer on call"]
+    }
+  },
+  {
+    "id": "audit_demo_012",
+    "request_id": "req_demo_mid_01",
+    "case_id": "case_demo_mid_transit_invalid",
+    "hospital_id": "hospital_010",
+    "event_type": "RESOURCE_RELEASED",
+    "timestamp": 1773999100000,
+    "actor_type": "system",
+    "actor_id": "hold_manager",
+    "metadata": {
+      "reason": "commitment_invalidated",
+      "released_resources": { "icu": 1, "blood": { "O-": 2 } }
+    }
+  },
+  {
+    "id": "audit_demo_013",
+    "request_id": "req_demo_mid_01",
+    "case_id": "case_demo_mid_transit_invalid",
+    "hospital_id": "hospital_010",
+    "event_type": "REQUEST_SUPERSEDED",
+    "timestamp": 1773999102000,
+    "actor_type": "system",
+    "actor_id": "reroute_service",
+    "metadata": {
+      "superseded_by": "req_demo_mid_02"
+    }
+  },
+  {
+    "id": "audit_demo_014",
+    "request_id": "req_demo_completed_01",
+    "case_id": "case_demo_completed_handoff",
+    "hospital_id": "hospital_001",
+    "event_type": "RESOURCE_CONSUMED",
+    "timestamp": 1773998795000,
+    "actor_type": "hospital_user",
+    "actor_id": "er_charge_nurse_01",
+    "metadata": {
+      "unit": "Cath Lab Bay 2 occupied"
+    }
+  },
+  {
+    "id": "audit_demo_015",
+    "request_id": "req_demo_completed_01",
+    "case_id": "case_demo_completed_handoff",
+    "hospital_id": "hospital_001",
+    "event_type": "HANDOFF_COMPLETED",
+    "timestamp": 1773998800000,
+    "actor_type": "hospital_user",
+    "actor_id": "er_triage_officer_01",
+    "metadata": {
+      "patient_status": "transferred_to_cath_lab",
+      "receiving_physician": "Dr. V. Mehta"
+    }
+  },
+  {
+    "id": "audit_demo_016",
+    "request_id": null,
+    "case_id": "case_mci_patient_1",
+    "hospital_id": null,
+    "event_type": "MCI_DISTRIBUTED",
+    "timestamp": 1773999300000,
+    "actor_type": "ambulance_user",
+    "actor_id": "triage_commander",
+    "metadata": {
+      "incident_group_id": "incident_expressway_mci_01",
+      "total_cases": 4,
+      "assigned_cases": 4,
+      "distribution": {
+        "case_mci_patient_1": "hospital_001",
+        "case_mci_patient_2": "hospital_002",
+        "case_mci_patient_3": "hospital_003",
+        "case_mci_patient_4": "hospital_007"
+      }
+    }
+  }
+]

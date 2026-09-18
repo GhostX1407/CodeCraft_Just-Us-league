@@ -1,0 +1,96 @@
+[
+  {
+    "request_id": "req_demo_002",
+    "case_id": "case_demo_trauma_01",
+    "hospital_id": "hospital_001",
+    "created_at": 1773999575000,
+    "status": "active",
+    "resources": {
+      "icu": 1,
+      "ventilator": 0,
+      "blood": {
+        "O-": 2
+      }
+    }
+  },
+  {
+    "request_id": "req_demo_004",
+    "case_id": "case_demo_pediatric_01",
+    "hospital_id": "hospital_007",
+    "created_at": 1773999630000,
+    "status": "active",
+    "resources": {
+      "icu": 1,
+      "ventilator": 1,
+      "blood": {}
+    }
+  },
+  {
+    "request_id": "req_demo_reroute_02",
+    "case_id": "case_demo_reroute_reject",
+    "hospital_id": "hospital_001",
+    "created_at": 1773999150000,
+    "status": "active",
+    "resources": {
+      "icu": 1,
+      "ventilator": 0,
+      "blood": {
+        "O-": 2
+      }
+    }
+  },
+  {
+    "request_id": "req_demo_timeout_02",
+    "case_id": "case_demo_reroute_timeout",
+    "hospital_id": "hospital_002",
+    "created_at": 1773999290000,
+    "status": "active",
+    "resources": {
+      "icu": 1,
+      "ventilator": 0,
+      "blood": {}
+    }
+  },
+  {
+    "request_id": "req_demo_mid_01",
+    "case_id": "case_demo_mid_transit_invalid",
+    "hospital_id": "hospital_010",
+    "created_at": 1773999080000,
+    "consumed_at": 1773999100000,
+    "status": "released",
+    "resources": {
+      "icu": 1,
+      "ventilator": 0,
+      "blood": {
+        "O-": 2
+      }
+    }
+  },
+  {
+    "request_id": "req_demo_mid_02",
+    "case_id": "case_demo_mid_transit_invalid",
+    "hospital_id": "hospital_001",
+    "created_at": 1773999125000,
+    "status": "active",
+    "resources": {
+      "icu": 1,
+      "ventilator": 0,
+      "blood": {
+        "O-": 2
+      }
+    }
+  },
+  {
+    "request_id": "req_demo_completed_01",
+    "case_id": "case_demo_completed_handoff",
+    "hospital_id": "hospital_001",
+    "created_at": 1773998030000,
+    "consumed_at": 1773998800000,
+    "status": "consumed",
+    "resources": {
+      "icu": 1,
+      "ventilator": 0,
+      "blood": {}
+    }
+  }
+]

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "AMB-01",
+    "callsign": "ALS Alpha-01",
+    "unit_type": "advanced_life_support",
+    "status": "in_transit",
+    "current_case_id": "case_demo_cardiac_01",
+    "base_station": "Central Emergency Corridor",
+    "location": {
+      "lat": 23.118,
+      "lng": 72.545
+    },
+    "crew": {
+      "paramedic_lead": "EMS Paramedic Alpha-1",
+      "driver": "Driver Unit 01"
+    }
+  },
+  {
+    "id": "AMB-02",
+    "callsign": "CCT Alpha-02",
+    "unit_type": "critical_care_transport",
+    "status": "in_transit",
+    "current_case_id": "case_demo_trauma_01",
+    "base_station": "Apex Ring Station",
+    "location": {
+      "lat": 23.112,
+      "lng": 72.558
+    },
+    "crew": {
+      "paramedic_lead": "EMS Paramedic Alpha-2",
+      "driver": "Driver Unit 02"
+    }
+  },
+  {
+    "id": "AMB-03",
+    "callsign": "BLS Beta-01",
+    "unit_type": "basic_life_support",
+    "status": "available",
+    "current_case_id": null,
+    "base_station": "West District Base",
+    "location": {
+      "lat": 23.131,
+      "lng": 72.548
+    },
+    "crew": {
+      "paramedic_lead": "EMS Paramedic Beta-1",
+      "driver": "Driver Unit 03"
+    }
+  },
+  {
+    "id": "AMB-04",
+    "callsign": "ALS Beta-02",
+    "unit_type": "advanced_life_support",
+    "status": "available",
+    "current_case_id": null,
+    "base_station": "Metro East Base",
+    "location": {
+      "lat": 23.142,
+      "lng": 72.56
+    },
+    "crew": {
+      "paramedic_lead": "EMS Paramedic Beta-2",
+      "driver": "Driver Unit 04"
+    }
+  },
+  {
+    "id": "AMB-05",
+    "callsign": "MICU Pediatric-01",
+    "unit_type": "pediatric_mobile_icu",
+    "status": "available",
+    "current_case_id": null,
+    "base_station": "Diamond Children Pavilion Base",
+    "location": {
+      "lat": 23.158,
+      "lng": 72.542
+    },
+    "crew": {
+      "paramedic_lead": "Neonatal Specialist EMT",
+      "driver": "Driver Unit 05"
+    }
+  },
+  {
+    "id": "AMB-06",
+    "callsign": "MCI Command Unit",
+    "unit_type": "mass_casualty_command",
+    "status": "dispatched",
+    "current_case_id": "incident_expressway_mci_01",
+    "base_station": "State Disaster Command Depot",
+    "location": {
+      "lat": 23.192,
+      "lng": 72.515
+    },
+    "crew": {
+      "paramedic_lead": "Triage Commander Officer",
+      "driver": "Logistics EMT"
+    }
+  }
+]

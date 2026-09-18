@@ -99,7 +99,9 @@ export const HospitalPickerPage: React.FC = () => {
                     </div>
                     <div className="bg-[#FAF8F5] p-2 rounded-xl border border-[#E8E2D9] text-center">
                       <span className="text-[10px] text-[#7D7067] uppercase font-bold block">Reliability</span>
-                      <div className="font-black text-[#52796F] mt-0.5">{Math.round(hosp.reliability_score * 100)}%</div>
+                      <div className="font-black text-[#52796F] mt-0.5">
+                        {hosp.reliability_score !== null ? `${Math.round(hosp.reliability_score * 100)}%` : 'New'}
+                      </div>
                     </div>
                   </div>
                 </div>
