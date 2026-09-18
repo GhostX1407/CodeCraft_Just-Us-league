@@ -90,19 +90,19 @@ export const AmbulanceHomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] text-[#0F172A] p-4 sm:p-8 font-sans select-none relative z-10">
+    <div className="min-h-[calc(100vh-64px)] text-[#2D231C] p-4 sm:p-8 font-sans select-none relative z-10">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Top Header & Context */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E8E2D9]">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-[#149B9E] animate-pulse" />
-              <span className="font-mono text-xs uppercase tracking-widest text-[#149B9E] font-extrabold">
+              <span className="w-2 h-2 rounded-full bg-[#EA580C] animate-pulse" />
+              <span className="font-mono text-xs uppercase tracking-widest text-[#EA580C] font-extrabold">
                 Emergency Dispatch & Tactical Routing
               </span>
-              <span className="text-xs font-mono text-[#64748B] font-bold">[Unit AMB-04 • Active]</span>
+              <span className="text-xs font-mono text-[#7D7067] font-bold">[Unit AMB-04 • Active]</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-[#0F172A]">
+            <h1 className="text-2xl sm:text-3xl font-display font-black tracking-tight text-[#2D231C]">
               New Patient Case Intake
             </h1>
           </div>
@@ -110,9 +110,9 @@ export const AmbulanceHomePage: React.FC = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/ambulance/mass-casualty"
-              className="px-4 py-2 rounded-xl bg-white border border-[#E2E8F0] text-xs font-mono text-[#475569] font-bold hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center gap-2 transition-all shadow-xs"
+              className="px-4 py-2 rounded-xl bg-white border border-[#E8E2D9] text-xs font-mono text-[#7D7067] font-bold hover:text-[#2D231C] hover:bg-[#FAF8F5] flex items-center gap-2 transition-all shadow-xs"
             >
-              <Users className="w-4 h-4 text-[#149B9E]" />
+              <Users className="w-4 h-4 text-[#EA580C]" />
               <span>Mass-Casualty Protocol</span>
             </Link>
           </div>
@@ -122,18 +122,18 @@ export const AmbulanceHomePage: React.FC = () => {
         {activeRequests.length > 0 && (
           <div
             onClick={() => navigate(`/ambulance/${activeRequests[0].case_id}`)}
-            className="p-4 bg-[#E6F7F7] border border-[#149B9E]/40 rounded-2xl flex items-center justify-between cursor-pointer hover:bg-[#CCFBF1] transition-all shadow-xs"
+            className="p-4 bg-[#FFF7ED] border border-[#EA580C]/40 rounded-2xl flex items-center justify-between cursor-pointer hover:bg-[#EFF6F3] transition-all shadow-xs"
           >
             <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#149B9E] animate-pulse" />
-              <span className="text-xs font-mono text-[#0D7C7E] font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EA580C] animate-pulse" />
+              <span className="text-xs font-mono text-[#C2410C] font-bold">
                 Emergency Dispatch In Flight: Case {activeRequests[0].case_id}
               </span>
-              <span className="text-xs font-mono text-[#475569] font-medium hidden sm:inline">
+              <span className="text-xs font-mono text-[#7D7067] font-medium hidden sm:inline">
                 ({activeRequests[0].reason_shown_to_dispatcher})
               </span>
             </div>
-            <span className="text-xs font-mono text-[#0D7C7E] font-bold flex items-center gap-1.5">
+            <span className="text-xs font-mono text-[#C2410C] font-bold flex items-center gap-1.5">
               <span>Resume Active Case</span>
               <ArrowRight className="w-4 h-4" />
             </span>
@@ -146,12 +146,12 @@ export const AmbulanceHomePage: React.FC = () => {
           <div className="lg:col-span-7 space-y-6 stagger-1">
             {/* STEP 1: CASE INTAKE (Tap-Only Presets) */}
             {step === 'intake' && (
-              <div className="p-6 sm:p-8 rounded-3xl border border-[#E2E8F0] bg-white shadow-sm space-y-6 animate-fade-in">
-                <div className="border-b border-[#E2E8F0] pb-4">
-                  <h2 className="text-xl sm:text-2xl font-display font-black text-[#0F172A] tracking-tight">
+              <div className="p-6 sm:p-8 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-6 animate-fade-in">
+                <div className="border-b border-[#E8E2D9] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-display font-black text-[#2D231C] tracking-tight">
                     What kind of emergency is this?
                   </h2>
-                  <p className="text-xs text-[#475569] font-mono font-bold mt-1">
+                  <p className="text-xs text-[#7D7067] font-mono font-bold mt-1">
                     Select category to automatically load deterministic capability rules
                   </p>
                 </div>
@@ -177,17 +177,17 @@ export const AmbulanceHomePage: React.FC = () => {
                         className={clsx(
                           'p-4 rounded-2xl border text-left flex flex-col justify-between transition-all duration-180 min-h-[110px] group relative overflow-hidden',
                           isSelected
-                            ? 'border-[#149B9E] bg-[#E6F7F7] ring-1 ring-[#149B9E] shadow-xs'
-                            : 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white hover:border-[#CBD5E1]'
+                            ? 'border-[#EA580C] bg-[#FFF7ED] ring-1 ring-[#EA580C] shadow-xs'
+                            : 'border-[#E8E2D9] bg-[#FAF8F5] hover:bg-white hover:border-[#D8CFBF]'
                         )}
                       >
                         <div className="flex items-center justify-between">
-                          <span className={clsx('text-base font-display font-bold transition-colors', isSelected ? 'text-[#0D7C7E]' : 'text-[#0F172A]')}>
+                          <span className={clsx('text-base font-display font-bold transition-colors', isSelected ? 'text-[#C2410C]' : 'text-[#2D231C]')}>
                             {c.label}
                           </span>
-                          <Icon className={clsx('w-5 h-5 transition-transform group-hover:scale-105', isSelected ? 'text-[#149B9E]' : 'text-[#64748B]')} />
+                          <Icon className={clsx('w-5 h-5 transition-transform group-hover:scale-105', isSelected ? 'text-[#EA580C]' : 'text-[#7D7067]')} />
                         </div>
-                        <span className="text-[11px] font-mono text-[#475569] font-semibold leading-tight mt-3">
+                        <span className="text-[11px] font-mono text-[#7D7067] font-semibold leading-tight mt-3">
                           {c.sub}
                         </span>
                       </button>
@@ -196,10 +196,10 @@ export const AmbulanceHomePage: React.FC = () => {
                 </div>
 
                 {/* Urgency Priority Tier with Disclaimer */}
-                <div className="space-y-2 pt-3 border-t border-[#E2E8F0]">
+                <div className="space-y-2 pt-3 border-t border-[#E8E2D9]">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-[#0F172A] uppercase font-bold">Priority Urgency Tier</span>
-                    <span className="text-[11px] text-[#64748B] font-bold">Derived from Category</span>
+                    <span className="text-[#2D231C] uppercase font-bold">Priority Urgency Tier</span>
+                    <span className="text-[11px] text-[#7D7067] font-bold">Derived from Category</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     {(['red', 'yellow', 'green'] as Severity[]).map((s) => (
@@ -214,40 +214,40 @@ export const AmbulanceHomePage: React.FC = () => {
                               ? 'border-[#E11D48]/50 bg-[#FFE4E6] text-[#BE123C] ring-1 ring-[#E11D48]'
                               : s === 'yellow'
                               ? 'border-[#D97706]/50 bg-[#FEF3C7] text-[#B45309] ring-1 ring-[#D97706]'
-                              : 'border-[#0D9488]/60 bg-[#CCFBF1] text-[#0F766E] ring-1 ring-[#0D9488]'
-                            : 'border-[#E2E8F0] bg-white text-[#475569] hover:text-[#0F172A]'
+                              : 'border-[#52796F]/60 bg-[#EFF6F3] text-[#354F52] ring-1 ring-[#52796F]'
+                            : 'border-[#E8E2D9] bg-white text-[#7D7067] hover:text-[#2D231C]'
                         )}
                       >
                         Priority: {s}
                       </button>
                     ))}
                   </div>
-                  <div className="text-[11px] text-[#64748B] italic font-sans font-medium">
+                  <div className="text-[11px] text-[#7D7067] italic font-sans font-medium">
                     Prototype urgency — not a clinical triage category.
                   </div>
                 </div>
 
                 {/* Patient Demographics & Live ECG Waveform Bar */}
-                <div className="space-y-4 pt-3 border-t border-[#E2E8F0]">
+                <div className="space-y-4 pt-3 border-t border-[#E8E2D9]">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Age Stepper */}
-                    <div className="p-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC]">
-                      <div className="text-[10px] font-mono uppercase text-[#475569] font-bold mb-1.5">
+                    <div className="p-4 rounded-2xl border border-[#E8E2D9] bg-[#FAF8F5]">
+                      <div className="text-[10px] font-mono uppercase text-[#7D7067] font-bold mb-1.5">
                         Patient Age
                       </div>
                       <div className="flex items-center justify-between">
                         <button
                           type="button"
                           onClick={() => setAge(Math.max(1, age - 5))}
-                          className="w-8 h-8 rounded-lg border border-[#E2E8F0] bg-white text-base font-mono font-extrabold text-[#0F172A] hover:bg-[#F8FAFC] active:scale-95 shadow-xs"
+                          className="w-8 h-8 rounded-lg border border-[#E8E2D9] bg-white text-base font-mono font-extrabold text-[#2D231C] hover:bg-[#FAF8F5] active:scale-95 shadow-xs"
                         >
                           -
                         </button>
-                        <span className="font-mono text-base font-extrabold text-[#0F172A]">{age} years</span>
+                        <span className="font-mono text-base font-extrabold text-[#2D231C]">{age} years</span>
                         <button
                           type="button"
                           onClick={() => setAge(Math.min(100, age + 5))}
-                          className="w-8 h-8 rounded-lg border border-[#E2E8F0] bg-white text-base font-mono font-extrabold text-[#0F172A] hover:bg-[#F8FAFC] active:scale-95 shadow-xs"
+                          className="w-8 h-8 rounded-lg border border-[#E8E2D9] bg-white text-base font-mono font-extrabold text-[#2D231C] hover:bg-[#FAF8F5] active:scale-95 shadow-xs"
                         >
                           +
                         </button>
@@ -255,8 +255,8 @@ export const AmbulanceHomePage: React.FC = () => {
                     </div>
 
                     {/* Sex Segmented Control */}
-                    <div className="p-4 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC]">
-                      <div className="text-[10px] font-mono uppercase text-[#475569] font-bold mb-1.5">
+                    <div className="p-4 rounded-2xl border border-[#E8E2D9] bg-[#FAF8F5]">
+                      <div className="text-[10px] font-mono uppercase text-[#7D7067] font-bold mb-1.5">
                         Biological Sex
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -268,8 +268,8 @@ export const AmbulanceHomePage: React.FC = () => {
                             className={clsx(
                               'py-2 text-xs font-mono capitalize rounded-xl border transition-colors font-bold',
                               sex === g
-                                ? 'border-[#149B9E] bg-white text-[#149B9E] shadow-xs'
-                                : 'border-[#E2E8F0] bg-white/70 text-[#475569] hover:text-[#0F172A]'
+                                ? 'border-[#EA580C] bg-white text-[#EA580C] shadow-xs'
+                                : 'border-[#E8E2D9] bg-white/70 text-[#7D7067] hover:text-[#2D231C]'
                             )}
                           >
                             {g}
@@ -281,9 +281,9 @@ export const AmbulanceHomePage: React.FC = () => {
 
                   {/* Vitals Presets with Live Waveform Icon */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-[#475569] font-bold">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#7D7067] font-bold">
                       <span className="uppercase">Observed Field Vitals (Tap preset)</span>
-                      <span className="flex items-center gap-1.5 text-[#0D9488]">
+                      <span className="flex items-center gap-1.5 text-[#52796F]">
                         <Activity className="w-3.5 h-3.5 animate-pulse" />
                         <span>ECG Lead Live</span>
                       </span>
@@ -297,8 +297,8 @@ export const AmbulanceHomePage: React.FC = () => {
                           className={clsx(
                             'text-left p-3.5 rounded-xl border text-xs font-mono transition-all font-bold',
                             vitalsPreset === opt
-                              ? 'border-[#149B9E] bg-[#E6F7F7] text-[#0D7C7E] shadow-xs'
-                              : 'border-[#E2E8F0] bg-white text-[#475569] hover:bg-[#F8FAFC]'
+                              ? 'border-[#EA580C] bg-[#FFF7ED] text-[#C2410C] shadow-xs'
+                              : 'border-[#E8E2D9] bg-white text-[#7D7067] hover:bg-[#FAF8F5]'
                           )}
                         >
                           {opt}
@@ -309,7 +309,7 @@ export const AmbulanceHomePage: React.FC = () => {
                 </div>
 
                 {/* Primary CTA */}
-                <div className="pt-4 border-t border-[#E2E8F0]">
+                <div className="pt-4 border-t border-[#E8E2D9]">
                   <Button
                     variant="primary"
                     size="lg"
@@ -324,59 +324,59 @@ export const AmbulanceHomePage: React.FC = () => {
 
             {/* STEP 2: NEED PROFILE PREVIEW */}
             {step === 'need_preview' && (
-              <div className="p-6 sm:p-8 rounded-3xl border border-[#E2E8F0] bg-white shadow-sm space-y-6 animate-fade-in">
-                <div className="border-b border-[#E2E8F0] pb-4">
-                  <span className="text-xs font-mono uppercase tracking-wider text-[#149B9E] font-extrabold">
+              <div className="p-6 sm:p-8 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-6 animate-fade-in">
+                <div className="border-b border-[#E8E2D9] pb-4">
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#EA580C] font-extrabold">
                     Pre-Routing Requirements Confirmation
                   </span>
-                  <h2 className="text-2xl font-display font-black text-[#0F172A] tracking-tight mt-1">
+                  <h2 className="text-2xl font-display font-black text-[#2D231C] tracking-tight mt-1">
                     This case needs:
                   </h2>
-                  <p className="text-xs text-[#475569] mt-1 leading-relaxed font-medium">
+                  <p className="text-xs text-[#7D7067] mt-1 leading-relaxed font-medium">
                     Generated from a deterministic rules table — no model, no guesswork.
                   </p>
                 </div>
 
-                <div className="p-5 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] space-y-4">
+                <div className="p-5 bg-[#FAF8F5] rounded-2xl border border-[#E8E2D9] space-y-4">
                   <div>
-                    <div className="text-xs font-mono text-[#0F172A] font-bold uppercase mb-2">
+                    <div className="text-xs font-mono text-[#2D231C] font-bold uppercase mb-2">
                       Mandatory Clinical Flags & Specialist Coverage:
                     </div>
                     <NeedProfileChips needProfile={derivedNeed} />
                   </div>
 
-                  <div className="pt-3 border-t border-[#E2E8F0] grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono font-bold">
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
-                      <span className="text-[#475569] text-[10px] uppercase">Category</span>
-                      <div className="font-extrabold text-[#0F172A] uppercase mt-0.5">{category}</div>
+                  <div className="pt-3 border-t border-[#E8E2D9] grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono font-bold">
+                    <div className="p-3 bg-white rounded-xl border border-[#E8E2D9] shadow-xs">
+                      <span className="text-[#7D7067] text-[10px] uppercase">Category</span>
+                      <div className="font-extrabold text-[#2D231C] uppercase mt-0.5">{category}</div>
                     </div>
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
-                      <span className="text-[#475569] text-[10px] uppercase">Urgency</span>
+                    <div className="p-3 bg-white rounded-xl border border-[#E8E2D9] shadow-xs">
+                      <span className="text-[#7D7067] text-[10px] uppercase">Urgency</span>
                       <div className="font-extrabold text-[#E11D48] uppercase mt-0.5">{severity} Priority</div>
                     </div>
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
-                      <span className="text-[#475569] text-[10px] uppercase">Demographics</span>
-                      <div className="font-extrabold text-[#0F172A] mt-0.5">{age}y, {sex}</div>
+                    <div className="p-3 bg-white rounded-xl border border-[#E8E2D9] shadow-xs">
+                      <span className="text-[#7D7067] text-[10px] uppercase">Demographics</span>
+                      <div className="font-extrabold text-[#2D231C] mt-0.5">{age}y, {sex}</div>
                     </div>
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-xs">
-                      <span className="text-[#475569] text-[10px] uppercase">Location</span>
-                      <div className="font-extrabold text-[#0D9488] mt-0.5">GPS Fixed</div>
+                    <div className="p-3 bg-white rounded-xl border border-[#E8E2D9] shadow-xs">
+                      <span className="text-[#7D7067] text-[10px] uppercase">Location</span>
+                      <div className="font-extrabold text-[#52796F] mt-0.5">GPS Fixed</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#CCFBF1]/30 border border-[#0D9488]/30 text-xs text-[#0F766E] font-medium flex items-start gap-3">
-                  <ShieldCheck className="w-5 h-5 text-[#0D9488] shrink-0 mt-0.5" />
+                <div className="p-4 rounded-2xl bg-[#EFF6F3]/30 border border-[#52796F]/30 text-xs text-[#354F52] font-medium flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-[#52796F] shrink-0 mt-0.5" />
                   <span>
                     Regional network ranking evaluates specialist presence, blood banks, and ER congestion. Only confirmed facilities with capacity will be offered for commitment.
                   </span>
                 </div>
 
-                <div className="pt-4 border-t border-[#E2E8F0] flex gap-4">
+                <div className="pt-4 border-t border-[#E8E2D9] flex gap-4">
                   <button
                     type="button"
                     onClick={() => setStep('intake')}
-                    className="px-5 py-3 rounded-xl border border-[#E2E8F0] bg-white text-xs font-mono text-[#475569] font-bold hover:text-[#0F172A] hover:bg-[#F8FAFC]"
+                    className="px-5 py-3 rounded-xl border border-[#E8E2D9] bg-white text-xs font-mono text-[#7D7067] font-bold hover:text-[#2D231C] hover:bg-[#FAF8F5]"
                   >
                     Back to Intake
                   </button>
@@ -394,13 +394,13 @@ export const AmbulanceHomePage: React.FC = () => {
 
             {/* STEP 3: MATCHING WORKING STATE */}
             {step === 'matching' && (
-              <div className="p-8 sm:p-12 rounded-3xl border border-[#E2E8F0] bg-white shadow-sm space-y-6 text-center animate-fade-in">
-                <div className="w-14 h-14 rounded-full border-3 border-[#149B9E] border-t-transparent animate-spin mx-auto" />
+              <div className="p-8 sm:p-12 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-6 text-center animate-fade-in">
+                <div className="w-14 h-14 rounded-full border-3 border-[#EA580C] border-t-transparent animate-spin mx-auto" />
                 <div>
-                  <h3 className="text-2xl font-display font-black text-[#0F172A] tracking-tight">
+                  <h3 className="text-2xl font-display font-black text-[#2D231C] tracking-tight">
                     Evaluating Regional Capability & Freshness Matrix…
                   </h3>
-                  <p className="text-xs text-[#475569] font-medium mt-1.5">
+                  <p className="text-xs text-[#7D7067] font-medium mt-1.5">
                     Checking which hospitals can actually receive this patient right now.
                   </p>
                 </div>
@@ -419,12 +419,12 @@ export const AmbulanceHomePage: React.FC = () => {
                       className={clsx(
                         'p-3 rounded-xl border transition-colors flex items-center justify-between font-bold',
                         matchingStep >= s.id
-                          ? 'border-[#149B9E]/50 bg-[#E6F7F7] text-[#0D7C7E] shadow-xs'
-                          : 'border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]'
+                          ? 'border-[#EA580C]/50 bg-[#FFF7ED] text-[#C2410C] shadow-xs'
+                          : 'border-[#E8E2D9] bg-[#FAF8F5] text-[#7D7067]'
                       )}
                     >
                       <span>{s.label}</span>
-                      {matchingStep >= s.id && <span className="font-extrabold text-[#0D9488]">✓</span>}
+                      {matchingStep >= s.id && <span className="font-extrabold text-[#52796F]">✓</span>}
                     </div>
                   ))}
                 </div>
@@ -434,16 +434,16 @@ export const AmbulanceHomePage: React.FC = () => {
 
           {/* Right Column: Live Regional Readiness Radar (5 Cols) */}
           <div className="lg:col-span-5 space-y-4 stagger-2">
-            <div className="p-6 rounded-3xl border border-[#E2E8F0] bg-white shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+            <div className="p-6 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D9]">
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#149B9E]" />
-                  <span className="text-xs font-mono uppercase tracking-wider text-[#0F172A] font-black">
+                  <Building2 className="w-4 h-4 text-[#EA580C]" />
+                  <span className="text-xs font-mono uppercase tracking-wider text-[#2D231C] font-black">
                     Regional Facility Readiness Radar
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-[#0F766E] font-bold flex items-center gap-1.5 bg-[#CCFBF1] px-2.5 py-0.5 rounded-full border border-[#0D9488]/40">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488] animate-pulse" />
+                <span className="text-[10px] font-mono text-[#354F52] font-bold flex items-center gap-1.5 bg-[#EFF6F3] px-2.5 py-0.5 rounded-full border border-[#52796F]/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#52796F] animate-pulse" />
                   <span>Telemetry Live</span>
                 </span>
               </div>
@@ -452,12 +452,12 @@ export const AmbulanceHomePage: React.FC = () => {
                 {hospitals.map((hosp) => (
                   <div
                     key={hosp.id}
-                    className="p-4 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] space-y-2.5 hover:border-[#149B9E]/40 transition-all hover:bg-white shadow-xs"
+                    className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E8E2D9] space-y-2.5 hover:border-[#EA580C]/40 transition-all hover:bg-white shadow-xs"
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="text-sm font-display font-bold text-[#0F172A]">{hosp.name}</div>
-                        <div className="text-[10px] font-mono text-[#475569] font-bold">
+                        <div className="text-sm font-display font-bold text-[#2D231C]">{hosp.name}</div>
+                        <div className="text-[10px] font-mono text-[#7D7067] font-bold">
                           Trauma: {hosp.trauma_team_on_shift ? 'ACTIVE SHIFT' : 'STANDBY'} • ER Congestion: {hosp.er_load_score}/5
                         </div>
                       </div>
@@ -465,17 +465,17 @@ export const AmbulanceHomePage: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 text-xs font-mono pt-1">
-                      <div className="bg-white p-2.5 rounded-xl text-center border border-[#E2E8F0] shadow-xs">
-                        <span className="text-[9px] text-[#475569] font-bold block">ICU FREE</span>
-                        <span className="font-extrabold text-[#0F172A]">{hosp.icu_beds_free}</span>
+                      <div className="bg-white p-2.5 rounded-xl text-center border border-[#E8E2D9] shadow-xs">
+                        <span className="text-[9px] text-[#7D7067] font-bold block">ICU FREE</span>
+                        <span className="font-extrabold text-[#2D231C]">{hosp.icu_beds_free}</span>
                       </div>
-                      <div className="bg-white p-2.5 rounded-xl text-center border border-[#E2E8F0] shadow-xs">
-                        <span className="text-[9px] text-[#475569] font-bold block">VENTILATORS</span>
-                        <span className="font-extrabold text-[#0F172A]">{hosp.ventilators_free}</span>
+                      <div className="bg-white p-2.5 rounded-xl text-center border border-[#E8E2D9] shadow-xs">
+                        <span className="text-[9px] text-[#7D7067] font-bold block">VENTILATORS</span>
+                        <span className="font-extrabold text-[#2D231C]">{hosp.ventilators_free}</span>
                       </div>
-                      <div className="bg-white p-2.5 rounded-xl text-center border border-[#E2E8F0] shadow-xs">
-                        <span className="text-[9px] text-[#475569] font-bold block">RELIABILITY</span>
-                        <span className="font-extrabold text-[#0D9488]">
+                      <div className="bg-white p-2.5 rounded-xl text-center border border-[#E8E2D9] shadow-xs">
+                        <span className="text-[9px] text-[#7D7067] font-bold block">RELIABILITY</span>
+                        <span className="font-extrabold text-[#52796F]">
                           {Math.round(hosp.reliability_score * 100)}%
                         </span>
                       </div>
@@ -484,8 +484,8 @@ export const AmbulanceHomePage: React.FC = () => {
                 ))}
               </div>
 
-              <div className="pt-2 text-[11px] font-mono text-[#475569] font-semibold leading-relaxed">
-                Hospital profiles dynamically decay from <code className="text-[#0D9488] font-bold">fresh</code> (&lt;10m) to <code className="text-[#D97706] font-bold">stale</code> (10-30m) to <code className="text-[#64748B] font-bold">unknown</code> (&gt;30m).
+              <div className="pt-2 text-[11px] font-mono text-[#7D7067] font-semibold leading-relaxed">
+                Hospital profiles dynamically decay from <code className="text-[#52796F] font-bold">fresh</code> (&lt;10m) to <code className="text-[#D97706] font-bold">stale</code> (10-30m) to <code className="text-[#7D7067] font-bold">unknown</code> (&gt;30m).
               </div>
             </div>
           </div>

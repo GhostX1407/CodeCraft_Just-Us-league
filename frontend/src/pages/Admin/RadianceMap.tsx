@@ -35,7 +35,7 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
     : null;
 
   return (
-    <div className={clsx('relative w-full h-[460px] rounded-3xl border border-[#E2E8F0] overflow-hidden shadow-sm bg-[#F8FAFC]', className)}>
+    <div className={clsx('relative w-full h-[460px] rounded-3xl border border-[#E8E2D9] overflow-hidden shadow-sm bg-[#FAF8F5]', className)}>
       <MapContainer
         center={[centerLat, centerLng]}
         zoom={13}
@@ -60,11 +60,11 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
             : 300 + hosp.icu_beds_free * 40;
 
           const radianceColor = isAccepted
-            ? '#0D9488'
+            ? '#52796F'
             : isRequested
-            ? '#149B9E'
+            ? '#EA580C'
             : freshnessStatus === 'unknown'
-            ? '#94A3B8'
+            ? '#A89F97'
             : '#2DD4BF';
 
           // Custom High-Def Pin
@@ -112,11 +112,11 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
               <Marker position={[hosp.lat, hosp.lng]} icon={customIcon}>
                 <Popup className="font-sans text-xs">
                   <div className="p-1 space-y-1">
-                    <div className="font-black text-[#0F172A]">{hosp.name}</div>
-                    <div className="font-mono font-bold text-[#475569]">
-                      ICU Free: <span className="text-[#0F172A]">{hosp.icu_beds_free}</span> • Vents: <span className="text-[#0F172A]">{hosp.ventilators_free}</span>
+                    <div className="font-black text-[#2D231C]">{hosp.name}</div>
+                    <div className="font-mono font-bold text-[#7D7067]">
+                      ICU Free: <span className="text-[#2D231C]">{hosp.icu_beds_free}</span> • Vents: <span className="text-[#2D231C]">{hosp.ventilators_free}</span>
                     </div>
-                    <div className="font-mono font-bold text-[#0D7C7E]">
+                    <div className="font-mono font-bold text-[#C2410C]">
                       Reliability: {Math.round(hosp.reliability_score * 100)}%
                     </div>
                   </div>
@@ -137,7 +137,7 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
                   width: 32px;
                   height: 32px;
                   border-radius: 50%;
-                  background: #149B9E;
+                  background: #EA580C;
                   border: 2px solid #FFFFFF;
                   display: flex;
                   align-items: center;
@@ -156,7 +156,7 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
             })}
           >
             <Popup>
-              <div className="font-mono text-xs font-bold text-[#0F172A]">
+              <div className="font-mono text-xs font-bold text-[#2D231C]">
                 Ambulance Dispatch • Case {activeCase.id}
               </div>
             </Popup>
@@ -171,7 +171,7 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
               [targetHospital.lat, targetHospital.lng],
             ]}
             pathOptions={{
-              color: activeRequest?.status === 'accepted' ? '#0D9488' : '#149B9E',
+              color: activeRequest?.status === 'accepted' ? '#52796F' : '#EA580C',
               weight: activeRequest?.status === 'accepted' ? 4 : 2.5,
               dashArray: activeRequest?.status === 'accepted' ? undefined : '6, 8',
               opacity: 0.9,
@@ -181,16 +181,16 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
       </MapContainer>
 
       {/* Map Legend & Radiance Explanation Overlay */}
-      <div className="absolute top-4 right-4 z-20 bg-white/95 border border-[#E2E8F0] p-4 rounded-2xl text-[11px] font-mono font-semibold text-[#475569] space-y-1.5 backdrop-blur-md pointer-events-none select-none shadow-sm">
-        <div className="text-[10px] uppercase font-black text-[#0F172A] tracking-wider mb-1">
+      <div className="absolute top-4 right-4 z-20 bg-white/95 border border-[#E8E2D9] p-4 rounded-2xl text-[11px] font-mono font-semibold text-[#7D7067] space-y-1.5 backdrop-blur-md pointer-events-none select-none shadow-sm">
+        <div className="text-[10px] uppercase font-black text-[#2D231C] tracking-wider mb-1">
           Capability Radiance:
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#149B9E]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#EA580C]" />
           <span>Teal: In-flight candidate vector</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0D9488]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#52796F]" />
           <span>Mint: Locked commitment hold</span>
         </div>
         <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ export const RadianceMap: React.FC<RadianceMapProps> = ({
           <span>Cyan: Regional hospital ready</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full border border-dashed border-[#94A3B8]" />
+          <span className="w-2.5 h-2.5 rounded-full border border-dashed border-[#A89F97]" />
           <span>Dashed: Stale / de-weighted</span>
         </div>
       </div>

@@ -82,31 +82,33 @@ export const LoginPage: React.FC = () => {
   const ActiveIcon = currentRoleMeta.icon;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col justify-between p-4 sm:p-6 font-sans select-none relative z-10">
+    <div className="min-h-screen bg-[#FAF8F5] text-[#2D231C] flex flex-col justify-between p-4 sm:p-6 font-sans select-none relative z-10">
       {/* Top Header */}
-      <header className="w-full flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#E6F7F7] border border-[#149B9E]/30 flex items-center justify-center text-[#149B9E] font-mono font-black text-lg shadow-xs">
-            R
-          </div>
+      <header className="w-full flex items-center justify-between pb-4 border-b border-[#E8E2D9]">
+        <div className="flex items-center gap-3.5">
+          <img
+            src="/raahi-logo.png"
+            alt="Raahi Logo"
+            className="w-11 h-11 rounded-2xl object-contain shadow-xs border border-[#E8E2D9] bg-white p-0.5"
+          />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-display font-black text-[#0F172A] tracking-tight">
+              <span className="text-xl font-display font-black text-[#2D231C] tracking-tight">
                 Raahi
               </span>
-              <span className="text-[10px] font-mono uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-[#E6F7F7] text-[#0D7C7E] border border-[#149B9E]/30">
+              <span className="text-[10px] font-mono uppercase tracking-wider font-black px-2 py-0.5 rounded-full bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA]">
                 EMS Gateway
               </span>
             </div>
-            <p className="text-xs font-mono font-bold text-[#64748B]">
+            <p className="text-xs font-mono font-bold text-[#7D7067]">
               Capability-Match Emergency Medical Routing Platform
             </p>
           </div>
         </div>
 
         <div className="hidden sm:flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0D9488] animate-pulse" />
-          <span className="text-xs font-mono font-bold text-[#0F766E] uppercase tracking-wider">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#52796F] animate-pulse" />
+          <span className="text-xs font-mono font-bold text-[#52796F] uppercase tracking-wider">
             Network Operations Online
           </span>
         </div>
@@ -114,9 +116,9 @@ export const LoginPage: React.FC = () => {
 
       {/* Main Login Card Section */}
       <main className="max-w-md mx-auto w-full my-auto py-6">
-        <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 sm:p-8 shadow-sm">
+        <div className="bg-white border border-[#E8E2D9] rounded-3xl p-6 sm:p-8 shadow-[0_12px_36px_rgba(45,35,28,0.06)]">
           {/* 3 Clean Role Segmented Switcher */}
-          <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#F1F5F9] rounded-2xl border border-[#E2E8F0] mb-6">
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#F4EFE6] rounded-2xl border border-[#E8E2D9] mb-6">
             {activeRoles.map((roleItem) => {
               const Icon = roleItem.icon;
               const isActive = selectedRole === roleItem.key;
@@ -128,11 +130,11 @@ export const LoginPage: React.FC = () => {
                   className={clsx(
                     'py-2 px-1 rounded-xl text-xs font-mono font-bold flex flex-col items-center justify-center gap-1 transition-all duration-150 select-none',
                     isActive
-                      ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
-                      : 'text-[#64748B] hover:text-[#0F172A]'
+                      ? 'bg-white text-[#2D231C] shadow-xs border border-[#E8E2D9]'
+                      : 'text-[#7D7067] hover:text-[#2D231C]'
                   )}
                 >
-                  <Icon className={clsx('w-4 h-4', isActive ? 'text-[#149B9E]' : 'text-[#64748B]')} />
+                  <Icon className={clsx('w-4 h-4', isActive ? 'text-[#EA580C]' : 'text-[#7D7067]')} />
                   <span className="text-[10px] truncate max-w-full">
                     {roleItem.key === 'ambulance' ? 'Ambulance' : roleItem.key === 'hospital' ? 'Hospital' : 'Admin'}
                   </span>
@@ -142,15 +144,15 @@ export const LoginPage: React.FC = () => {
           </div>
 
           {/* Form Header */}
-          <div className="flex items-center gap-3 pb-5 border-b border-[#E2E8F0] mb-5">
-            <div className="w-10 h-10 rounded-2xl bg-[#E6F7F7] border border-[#149B9E]/30 flex items-center justify-center text-[#149B9E]">
+          <div className="flex items-center gap-3 pb-5 border-b border-[#E8E2D9] mb-5">
+            <div className="w-10 h-10 rounded-2xl bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-center text-[#EA580C] shadow-2xs">
               <ActiveIcon className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-black text-[#0F172A] tracking-tight">
+              <h1 className="text-xl font-display font-black text-[#2D231C] tracking-tight">
                 {DEMO_ACCOUNTS[selectedRole].title} Sign In
               </h1>
-              <p className="text-xs font-mono font-semibold text-[#64748B]">
+              <p className="text-xs font-mono font-semibold text-[#7D7067]">
                 {DEMO_ACCOUNTS[selectedRole].subtitle}
               </p>
             </div>
@@ -158,7 +160,7 @@ export const LoginPage: React.FC = () => {
 
           {/* Error Banner */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-[#FFE4E6] border border-[#FECDD3] text-[#E11D48] text-xs font-bold flex items-center gap-2">
+            <div className="mb-4 p-3 rounded-xl bg-[#FEE2E2] border border-[#FECACA] text-[#DC2626] text-xs font-bold flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -168,11 +170,11 @@ export const LoginPage: React.FC = () => {
           <form onSubmit={handleFormSubmit} className="space-y-4">
             {/* Username */}
             <div>
-              <label className="block text-xs font-mono font-bold uppercase text-[#475569] mb-1.5">
+              <label className="block text-xs font-mono font-bold uppercase text-[#5C4E45] mb-1.5">
                 Username / Email
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#64748B]">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#7D7067]">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -180,18 +182,18 @@ export const LoginPage: React.FC = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter authorized username or email"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-medium text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#149B9E]/30 focus:border-[#149B9E] transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8E2D9] bg-[#FAF8F5] text-sm font-medium text-[#2D231C] placeholder-[#A89F97] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/25 focus:border-[#EA580C] transition-all"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-mono font-bold uppercase text-[#475569] mb-1.5">
+              <label className="block text-xs font-mono font-bold uppercase text-[#5C4E45] mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#64748B]">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#7D7067]">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -199,12 +201,12 @@ export const LoginPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter access password"
-                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-sm font-mono text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#149B9E]/30 focus:border-[#149B9E] transition-all"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#E8E2D9] bg-[#FAF8F5] text-sm font-mono text-[#2D231C] placeholder-[#A89F97] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/25 focus:border-[#EA580C] transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#64748B] hover:text-[#0F172A] transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#7D7067] hover:text-[#2D231C] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -216,7 +218,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-[#149B9E] hover:bg-[#0D7C7E] active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all disabled:opacity-60"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#EA580C] via-[#F59E0B] to-[#EA580C] hover:brightness-105 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-[#EA580C]/20 transition-all disabled:opacity-60"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -236,33 +238,33 @@ export const LoginPage: React.FC = () => {
       </main>
 
       {/* Bottom Area: Left-Corner Credentials & Right-Corner Compliance */}
-      <footer className="w-full flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 pt-4 border-t border-[#E2E8F0]">
+      <footer className="w-full flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 pt-4 border-t border-[#E8E2D9]">
         {/* Full Left Side Corner at Bottom: Shows ONLY the Selected Role's Credential */}
         <div className="text-left font-mono">
-          <div className="text-[10px] uppercase font-bold text-[#64748B] tracking-wider mb-1">
+          <div className="text-[10px] uppercase font-bold text-[#7D7067] tracking-wider mb-1">
             {selectedRole === 'ambulance' ? 'Ambulance' : selectedRole === 'hospital' ? 'Hospital' : 'Admin'} Demo Credentials:
           </div>
           <div
             onClick={handleApplyCredentials}
-            className="text-xs text-[#64748B] bg-white border border-[#E2E8F0] px-3.5 py-2 rounded-xl shadow-2xs cursor-pointer hover:border-[#149B9E]/50 hover:text-[#0F172A] transition-all flex items-center gap-2.5 group"
+            className="text-xs text-[#7D7067] bg-white border border-[#E8E2D9] px-3.5 py-2 rounded-xl shadow-2xs cursor-pointer hover:border-[#EA580C]/40 hover:text-[#2D231C] transition-all flex items-center gap-2.5 group"
             title="Click to auto-enter credentials"
           >
             <div>
-              <span className="font-semibold text-[#64748B]">Username:</span>{' '}
-              <span className="text-[#475569] font-medium select-all">{DEMO_ACCOUNTS[selectedRole].username}</span>
+              <span className="font-semibold text-[#7D7067]">Username:</span>{' '}
+              <span className="text-[#4A3E36] font-medium select-all">{DEMO_ACCOUNTS[selectedRole].username}</span>
             </div>
-            <span className="text-[#CBD5E1]">•</span>
+            <span className="text-[#D8CFBF]">•</span>
             <div>
-              <span className="font-semibold text-[#64748B]">Password:</span>{' '}
-              <span className="text-[#475569] font-medium select-all">{DEMO_ACCOUNTS[selectedRole].password}</span>
+              <span className="font-semibold text-[#7D7067]">Password:</span>{' '}
+              <span className="text-[#4A3E36] font-medium select-all">{DEMO_ACCOUNTS[selectedRole].password}</span>
             </div>
             {applied ? (
-              <span className="flex items-center gap-1 text-[10px] font-bold text-[#0D9488] bg-[#E6F7F7] px-1.5 py-0.5 rounded-md ml-1">
+              <span className="flex items-center gap-1 text-[10px] font-bold text-[#52796F] bg-[#EFF6F3] px-1.5 py-0.5 rounded-md ml-1">
                 <Check className="w-3 h-3" />
                 Applied
               </span>
             ) : (
-              <span className="text-[10px] text-[#94A3B8] group-hover:text-[#149B9E] transition-colors ml-1">
+              <span className="text-[10px] text-[#A89F97] group-hover:text-[#EA580C] transition-colors ml-1">
                 (click to enter)
               </span>
             )}
@@ -270,12 +272,13 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Full Right Side Corner at Bottom: DISHA & HIPAA Architecture */}
-        <div className="text-left sm:text-right text-xs font-mono text-[#64748B]">
-          <div className="font-semibold text-[#475569]">DISHA &amp; HIPAA Compliant Architecture</div>
-          <div className="mt-0.5 text-[11px] text-[#94A3B8]">Raahi Emergency Medical Network • 256-bit Encryption</div>
+        <div className="text-left sm:text-right text-xs font-mono text-[#7D7067]">
+          <div className="font-semibold text-[#5C4E45]">DISHA &amp; HIPAA Compliant Architecture</div>
+          <div className="mt-0.5 text-[11px] text-[#A89F97]">Raahi Emergency Medical Network • 256-bit Encryption</div>
         </div>
       </footer>
     </div>
   );
 };
+
 

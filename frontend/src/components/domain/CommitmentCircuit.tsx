@@ -81,14 +81,14 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
 
           {/* Traveling Photon Gradient */}
           <linearGradient id="photonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#149B9E" stopOpacity="0" />
-            <stop offset="70%" stopColor="#149B9E" stopOpacity="0.8" />
+            <stop offset="0%" stopColor="#EA580C" stopOpacity="0" />
+            <stop offset="70%" stopColor="#EA580C" stopOpacity="0.8" />
             <stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
           </linearGradient>
 
           {/* Locked Commit Gradient (Medical Deep Teal -> Bright Mint) */}
           <linearGradient id="commitFill" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#0D9488" />
+            <stop offset="0%" stopColor="#52796F" />
             <stop offset="100%" stopColor="#2DD4BF" />
           </linearGradient>
         </defs>
@@ -167,7 +167,7 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
               width="8"
               height="20"
               rx="2.5"
-              fill="#0D9488"
+              fill="#52796F"
               filter="url(#commitGlow)"
             />
             {/* Terminal Right Lock Cap */}
@@ -177,7 +177,7 @@ export const CommitmentCircuit: React.FC<CommitmentCircuitProps> = ({
               width="8"
               height="20"
               rx="2.5"
-              fill="#0D9488"
+              fill="#52796F"
               filter="url(#commitGlow)"
             />
           </g>

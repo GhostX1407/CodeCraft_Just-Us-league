@@ -69,25 +69,27 @@ export const CommandDock: React.FC = () => {
     <div className="fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-3 pointer-events-none select-none">
       <nav
         aria-label="System Command Dock"
-        className="pointer-events-auto bg-white/95 backdrop-blur-2xl border border-[#E2E8F0] rounded-full px-3 sm:px-4 py-2 shadow-[0_16px_40px_rgba(15,23,42,0.08)] flex items-center gap-2 sm:gap-3 transition-all duration-300 ring-1 ring-[#149B9E]/[0.1]"
+        className="pointer-events-auto bg-white/95 backdrop-blur-2xl border border-[#E8E2D9] rounded-full px-3 sm:px-4 py-2 shadow-[0_16px_40px_rgba(45,35,28,0.08)] flex items-center gap-2 sm:gap-3 transition-all duration-300 ring-1 ring-[#EA580C]/[0.12]"
       >
         {/* Brand Core */}
         <Link
           to="/"
-          className="flex items-center gap-2.5 pr-2.5 sm:pr-3 border-r border-[#E2E8F0] hover:opacity-90 transition-opacity group"
+          className="flex items-center gap-2.5 pr-2.5 sm:pr-3 border-r border-[#E8E2D9] hover:opacity-90 transition-opacity group"
         >
-          <div className="relative w-8 h-8 rounded-full bg-[#149B9E] flex items-center justify-center text-white font-mono font-bold text-xs shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-            <span className="relative z-10 font-black">R</span>
-          </div>
+          <img
+            src="/raahi-logo.png"
+            alt="Raahi Logo"
+            className="w-8 h-8 rounded-full object-cover shadow-xs border border-[#FED7AA] group-hover:scale-105 transition-transform bg-white"
+          />
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-display font-bold text-sm tracking-tight text-[#0F172A]">
+              <span className="font-display font-bold text-sm tracking-tight text-[#2D231C]">
                 Raahi
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#149B9E] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EA580C] animate-pulse" />
             </div>
-            <div className="flex items-center gap-1 text-[9px] font-mono text-[#475569] font-bold hidden lg:flex tracking-widest uppercase">
-              <Activity className="w-2.5 h-2.5 text-[#149B9E]" />
+            <div className="flex items-center gap-1 text-[9px] font-mono text-[#7D7067] font-bold hidden lg:flex tracking-widest uppercase">
+              <Activity className="w-2.5 h-2.5 text-[#EA580C]" />
               <span>Routing Core</span>
             </div>
           </div>
@@ -109,8 +111,8 @@ export const CommandDock: React.FC = () => {
                 className={clsx(
                   'px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-sans transition-all duration-200 flex items-center gap-1.5',
                   isActive
-                    ? 'bg-[#E6F7F7] text-[#0D7C7E] border border-[#149B9E]/50 font-bold shadow-xs'
-                    : 'text-[#475569] hover:text-[#0F172A] hover:bg-[#F1F5F9] border border-transparent font-semibold'
+                    ? 'bg-[#FFF7ED] text-[#C2410C] border border-[#FED7AA] font-bold shadow-xs'
+                    : 'text-[#7D7067] hover:text-[#2D231C] hover:bg-[#F4EFE6] border border-transparent font-semibold'
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -124,9 +126,9 @@ export const CommandDock: React.FC = () => {
         {activeRequest && (
           <button
             onClick={() => navigate(`/ambulance/${activeRequest.case_id}`)}
-            className="px-3 py-1.5 rounded-full bg-[#E6F7F7] border border-[#149B9E] text-[#0D7C7E] text-xs font-mono font-bold flex items-center gap-2 hover:bg-[#CCFBF1] transition-all animate-pulse shadow-xs"
+            className="px-3 py-1.5 rounded-full bg-[#FFF7ED] border border-[#EA580C] text-[#C2410C] text-xs font-mono font-bold flex items-center gap-2 hover:bg-[#FFEDD5] transition-all animate-pulse shadow-xs"
           >
-            <span className="w-2 h-2 rounded-full bg-[#149B9E]" />
+            <span className="w-2 h-2 rounded-full bg-[#EA580C]" />
             <span className="hidden sm:inline">Active:</span>
             <span>{activeRequest.case_id.slice(0, 10)}</span>
           </button>
@@ -134,21 +136,21 @@ export const CommandDock: React.FC = () => {
 
         {/* Live System Time in Tabular Mono */}
         {currentTime && (
-          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[11px] font-mono text-[#0F172A] font-bold tabular-nums">
-            <Clock className="w-3 h-3 text-[#149B9E]" />
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#E8E2D9] text-[11px] font-mono text-[#2D231C] font-bold tabular-nums">
+            <Clock className="w-3 h-3 text-[#EA580C]" />
             <span>{currentTime}</span>
           </div>
         )}
 
         {/* Utility Controls */}
-        <div className="flex items-center gap-1.5 pl-2 border-l border-[#E2E8F0]">
+        <div className="flex items-center gap-1.5 pl-2 border-l border-[#E8E2D9]">
           {/* Audio Chime Trigger */}
           <button
             onClick={handleAudioToggle}
             className={clsx(
               'p-2 rounded-full border transition-all duration-180',
               audioActive
-                ? 'border-[#0D9488] text-[#0D9488] bg-[#E6F7F7] shadow-xs'
+                ? 'border-[#52796F] text-[#52796F] bg-[#EFF6F3] shadow-xs'
                 : 'border-[#D97706] text-[#D97706] bg-[#FEF3C7] hover:bg-[#FDE68A] animate-pulse'
             )}
             title={audioActive ? 'Alert tone active (Web Audio API)' : 'Click to unlock alert audio chime'}
@@ -159,7 +161,7 @@ export const CommandDock: React.FC = () => {
           {/* Quick Component Gallery */}
           <Link
             to="/dev/components"
-            className="p-2 rounded-full border border-[#E2E8F0] text-[#475569] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"
+            className="p-2 rounded-full border border-[#E8E2D9] text-[#7D7067] hover:text-[#2D231C] hover:bg-[#F4EFE6] transition-colors"
             title="Open Component Testbench"
           >
             <Layers className="w-3.5 h-3.5" />
@@ -168,7 +170,7 @@ export const CommandDock: React.FC = () => {
           {/* Reset Demo Data */}
           <button
             onClick={handleReset}
-            className="p-2 rounded-full border border-[#E2E8F0] text-[#475569] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"
+            className="p-2 rounded-full border border-[#E8E2D9] text-[#7D7067] hover:text-[#2D231C] hover:bg-[#F4EFE6] transition-colors"
             title="Reset to clean initial state"
           >
             <RotateCcw className="w-3.5 h-3.5" />

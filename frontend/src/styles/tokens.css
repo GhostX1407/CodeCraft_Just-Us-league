@@ -1,86 +1,93 @@
 :root {
-  /* ── Pristine White & Medical Teal-Blue Palette (Reception Image Inspired) ── */
-  --hospital-white:          #FFFFFF;   /* Pure crisp white: walls, cards, major surfaces */
-  --hospital-canvas:         #F8FAFC;   /* Clean clinical ground: corridors, floorings */
-  --hospital-ground-subtle:  #F1F5F9;   /* Subtle recessed section ground */
+  /* ── Raahi Brand Identity Palette (Matched to Official Logo & Silk Ambience) ── */
+  --hospital-white:          #FFFFFF;   /* Pure crisp white: cards, elevated surfaces */
+  --hospital-canvas:         #FAF8F5;   /* Warm porcelain silk ivory: corridors, floorings, main canvas */
+  --hospital-ground-subtle:  #F4EFE6;   /* Subtle warm recessed section ground */
   --hospital-surface:        #FFFFFF;   /* Crisp elevated surface / card face */
-  --hospital-surface-hover:  #F8FAFC;   /* Crisp hover */
+  --hospital-surface-hover:  #FFFDFB;   /* Warm soft hover */
   
-  /* Medical Teal / Cyan Blue (Ceiling Bulkhead & Accent) */
-  --hospital-teal:           #149B9E;   /* Signature Medical Teal-Blue */
-  --hospital-teal-hover:     #0D7C7E;   /* Deep Teal on hover */
-  --hospital-teal-light:     #E6F7F7;   /* Pale teal tint / pill background */
-  --hospital-teal-subtle:    #CCF0F0;   /* Secondary teal border / accent */
-  --hospital-teal-glow:      rgba(20, 155, 158, 0.3);
+  /* Primary Brand Warm Saffron / Golden Amber (Road-Cross Symbol) */
+  --hospital-teal:           #EA580C;   /* Primary Brand Saffron-Orange */
+  --hospital-teal-hover:     #C2410C;   /* Deep Saffron on hover */
+  --hospital-teal-light:     #FFF7ED;   /* Pale saffron tint / pill background */
+  --hospital-teal-subtle:    #FED7AA;   /* Secondary warm border / accent */
+  --hospital-teal-glow:      rgba(234, 88, 12, 0.32);
 
-  /* Deep Architectural Contrast (Reception Counter Wood & Charcoal Trim) */
-  --hospital-wood:           #4A3525;   /* Warm Walnut reception accent */
-  --hospital-wood-dark:      #302217;
-  --hospital-charcoal:       #0F172A;   /* Deepest Charcoal for bold headers */
+  /* Secondary Brand Healing Sage / Eucalyptus Green (Road Landscape) */
+  --hospital-sage:           #52796F;   /* Healing Medical Sage */
+  --hospital-sage-hover:     #354F52;   /* Deep Sage */
+  --hospital-sage-light:     #EFF6F3;   /* Light Sage Tint */
+  --hospital-sage-subtle:    #C2D6CC;   /* Sage Border */
 
-  /* High-Contrast Bold Typography (Every font crystal-clear on light surfaces) */
-  --text-hi:                 #0F172A;   /* Deep Slate: 100% contrast, bold primary text */
-  --text-mid:                #1E293B;   /* Strong Slate: secondary text & labels */
-  --text-low:                #475569;   /* Crisp Mid-Slate: readable timestamps/hints */
+  /* Deep Warm Espresso Architectural Contrast */
+  --hospital-wood:           #42342B;   /* Warm Espresso Walnut */
+  --hospital-wood-dark:      #2D231C;   /* Deepest Cocoa */
+  --hospital-charcoal:       #2D231C;   /* Deepest Espresso Charcoal for bold headers */
 
-  /* Clean Clinical Borders */
-  --color-border:            #E2E8F0;   /* Clean light architectural border */
-  --color-border-strong:     #CBD5E1;   /* Medium architectural border */
-  --line-1:                  #E2E8F0;
-  --line-highlight:          rgba(20, 155, 158, 0.15);
+  /* High-Contrast Bold Typography (Crystal-clear on light porcelain surfaces) */
+  --text-hi:                 #2D231C;   /* Deep Espresso: 100% contrast, bold primary text */
+  --text-mid:                #4A3E36;   /* Warm Cocoa: secondary text & labels */
+  --text-low:                #7D7067;   /* Warm Muted: readable timestamps/hints */
+
+  /* Clean Warm Architectural Borders */
+  --color-border:            #E8E2D9;   /* Warm architectural border */
+  --color-border-strong:     #D8CFBF;   /* Medium architectural border */
+  --line-1:                  #E8E2D9;
+  --line-highlight:          rgba(234, 88, 12, 0.18);
 
   /* Surface Tokens */
-  --color-canvas:            #F8FAFC;
-  --color-canvas-subtle:     #F1F5F9;
+  --color-canvas:            #FAF8F5;
+  --color-canvas-subtle:     #F4EFE6;
   --color-surface:           #FFFFFF;
   --color-surface-elevated:  #FFFFFF;
-  --color-surface-hover:     #F8FAFC;
-  --color-surface-muted:     #F1F5F9;
+  --color-surface-hover:     #FFFDFB;
+  --color-surface-muted:     #F4EFE6;
   
-  --ink-950:                 #F8FAFC;   /* Main canvas ground */
+  --ink-950:                 #FAF8F5;   /* Main canvas ground */
   --ink-900:                 #FFFFFF;   /* Pure white card face */
   --ink-850:                 #FFFFFF;
-  --ink-800:                 #F8FAFC;
-  --ink-750:                 #F1F5F9;
-  --ink-700:                 #E2E8F0;
-  --ink-600:                 #CBD5E1;
+  --ink-800:                 #FAF8F5;
+  --ink-750:                 #F4EFE6;
+  --ink-700:                 #E8E2D9;
+  --ink-600:                 #D8CFBF;
   --paper:                   #FFFFFF;
-  --paper-2:                 #F8FAFC;
+  --paper-2:                 #FAF8F5;
 
   /* Clinical Signal Grade Accents */
-  --signal:                  #149B9E;   /* Signature Medical Teal: in-flight routing / CTA */
-  --signal-light:            #E6F7F7;
-  --signal-glow:             rgba(20, 155, 158, 0.3);
+  --signal:                  #EA580C;   /* Brand Saffron: in-flight routing / CTA */
+  --signal-light:            #FFF7ED;
+  --signal-glow:             rgba(234, 88, 12, 0.35);
 
-  --commit:                  #0D9488;   /* Confirmed reception / committed lock */
-  --commit-light:            #CCFBF1;
-  --commit-glow:             rgba(13, 148, 136, 0.3);
+  --commit:                  #52796F;   /* Brand Healing Sage: confirmed reception / committed lock */
+  --commit-light:            #EFF6F3;
+  --commit-glow:             rgba(82, 121, 111, 0.3);
 
-  --caution:                 #D97706;   /* Amber: attention, deadline countdown */
+  --caution:                 #D97706;   /* Golden Amber: attention, deadline countdown */
   --caution-glow:            rgba(217, 119, 6, 0.3);
 
-  --critical:                #E11D48;   /* Medical Crimson/Coral: decline, fracture, emergency */
-  --critical-glow:           rgba(225, 29, 72, 0.3);
+  --critical:                #DC2626;   /* Coral Crimson: urgent alerts */
+  --critical-glow:           rgba(220, 38, 38, 0.3);
 
-  --unknown:                 #64748B;   /* Slate neutral */
-  --severity-red:            #E11D48;   /* Red urgency */
-  --severity-yellow:         #D97706;   /* Yellow urgency */
-  --severity-green:          #0D9488;   /* Green urgency */
+  --unknown:                 #7D7067;   /* Warm neutral */
+  --severity-red:            #DC2626;
+  --severity-yellow:         #D97706;
+  --severity-green:          #52796F;
 
-  /* Pristine Hospital Frosted Glass */
-  --glass-bg:                rgba(255, 255, 255, 0.92);
+  /* Pristine Silk Frosted Glass */
+  --glass-bg:                rgba(255, 255, 255, 0.94);
   --glass-bg-hover:          rgba(255, 255, 255, 0.98);
-  --glass-border:            rgba(226, 232, 240, 0.9);
-  --glass-border-hover:      rgba(20, 155, 158, 0.4);
-  --glass-shine:             linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 0) 60%);
+  --glass-border:            rgba(232, 226, 217, 0.9);
+  --glass-border-hover:      rgba(234, 88, 12, 0.45);
+  --glass-shine:             linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(250, 248, 245, 0) 60%);
 
-  /* Clean Clinical Shadows */
-  --shadow-macos-window:     0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
-  --shadow-macos-card:       0 3px 12px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.03);
-  --shadow-macos-lifted:     0 18px 35px -8px rgba(15, 23, 42, 0.10), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  /* Warm Organic Shadows */
+  --shadow-macos-window:     0 20px 45px -10px rgba(45, 35, 28, 0.08), 0 2px 8px rgba(45, 35, 28, 0.04);
+  --shadow-macos-card:       0 4px 16px rgba(45, 35, 28, 0.04), 0 1px 3px rgba(45, 35, 28, 0.03);
+  --shadow-macos-lifted:     0 18px 35px -8px rgba(45, 35, 28, 0.10), 0 0 0 1px rgba(232, 226, 217, 0.9);
 
   /* 120Hz Spring Physics */
   --ease-spring:             cubic-bezier(0.16, 1, 0.3, 1);
   --ease-snappy:             cubic-bezier(0.2, 0.9, 0.2, 1);
   --ease-bounce:             cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
