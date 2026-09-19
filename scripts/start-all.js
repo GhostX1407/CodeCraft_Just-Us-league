@@ -10,8 +10,16 @@
 const { spawn } = require('child_process');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
+const envPath = path.resolve(ROOT_DIR, '.env');
+if (fs.existsSync(envPath) && typeof process.loadEnvFile === 'function') {
+  try {
+    process.loadEnvFile(envPath);
+  } catch {}
+}
+
 const isWindows = process.platform === 'win32';
 const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 

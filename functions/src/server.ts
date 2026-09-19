@@ -10,10 +10,31 @@
 
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import { api, healthCheck } from './index';
 import { setDb } from './services/firebase';
 import { MockFirestore } from './data/mockFirestore';
 import { seedAllDemoData } from './data/seedData';
+
+// Automatically load .env if present
+const envFiles = [
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(__dirname, '../.env'),
+  path.resolve(process.cwd(), '.env'),
+];
+for (const envFile of envFiles) {
+  if (fs.existsSync(envFile)) {
+    try {
+      if (typeof (process as any).loadEnvFile === 'function') {
+        (process as any).loadEnvFile(envFile);
+        break;
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 5001;
