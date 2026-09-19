@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useHospitals, useActiveRequests, useAuditLog, useReliability } from '../../hooks/useSubscriptions';
+import { useHospitals, useActiveRequests, useAllRequests, useAuditLog, useReliability } from '../../hooks/useSubscriptions';
 import { RadianceMap } from './RadianceMap';
 import { AuditTimeline } from '../../components/domain/AuditTimeline';
 import { ReliabilityMeter } from '../../components/domain/ReliabilityMeter';
@@ -8,6 +8,7 @@ import { StatusBadge } from '../../components/domain/StatusBadge';
 import { Countdown } from '../../components/domain/Countdown';
 import { api } from '../../services/api';
 import { stateStore } from '../../services/stateStore';
+import { formatIsoTime } from '../../utils/time';
 import {
   Incident,
   HospitalRegistrationRecord,
@@ -41,6 +42,7 @@ import clsx from 'clsx';
 export const AdminDashboardPage: React.FC = () => {
   const { data: hospitals } = useHospitals();
   const { data: activeRequests } = useActiveRequests();
+  const { data: allRequests } = useAllRequests();
   const { data: auditEvents } = useAuditLog();
   const { data: reliabilityRows } = useReliability();
 
@@ -340,38 +342,75 @@ export const AdminDashboardPage: React.FC = () => {
                   <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D9]">
                     <span className="text-xs font-mono uppercase tracking-wider text-[#EA580C] font-black flex items-center gap-1.5">
                       <Activity className="w-4 h-4 text-[#EA580C]" />
-                      <span>Concurrent Dispatches</span>
+                      <span>Live Coordination Grid</span>
                     </span>
                     <span className="text-xs font-mono font-black bg-[#FFF7ED] text-[#C2410C] border border-[#EA580C]/30 px-2.5 py-0.5 rounded-full">
-                      {activeRequests.length} Active
+                      {activeRequests.length} Pending • {allRequests.length} Total
                     </span>
                   </div>
 
-                  {activeRequests.length === 0 ? (
+                  {allRequests.length === 0 ? (
                     <div className="py-12 text-center text-xs font-mono font-bold text-[#A89F97]">
-                      No pending ambulance requests in flight.
+                      No emergency requests in flight.
                     </div>
                   ) : (
-                    <div className="space-y-3 pt-3">
-                      {activeRequests.map((req) => {
+                    <div className="space-y-3 pt-3 max-h-[460px] overflow-y-auto pr-1">
+                      {allRequests.slice(0, 10).map((req) => {
                         const hosp = hospitals.find((h) => h.id === req.hospital_id);
+                        const isPending = req.status === 'pending';
+                        const isAccepted = req.status === 'accepted';
+                        const isRejected = req.status === 'rejected';
+
                         return (
                           <div
                             key={req.id}
-                            className="p-3.5 bg-[#FAF8F5] rounded-2xl border border-[#E8E2D9] space-y-2 shadow-xs"
+                            className={clsx(
+                              'p-3.5 rounded-2xl border space-y-2 shadow-xs transition-all',
+                              isPending && 'bg-[#FFF7ED]/40 border-[#EA580C]/40',
+                              isAccepted && 'bg-[#EFF6F3]/50 border-[#52796F]/40',
+                              isRejected && 'bg-[#FAF8F5] border-[#E8E2D9] opacity-85',
+                              !isPending && !isAccepted && !isRejected && 'bg-[#FAF8F5] border-[#E8E2D9]'
+                            )}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-mono font-black text-[#2D231C]">
-                                Case {req.case_id}
+                              <span className="text-xs font-mono font-black text-[#2D231C] flex items-center gap-1.5">
+                                {isPending && <span className="w-2 h-2 rounded-full bg-[#EA580C] animate-pulse" />}
+                                {isAccepted && <span className="w-2 h-2 rounded-full bg-[#52796F]" />}
+                                <span>Case {req.case_id}</span>
                               </span>
                               <StatusBadge status={req.status} size="sm" />
                             </div>
-                            <div className="text-xs text-[#7D7067] font-medium truncate">
-                              Target: <b className="text-[#2D231C] font-bold">{hosp?.name || req.hospital_id}</b>
+
+                            <div className="text-xs font-mono font-bold text-[#2D231C]">
+                              <span className="text-[#EA580C]">Ambulance (Unit AMB-01)</span>
+                              <span className="text-[#7D7067] mx-1.5">→</span>
+                              <span>{hosp?.name || req.hospital_id}</span>
                             </div>
-                            {req.status === 'pending' && (
+
+                            <div className="flex items-center justify-between text-[11px] font-mono text-[#7D7067]">
+                              <span>Time: <b className="text-[#2D231C]">{formatIsoTime(req.sent_at)}</b></span>
+                              {req.attempt_number > 1 && (
+                                <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-[#E8E2D9]">
+                                  Attempt {req.attempt_number}
+                                </span>
+                              )}
+                            </div>
+
+                            {isPending && (
                               <div className="pt-1">
                                 <Countdown expiresAt={req.expires_at} variant="bar" />
+                              </div>
+                            )}
+
+                            {isAccepted && (
+                              <div className="text-[11px] font-mono text-[#354F52] bg-white p-2 rounded-xl border border-[#52796F]/30 font-bold">
+                                ✓ Capacity Reserved: 1 ICU Bed held at destination
+                              </div>
+                            )}
+
+                            {isRejected && req.rejection_reason && (
+                              <div className="text-[10px] font-mono text-[#991B1B] bg-white p-1.5 rounded-lg border border-[#FECDD3]">
+                                Decline note: {req.rejection_reason}
                               </div>
                             )}
                           </div>
@@ -381,8 +420,9 @@ export const AdminDashboardPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-[#E8E2D9] text-[11px] font-mono font-semibold text-[#7D7067]">
-                  Auto-refreshes via BroadcastChannel cross-tab live sync.
+                <div className="pt-3 border-t border-[#E8E2D9] text-[11px] font-mono font-semibold text-[#7D7067] flex items-center justify-between">
+                  <span>Backend Live Sync Active</span>
+                  <span className="w-2 h-2 rounded-full bg-[#52796F] animate-pulse" />
                 </div>
               </div>
             </div>

@@ -27,6 +27,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   const [submitting, setSubmitting] = useState<'accept' | 'reject' | null>(null);
   const [showRejectReasons, setShowRejectReasons] = useState(false);
   const [selectedRejectReason, setSelectedRejectReason] = useState('Capacity full');
+  const [showReviewDetails, setShowReviewDetails] = useState(true);
 
   const severity = SEVERITY_CONFIG[caseData.severity];
   const categoryInfo = CATEGORY_LABELS[caseData.category];
@@ -71,30 +72,55 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       />
 
       <div className="p-6 md:p-10">
-        {/* Header Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-[#E8E2D9]">
-          <div className="flex items-center gap-3">
-            <span
+        {/* New Emergency Request Identification Masthead */}
+        <div className="pb-4 border-b border-[#E8E2D9] space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#E11D48] animate-pulse" />
+              <h2 className="text-xl sm:text-2xl font-display font-black text-[#2D231C] tracking-tight">
+                New Emergency Request
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowReviewDetails(!showReviewDetails)}
+                className="px-3 py-1.5 rounded-xl border border-[#E8E2D9] bg-[#FAF8F5] hover:bg-white text-xs font-mono font-bold text-[#2D231C] flex items-center gap-1.5 transition-colors shadow-xs"
+              >
+                <span>{showReviewDetails ? 'Collapse' : 'Review'}</span>
+                <span className="text-[10px] text-[#7D7067]">[Review]</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Core Demo Metadata Strip: Ambulance, Case, Severity */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs font-mono">
+            <div className="bg-[#FFF7ED] text-[#C2410C] border border-[#EA580C]/30 px-3 py-1 rounded-xl font-black flex items-center gap-1.5">
+              <span>Ambulance:</span>
+              <span className="text-[#2D231C]">Unit AMB-01 (ALS)</span>
+            </div>
+
+            <div className="bg-[#FAF8F5] text-[#2D231C] border border-[#E8E2D9] px-3 py-1 rounded-xl font-bold flex items-center gap-1.5">
+              <span>Case:</span>
+              <span className="font-black text-[#EA580C]">{caseData.id}</span>
+            </div>
+
+            <div
               className={clsx(
-                'px-3.5 py-1 text-xs font-mono font-black uppercase rounded-full border select-none tracking-wider',
+                'px-3 py-1 rounded-xl border font-black uppercase flex items-center gap-1.5',
                 severity.bg,
                 severity.text,
                 severity.border
               )}
             >
-              {severity.label}
-            </span>
-            <span className="text-2xl font-display font-black text-[#2D231C] tracking-tight">
-              {categoryInfo.label}
-            </span>
-            <span className="text-xs font-mono text-[#2D231C] font-bold bg-[#FAF8F5] px-3 py-1 rounded-full border border-[#E8E2D9]">
-              Case {caseData.id}
-            </span>
-          </div>
+              <span>Severity:</span>
+              <span>{severity.label} ({categoryInfo.label})</span>
+            </div>
 
-          <div className="text-xs font-mono text-[#2D231C] font-bold flex items-center gap-2 bg-[#FAF8F5] px-3.5 py-1.5 rounded-full border border-[#E8E2D9]">
-            <Clock className="w-4 h-4 text-[#EA580C]" />
-            <span>Onset: {caseData.onset_time}</span>
+            <div className="ml-auto text-xs font-mono text-[#7D7067] font-semibold flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#EA580C]" />
+              <span>Onset: {caseData.onset_time}</span>
+            </div>
           </div>
         </div>
 
@@ -217,7 +243,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             loading={submitting === 'accept'}
             disabled={submitting !== null}
             onClick={handleAcceptClick}
-            className="flex-1 text-2xl font-display font-black tracking-wide uppercase btn-tactile"
+            className="flex-1 text-2xl font-display font-black tracking-wide uppercase btn-tactile shadow-md"
           >
             Accept Patient
           </Button>
@@ -229,7 +255,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             onClick={() => setShowRejectReasons(!showRejectReasons)}
             className="flex-1 text-xl font-display font-bold tracking-wide uppercase rounded-2xl btn-tactile"
           >
-            Cannot Accept
+            Reject / Cannot Accept
           </Button>
         </div>
       </div>

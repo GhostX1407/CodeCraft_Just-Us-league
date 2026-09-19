@@ -20,6 +20,8 @@ import {
   SEED_AUDIT_LOGS,
 } from './seedData';
 import { toMillis } from '../utils/time';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { firestore } from './firebase';
 
 interface StoreState {
   hospitals: Hospital[];
@@ -193,6 +195,163 @@ function notifyListeners(): void {
   });
 }
 
+// 1. Live Firestore real-time listeners (when emulator or cloud Firestore is available)
+if (firestore) {
+  try {
+    onSnapshot(
+      collection(firestore, 'requests'),
+      (snapshot) => {
+        let changed = false;
+        snapshot.docChanges().forEach((change) => {
+          const data = change.doc.data() as any;
+          if (data && data.id) {
+            const normalizedReq: Request = {
+              id: data.id,
+              case_id: data.case_id,
+              hospital_id: data.hospital_id,
+              status: data.status || 'pending',
+              sent_at: toMillis(data.sent_at),
+              expires_at: toMillis(data.expires_at),
+              responded_at: data.responded_at ? toMillis(data.responded_at) : null,
+              attempt_number: data.attempt_number || 1,
+              match_score_breakdown: data.match_score_breakdown || {
+                capability_match_pct: 100,
+                distance_km: 2.5,
+                distance_factor: 1,
+                load_factor: 1,
+                staleness_factor: 1,
+                final_score: 100,
+              },
+              reason_shown_to_dispatcher: data.reason_shown_to_dispatcher || '',
+              rejection_reason: data.rejection_reason || data.reason,
+            };
+            state.requests[normalizedReq.id] = normalizedReq;
+
+            if (normalizedReq.case_id) {
+              const currentRouting = state.routings[normalizedReq.case_id] || {
+                status: normalizedReq.status === 'accepted' ? 'accepted' : 'pending',
+                active_request_id: normalizedReq.id,
+                attempt_number: normalizedReq.attempt_number,
+                accepted_hospital_id: normalizedReq.status === 'accepted' ? normalizedReq.hospital_id : null,
+              };
+              if (normalizedReq.status === 'accepted') {
+                currentRouting.status = 'accepted';
+                currentRouting.accepted_hospital_id = normalizedReq.hospital_id;
+              } else if (normalizedReq.status === 'rejected' && currentRouting.active_request_id === normalizedReq.id) {
+                currentRouting.status = 'rerouting';
+              }
+              state.routings[normalizedReq.case_id] = currentRouting;
+            }
+            changed = true;
+          }
+        });
+        if (changed) {
+          persistAndBroadcast();
+        }
+      },
+      (err) => {
+        console.warn('[Raahi Realtime] Requests onSnapshot fallback to local bus:', err.message);
+      }
+    );
+
+    onSnapshot(
+      collection(firestore, 'cases'),
+      (snapshot) => {
+        let changed = false;
+        snapshot.docChanges().forEach((change) => {
+          const data = change.doc.data() as any;
+          if (data && data.id) {
+            state.cases[data.id] = {
+              ...data,
+              created_at: toMillis(data.created_at),
+            };
+            changed = true;
+          }
+        });
+        if (changed) {
+          persistAndBroadcast();
+        }
+      },
+      () => {}
+    );
+
+    onSnapshot(
+      collection(firestore, 'hospitals'),
+      (snapshot) => {
+        let changed = false;
+        snapshot.docChanges().forEach((change) => {
+          const data = change.doc.data() as any;
+          if (data && data.id) {
+            const idx = state.hospitals.findIndex((h) => h.id === data.id);
+            if (idx !== -1) {
+              state.hospitals[idx] = {
+                ...state.hospitals[idx],
+                ...data,
+                last_updated_at: toMillis(data.last_updated_at),
+              };
+              changed = true;
+            }
+          }
+        });
+        if (changed) {
+          persistAndBroadcast();
+        }
+      },
+      () => {}
+    );
+  } catch (e) {
+    console.warn('[Raahi Realtime] Firestore listeners unavailable:', e);
+  }
+}
+
+// 2. Background Backend API Sync (every 1.5s, keeps cross-browser tabs in sync with backend state)
+if (typeof window !== 'undefined') {
+  const API_URL =
+    (import.meta as any).env?.VITE_API_BASE_URL ||
+    'http://localhost:5001/rahi-healthtech/us-central1/api';
+
+  setInterval(async () => {
+    try {
+      const res = await fetch(`${API_URL}/requests`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.requests) && json.requests.length > 0) {
+          let updated = false;
+          json.requests.forEach((req: any) => {
+            const existing = state.requests[req.id];
+            if (
+              !existing ||
+              existing.status !== req.status ||
+              toMillis(existing.expires_at) !== toMillis(req.expires_at)
+            ) {
+              state.requests[req.id] = {
+                ...req,
+                sent_at: toMillis(req.sent_at),
+                expires_at: toMillis(req.expires_at),
+                responded_at: req.responded_at ? toMillis(req.responded_at) : null,
+              };
+              if (req.status === 'accepted' && req.case_id) {
+                state.routings[req.case_id] = {
+                  status: 'accepted',
+                  active_request_id: req.id,
+                  attempt_number: req.attempt_number || 1,
+                  accepted_hospital_id: req.hospital_id,
+                };
+              }
+              updated = true;
+            }
+          });
+          if (updated) {
+            persistAndBroadcast();
+          }
+        }
+      }
+    } catch {
+      // Backend offline or unreachable, local broadcast channel continues
+    }
+  }, 1500);
+}
+
 // Global Store Accessors & Subscriptions
 export const stateStore = {
   getState(): StoreState {
@@ -307,6 +466,10 @@ export const stateStore = {
     return Object.values(state.requests)
       .filter((r) => r.status === 'pending')
       .sort((a, b) => toMillis(a.expires_at) - toMillis(b.expires_at));
+  },
+
+  getAllRequests(): Request[] {
+    return Object.values(state.requests || {}).sort((a, b) => toMillis(b.sent_at) - toMillis(a.sent_at));
   },
 
   logAudit(event: AuditEvent): void {

@@ -255,6 +255,7 @@ export const api = functions.https.onRequest(async (req, res) => {
       const existingReqs = await RequestRepository.listByCase(caseId);
       const attemptedIds = existingReqs.map((r) => r.hospital_id);
 
+      const targetHospitalId = req.body?.target_hospital_id || req.body?.targetHospitalId;
       const allHospitals = await HospitalRepository.listAll();
       const rankedCandidates = MatchingAdapter.rankEligibleCandidates(
         caseData,
@@ -273,7 +274,9 @@ export const api = functions.https.onRequest(async (req, res) => {
         return;
       }
 
-      const top = rankedCandidates[0];
+      const top = targetHospitalId
+        ? (rankedCandidates.find((c) => c.hospital.id === targetHospitalId) || rankedCandidates[0])
+        : rankedCandidates[0];
       const attemptNum = (caseData.attempt_number || 0) + 1;
 
       const request = await RequestLifecycleService.createRequest({
@@ -366,8 +369,8 @@ export const api = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // 5. POST /requests/:requestId/reject - Reject Request & Trigger Reroute
-    if (method === 'POST' && pathParts[0] === 'requests' && pathParts[2] === 'reject') {
+    // 5. POST /requests/:requestId/reject (or /decline) - Reject Request & Trigger Reroute
+    if (method === 'POST' && pathParts[0] === 'requests' && (pathParts[2] === 'reject' || pathParts[2] === 'decline')) {
       const requestId = pathParts[1];
       const actorId = req.body?.actor_id || 'hospital_user';
       const reason = req.body?.reason || 'Hospital declined case';
@@ -401,6 +404,14 @@ export const api = functions.https.onRequest(async (req, res) => {
 
       const timeoutResult = await TimeoutService.handleTimeout(requestId, actorId);
       res.status(200).json(timeoutResult);
+      return;
+    }
+
+    // 6b. GET /requests - List All Requests for Real-Time Cross-Role Sync
+    if (method === 'GET' && pathParts[0] === 'requests' && pathParts.length === 1) {
+      const snapshot = await RequestRepository.getCollection().get();
+      const allReqs = snapshot.docs.map((d) => d.data());
+      res.status(200).json({ requests: allReqs });
       return;
     }
 

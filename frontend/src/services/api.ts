@@ -367,7 +367,8 @@ export const api = {
   // POST /api/cases/:id/match
   async matchCase(
     caseId: string,
-    actor: Actor
+    actor: Actor,
+    targetHospitalId?: string
   ): Promise<
     ApiResponse<{
       case_id: string;
@@ -379,7 +380,7 @@ export const api = {
       const res = await fetch(`${API_BASE_URL}/cases/${caseId}/match`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actor_id: actor.actor_id }),
+        body: JSON.stringify({ actor_id: actor.actor_id, target_hospital_id: targetHospitalId }),
       });
       if (res.ok) {
         const json = await res.json();
@@ -675,7 +676,7 @@ export const api = {
     actor: Actor
   ): Promise<ApiResponse<{ rejected_request: Request; new_request: Request | null }>> {
     try {
-      const res = await fetch(`${API_BASE_URL}/requests/${requestId}/decline`, {
+      const res = await fetch(`${API_BASE_URL}/requests/${requestId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actor_id: actor.actor_id, reason }),

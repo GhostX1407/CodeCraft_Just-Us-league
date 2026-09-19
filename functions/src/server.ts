@@ -31,6 +31,22 @@ for (const envFile of envFiles) {
         break;
       }
     } catch {
+      // fallback manual parse
+    }
+    try {
+      const raw = fs.readFileSync(envFile, 'utf8');
+      raw.split('\n').forEach((line) => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+          const [key, ...rest] = trimmed.split('=');
+          const val = rest.join('=').trim();
+          if (key && !(key.trim() in process.env)) {
+            process.env[key.trim()] = val.replace(/^["'](.*)["']$/, '$1');
+          }
+        }
+      });
+      break;
+    } catch {
       // ignore
     }
   }

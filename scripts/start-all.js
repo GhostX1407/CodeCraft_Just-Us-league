@@ -14,9 +14,24 @@ const fs = require('fs');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const envPath = path.resolve(ROOT_DIR, '.env');
-if (fs.existsSync(envPath) && typeof process.loadEnvFile === 'function') {
+if (fs.existsSync(envPath)) {
   try {
-    process.loadEnvFile(envPath);
+    if (typeof process.loadEnvFile === 'function') {
+      process.loadEnvFile(envPath);
+    }
+  } catch {}
+  try {
+    const raw = fs.readFileSync(envPath, 'utf8');
+    raw.split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+        const [key, ...rest] = trimmed.split('=');
+        const val = rest.join('=').trim();
+        if (key && !(key.trim() in process.env)) {
+          process.env[key.trim()] = val.replace(/^["'](.*)["']$/, '$1');
+        }
+      }
+    });
   } catch {}
 }
 

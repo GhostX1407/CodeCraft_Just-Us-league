@@ -505,20 +505,26 @@ export const ActiveCasePage: React.FC = () => {
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-[#52796F] animate-pulse" />
                     <span className="font-mono text-xs uppercase tracking-wider font-extrabold text-[#354F52]">
-                      Confirmed Destination Locked
+                      Hospital Accepted • Confirmed Destination Locked
                     </span>
                   </div>
                   <span className="text-xs font-mono bg-[#EFF6F3] text-[#354F52] px-3 py-1 rounded-full font-black border border-[#52796F]/40">
-                    CAPACITY HELD
+                    STATUS: ACCEPTED
                   </span>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-display font-black text-[#2D231C] leading-tight tracking-tight">
-                    {activeRequest.reason_shown_to_dispatcher}
+                  <div className="text-xs font-mono text-[#354F52] font-black uppercase tracking-wider mb-1 flex items-center gap-2">
+                    <span>Hospital:</span>
+                    <span className="text-base font-display font-black text-[#2D231C] underline decoration-[#52796F]">
+                      {targetHospital.name}
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-display font-black text-[#2D231C] leading-tight tracking-tight mt-1">
+                    {activeRequest.reason_shown_to_dispatcher || `${targetHospital.name} Confirmed Commitment`}
                   </h2>
                   <p className="text-xs text-[#7D7067] font-mono font-bold mt-2">
-                    Hospital reception staff explicitly committed to receive this patient.
+                    Hospital reception staff explicitly committed to receive this patient in real time.
                   </p>
                 </div>
 

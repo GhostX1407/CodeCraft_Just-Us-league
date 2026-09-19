@@ -1,10 +1,21 @@
 import { Freshness, Timestamp } from '../types/domain';
 
-export function toMillis(ts: Timestamp | null | undefined): number {
+export function toMillis(ts: Timestamp | string | Date | any | null | undefined): number {
   if (!ts) return Date.now();
   if (typeof ts === 'number') return ts;
+  if (typeof ts === 'string') {
+    const parsed = Date.parse(ts);
+    return isNaN(parsed) ? Date.now() : parsed;
+  }
+  if (ts instanceof Date) return ts.getTime();
+  if (typeof ts.toDate === 'function') {
+    return ts.toDate().getTime();
+  }
   if ('seconds' in ts) {
     return ts.seconds * 1000 + (ts.nanoseconds ? Math.floor(ts.nanoseconds / 1000000) : 0);
+  }
+  if ('_seconds' in ts) {
+    return ts._seconds * 1000 + (ts._nanoseconds ? Math.floor(ts._nanoseconds / 1000000) : 0);
   }
   return Date.now();
 }

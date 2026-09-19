@@ -32,6 +32,7 @@ export const AmbulanceHomePage: React.FC = () => {
 
   // Intake Form State
   const [category, setCategory] = useState<CaseCategory>('cardiac');
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string>('');
   const [subcategory, setSubcategory] = useState<string>('heart_attack');
   const [severity, setSeverity] = useState<Severity>('red');
   const [age, setAge] = useState(58);
@@ -166,10 +167,14 @@ export const AmbulanceHomePage: React.FC = () => {
       );
 
       if (caseRes.success) {
-        await api.matchCase(caseRes.data.case.id, {
-          actor_type: 'ambulance',
-          actor_id: 'AMB-01',
-        });
+        await api.matchCase(
+          caseRes.data.case.id,
+          {
+            actor_type: 'ambulance',
+            actor_id: 'AMB-01',
+          },
+          selectedHospitalId || undefined
+        );
         navigate(`/ambulance/${caseRes.data.case.id}`);
       }
     }, 800);
@@ -484,6 +489,31 @@ export const AmbulanceHomePage: React.FC = () => {
                       <div className="text-[#2D231C]">{age}y {sex}</div>
                     </div>
                   </div>
+
+                  {/* Target Facility Selection */}
+                  <div className="p-4 bg-white rounded-2xl border border-[#E8E2D9] space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono text-[#2D231C] font-bold uppercase flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#EA580C]" />
+                        <span>Target Hospital Destination</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-[#7D7067] font-bold">
+                        {selectedHospitalId ? 'Manual Selection' : 'Automated Optimal Matching'}
+                      </span>
+                    </div>
+                    <select
+                      value={selectedHospitalId}
+                      onChange={(e) => setSelectedHospitalId(e.target.value)}
+                      className="w-full text-xs font-mono font-bold bg-[#FAF8F5] text-[#2D231C] border border-[#E8E2D9] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#EA580C] shadow-xs"
+                    >
+                      <option value="">🎯 Auto-Ranked Optimal Facility (Raahi Recommendation)</option>
+                      {hospitals.map((h) => (
+                        <option key={h.id} value={h.id}>
+                          {h.name} ({h.icu_beds_free} ICU Beds, {h.ventilators_free} Vent, ER Load: {h.er_load_score}/5)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-2">
@@ -497,9 +527,9 @@ export const AmbulanceHomePage: React.FC = () => {
                   <Button
                     variant="primary"
                     onClick={handleExecuteMatch}
-                    className="w-2/3 text-sm font-display font-black uppercase tracking-wider btn-tactile"
+                    className="w-2/3 text-sm font-display font-black uppercase tracking-wider btn-tactile shadow-md"
                   >
-                    Execute Deterministic Hospital Match
+                    Send Emergency Request
                   </Button>
                 </div>
               </div>

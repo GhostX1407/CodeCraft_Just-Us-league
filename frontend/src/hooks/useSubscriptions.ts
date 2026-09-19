@@ -173,6 +173,23 @@ export function useActiveRequests(): SubResult<Request[]> {
   return { data, status: 'live', error: null };
 }
 
+// All Requests across system (Pending, Accepted, Rejected) for Complete Real-Time Sync
+export function useAllRequests(): SubResult<Request[]> {
+  ensureTimeoutChecker();
+  const [data, setData] = useState<Request[]>(() => stateStore.getAllRequests());
+
+  useEffect(() => {
+    const update = () => {
+      setData(stateStore.getAllRequests());
+    };
+    update();
+    const unsub = stateStore.subscribe(update);
+    return unsub;
+  }, []);
+
+  return { data, status: 'live', error: null };
+}
+
 // Audit Log Hook
 export function useAuditLog(): SubResult<AuditEvent[]> {
   const [data, setData] = useState<AuditEvent[]>(() => stateStore.getAuditLogs());
