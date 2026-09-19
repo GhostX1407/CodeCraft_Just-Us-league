@@ -76,24 +76,26 @@ function getInitialState(): StoreState {
     },
   };
 
-  const seedNotifications: AppNotification[] = [
-    {
-      id: 'notif_welcome',
-      recipientRole: 'admin',
-      type: 'SYSTEM_READY',
-      severity: 'info',
-      title: 'Raahi Emergency Coordination Grid Online',
-      message: '12 Regional hospitals accredited. Real-time telemetry monitoring active.',
-      timestamp: new Date().toISOString(),
-      read: false,
-    },
-  ];
+  const seedNotifications: AppNotification[] = [];
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.hospitals) && parsed.hospitals.length > 0) {
+        // Filter out any fake/system notifications (notif_welcome, REQUEST_TIMED_OUT, demo timeouts, etc.)
+        const realNotifications = Array.isArray(parsed.notifications)
+          ? parsed.notifications.filter(
+              (n: any) =>
+                n &&
+                n.id !== 'notif_welcome' &&
+                !String(n.id).startsWith('notif_demo') &&
+                n.type !== 'REQUEST_TIMED_OUT' &&
+                n.type !== 'SYSTEM_READY' &&
+                !String(n.title || '').includes('Timed Out') &&
+                !String(n.title || '').includes('Escalating to Next')
+            )
+          : [];
         return {
           hospitals: parsed.hospitals,
           cases: parsed.cases && Object.keys(parsed.cases).length > 0 ? parsed.cases : { ...SEED_CASES },
@@ -105,7 +107,7 @@ function getInitialState(): StoreState {
           transits: parsed.transits || {},
           ambulances: parsed.ambulances || seedAmbulances,
           hospitalRegistrations: parsed.hospitalRegistrations || {},
-          notifications: Array.isArray(parsed.notifications) ? parsed.notifications : seedNotifications,
+          notifications: realNotifications,
           activeCrisis: parsed.activeCrisis || null,
         };
       }
@@ -304,7 +306,7 @@ if (firestore) {
   }
 }
 
-// 2. Background Backend API Sync (every 1.5s, keeps cross-browser tabs in sync with backend state)
+// 2. Background Backend API Sync (every 1s, keeps cross-browser tabs in sync with backend state)
 if (typeof window !== 'undefined') {
   const API_URL =
     (import.meta as any).env?.VITE_API_BASE_URL ||
@@ -338,6 +340,17 @@ if (typeof window !== 'undefined') {
                   accepted_hospital_id: req.hospital_id,
                 };
               }
+              if (req.case_id && !state.cases[req.case_id]) {
+                fetch(`${API_URL}/cases/${req.case_id}`)
+                  .then((cRes) => cRes.json())
+                  .then((cData) => {
+                    if (cData && cData.id) {
+                      state.cases[cData.id] = cData;
+                      persistAndBroadcast();
+                    }
+                  })
+                  .catch(() => {});
+              }
               updated = true;
             }
           });
@@ -346,10 +359,40 @@ if (typeof window !== 'undefined') {
           }
         }
       }
+
+      // Sync notifications across tabs & browsers
+      const notifRes = await fetch(`${API_URL}/notifications?limit=50`);
+      if (notifRes.ok) {
+        const nJson = await notifRes.json();
+        if (Array.isArray(nJson.notifications) && nJson.notifications.length > 0) {
+          if (!state.notifications) state.notifications = [];
+          const existingIds = new Set(state.notifications.map((n) => n.id));
+          let nUpdated = false;
+          nJson.notifications.forEach((n: AppNotification) => {
+            if (
+              !existingIds.has(n.id) &&
+              n.id !== 'notif_welcome' &&
+              !String(n.id).startsWith('notif_demo') &&
+              n.type !== 'REQUEST_TIMED_OUT' &&
+              n.type !== 'SYSTEM_READY' &&
+              !String(n.title || '').includes('Timed Out') &&
+              !String(n.title || '').includes('Escalating to Next')
+            ) {
+              state.notifications.unshift(n);
+              existingIds.add(n.id);
+              nUpdated = true;
+            }
+          });
+          if (nUpdated) {
+            state.notifications = state.notifications.slice(0, 100);
+            persistAndBroadcast();
+          }
+        }
+      }
     } catch {
       // Backend offline or unreachable, local broadcast channel continues
     }
-  }, 1500);
+  }, 1000);
 }
 
 // Global Store Accessors & Subscriptions
@@ -422,9 +465,22 @@ export const stateStore = {
     return state.cases[id];
   },
 
-  setCase(c: Case, routing: CaseRouting): void {
+  setCase(c: Case, routing?: CaseRouting): void {
     state.cases[c.id] = c;
-    state.routings[c.id] = routing;
+    if (routing) {
+      state.routings[c.id] = routing;
+    } else if (!state.routings[c.id]) {
+      const validStatus: CaseRouting['status'] =
+        c.status === 'accepted' || c.status === 'pending' || c.status === 'exhausted' || c.status === 'matching' || c.status === 'rerouting'
+          ? c.status
+          : 'idle';
+      state.routings[c.id] = {
+        status: validStatus,
+        active_request_id: c.active_request_id || null,
+        attempt_number: c.attempt_number || 0,
+        accepted_hospital_id: c.accepted_hospital_id || null,
+      };
+    }
     persistAndBroadcast();
   },
 
@@ -624,11 +680,28 @@ export const stateStore = {
   // Role Notifications
   getNotifications(role?: string, recipientId?: string): AppNotification[] {
     let list = state.notifications || [];
-    if (role) {
-      list = list.filter((n) => n.recipientRole === role || n.recipientRole === 'admin');
+    if (role && role !== 'all') {
+      if (role === 'admin') {
+        // Admin oversees all system events and notifications across all roles
+      } else if (role === 'hospital' || role === 'coordinator') {
+        list = list.filter((n) => n.recipientRole === 'hospital' || n.recipientRole === 'coordinator' || n.recipientRole === 'all');
+      } else if (role === 'ambulance') {
+        list = list.filter((n) => n.recipientRole === 'ambulance' || n.recipientRole === 'all');
+      } else {
+        list = list.filter((n) => n.recipientRole === role || n.recipientRole === 'all');
+      }
     }
     if (recipientId && recipientId !== 'all') {
-      list = list.filter((n) => !n.recipientId || n.recipientId === 'all' || n.recipientId === recipientId);
+      list = list.filter((n) => {
+        if (!n.recipientId || n.recipientId === 'all') return true;
+        if (n.recipientId === recipientId) return true;
+        if (n.hospitalId && n.hospitalId === recipientId) return true;
+        if (n.ambulanceId && n.ambulanceId === recipientId) return true;
+        if ((role === 'hospital' || role === 'coordinator') && (recipientId === 'ER Charge Officer' || recipientId.includes('hospital_') || recipientId.includes('coord'))) {
+          return true;
+        }
+        return false;
+      });
     }
     return list;
   },
@@ -646,5 +719,10 @@ export const stateStore = {
       n.read = true;
       persistAndBroadcast();
     }
+  },
+
+  clearNotifications(): void {
+    state.notifications = [];
+    persistAndBroadcast();
   },
 };

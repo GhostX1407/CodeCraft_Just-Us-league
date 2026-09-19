@@ -1,4 +1,4 @@
-export type UserRole = 'ambulance' | 'hospital' | 'admin' | 'family';
+export type UserRole = 'ambulance' | 'coordinator' | 'admin' | 'family' | 'hospital';
 
 export interface AuthUser {
   id: string;
@@ -19,7 +19,7 @@ export interface DemoAccount {
   user: AuthUser;
 }
 
-export const DEMO_ACCOUNTS: Record<UserRole, DemoAccount> = {
+export const DEMO_ACCOUNTS: Record<string, DemoAccount> = {
   ambulance: {
     role: 'ambulance',
     title: 'Ambulance EMT',
@@ -36,20 +36,36 @@ export const DEMO_ACCOUNTS: Record<UserRole, DemoAccount> = {
       redirectPath: '/ambulance',
     },
   },
-  hospital: {
-    role: 'hospital',
-    title: 'Hospital Reception',
-    subtitle: 'ER Triage & Capacity',
-    username: 'er-triage@apex.hospital',
-    password: 'hospital2026',
+  coordinator: {
+    role: 'coordinator',
+    title: 'Emergency Coordinator',
+    subtitle: 'Cross-Hospital Intake & Allocation',
+    username: 'coordinator@raahi.health',
+    password: 'coordinator2026',
     user: {
-      id: 'usr_hosp_apex',
-      username: 'er-triage@apex.hospital',
+      id: 'usr_coord_regional',
+      username: 'coordinator@raahi.health',
       name: 'Dr. Ananya Sen',
-      role: 'hospital',
-      badge: 'ER Charge Officer',
-      facilityOrUnit: 'Apex Heart & Trauma Center',
-      redirectPath: '/hospital/hospital_001',
+      role: 'coordinator',
+      badge: 'Regional Coordinator',
+      facilityOrUnit: 'Cross-Hospital Emergency Command',
+      redirectPath: '/coordinator',
+    },
+  },
+  hospital: {
+    role: 'coordinator',
+    title: 'Emergency Coordinator',
+    subtitle: 'Cross-Hospital Intake & Allocation',
+    username: 'coordinator@raahi.health',
+    password: 'coordinator2026',
+    user: {
+      id: 'usr_coord_regional',
+      username: 'coordinator@raahi.health',
+      name: 'Dr. Ananya Sen',
+      role: 'coordinator',
+      badge: 'Regional Coordinator',
+      facilityOrUnit: 'Cross-Hospital Emergency Command',
+      redirectPath: '/coordinator',
     },
   },
   admin: {
@@ -102,6 +118,12 @@ class AuthStore {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         this.user = JSON.parse(stored);
+        if (this.user && (this.user.role === 'hospital' as any)) {
+          this.user.role = 'coordinator';
+          this.user.redirectPath = '/coordinator';
+          this.user.badge = 'Regional Coordinator';
+          this.user.facilityOrUnit = 'Cross-Hospital Emergency Command';
+        }
       }
     } catch {
       this.user = null;
@@ -118,11 +140,12 @@ class AuthStore {
 
   public login(username: string, _password: string, preferredRole?: UserRole): { success: boolean; user?: AuthUser; message?: string } {
     const trimmed = username.trim().toLowerCase();
+    const effectiveRole = preferredRole === 'hospital' ? 'coordinator' : preferredRole;
 
     // Check against demo accounts
-    for (const key of Object.keys(DEMO_ACCOUNTS) as UserRole[]) {
+    for (const key of Object.keys(DEMO_ACCOUNTS)) {
       const demo = DEMO_ACCOUNTS[key];
-      if (demo.username.toLowerCase() === trimmed || (preferredRole && demo.role === preferredRole)) {
+      if (demo.username.toLowerCase() === trimmed || (effectiveRole && (demo.role === effectiveRole || key === effectiveRole))) {
         this.user = demo.user;
         this.persist();
         return { success: true, user: demo.user };
@@ -130,15 +153,15 @@ class AuthStore {
     }
 
     // Fallback: create dynamic auth profile based on input role
-    const assignedRole: UserRole = preferredRole || 'ambulance';
+    const assignedRole: UserRole = (preferredRole === 'hospital' ? 'coordinator' : preferredRole) || 'ambulance';
     const fallbackUser: AuthUser = {
       id: `usr_${Date.now()}`,
       username: trimmed || 'guest@raahi.health',
       name: trimmed ? trimmed.split('@')[0].toUpperCase() : 'Paramedic Crew',
       role: assignedRole,
-      badge: assignedRole === 'ambulance' ? 'ALS Unit' : assignedRole === 'hospital' ? 'ER Staff' : assignedRole === 'admin' ? 'Supervisor' : 'Family',
-      facilityOrUnit: assignedRole === 'hospital' ? 'Assigned Medical Center' : 'Field Operations',
-      redirectPath: DEMO_ACCOUNTS[assignedRole].user.redirectPath,
+      badge: assignedRole === 'ambulance' ? 'ALS Unit' : assignedRole === 'coordinator' ? 'Coordinator' : assignedRole === 'admin' ? 'Supervisor' : 'Family',
+      facilityOrUnit: assignedRole === 'coordinator' ? 'Cross-Hospital Emergency Command' : 'Field Operations',
+      redirectPath: DEMO_ACCOUNTS[assignedRole]?.user.redirectPath || '/coordinator',
     };
 
     this.user = fallbackUser;

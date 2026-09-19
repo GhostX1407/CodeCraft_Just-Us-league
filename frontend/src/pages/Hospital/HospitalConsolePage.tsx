@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useHospital, useHospitalQueue, useCase } from '../../hooks/useSubscriptions';
+import { useHospital, useHospitals, useActiveRequests, useCase } from '../../hooks/useSubscriptions';
+import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 import { stateStore } from '../../services/stateStore';
 import { RequestCard } from '../../components/domain/RequestCard';
 import { HospitalCapabilityPanel } from '../../components/domain/HospitalCapabilityPanel';
 import { FreshnessBadge } from '../../components/domain/FreshnessBadge';
-import { StatusBadge } from '../../components/domain/StatusBadge';
 import { LoadingState } from '../../components/feedback/LoadingState';
 import { playAlertSound } from '../../utils/sound';
-import { CaseTransitDetails, JourneyStage, AppNotification } from '../../types/domain';
+import { CaseTransitDetails, JourneyStage, Hospital, Request } from '../../types/domain';
 import {
   CheckSquare,
   Square,
-  AlertCircle,
-  Clock,
   ShieldCheck,
   CheckCircle2,
   ArrowLeft,
@@ -23,22 +21,53 @@ import {
   Truck,
   AlertOctagon,
   HeartPulse,
-  Navigation,
   UserCheck,
-  Activity,
-  ArrowRight,
+  Building2,
+  Lock,
+  Layers,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export const HospitalConsolePage: React.FC = () => {
-  const { hospitalId } = useParams<{ hospitalId: string }>();
+  const { hospitalId } = useParams<{ hospitalId?: string }>();
+  const { user } = useAuth();
 
-  const { data: hospital } = useHospital(hospitalId);
-  const { data: pendingRequests } = useHospitalQueue(hospitalId);
+  const { data: allHospitals } = useHospitals();
+  const { data: allPendingRequests } = useActiveRequests();
+
+  // Facility filter: 'all' (default for coordinator) or a specific hospital
+  const [selectedFacilityFilter, setSelectedFacilityFilter] = useState<string>(hospitalId || 'all');
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [lockConflictError, setLockConflictError] = useState<string | null>(null);
+
+  // Sync route param changes to filter
+  useEffect(() => {
+    if (hospitalId) {
+      setSelectedFacilityFilter(hospitalId);
+    }
+  }, [hospitalId]);
+
+  // Filter pending requests: by facility or network-wide
+  const pendingRequests =
+    selectedFacilityFilter === 'all'
+      ? allPendingRequests
+      : allPendingRequests.filter((r) => r.hospital_id === selectedFacilityFilter);
 
   // Active request to show on takeover
-  const activeRequest = pendingRequests.length > 0 ? pendingRequests[0] : null;
+  const activeRequest: Request | null =
+    (selectedRequestId ? pendingRequests.find((r) => r.id === selectedRequestId) : null) ||
+    (pendingRequests.length > 0 ? pendingRequests[0] : null);
+
   const { data: caseObj } = useCase(activeRequest?.case_id);
+
+  // Current hospital metadata
+  const currentHospital: Hospital | null =
+    (activeRequest ? allHospitals.find((h) => h.id === activeRequest.hospital_id) : null) ||
+    (selectedFacilityFilter !== 'all' ? allHospitals.find((h) => h.id === selectedFacilityFilter) : null) ||
+    allHospitals[0] ||
+    null;
 
   // Inbound transit data
   const [inboundTransits, setInboundTransits] = useState<{
@@ -46,6 +75,7 @@ export const HospitalConsolePage: React.FC = () => {
     transit: CaseTransitDetails;
     caseData: any;
     ambulanceUnit: string;
+    hospitalName: string;
   }[]>([]);
 
   // Flash alert state
@@ -61,6 +91,7 @@ export const HospitalConsolePage: React.FC = () => {
     {
       requestId: string;
       caseId: string;
+      hospitalName: string;
       items: { label: string; done: boolean }[];
     }[]
   >([]);
@@ -74,26 +105,31 @@ export const HospitalConsolePage: React.FC = () => {
     prevPendingCount.current = pendingRequests.length;
   }, [pendingRequests.length]);
 
-  // Sync inbound transits and notifications for this hospital
-  const refreshHospitalData = () => {
-    if (!hospitalId) return;
+  // Sync inbound transits and notifications
+  const refreshTransits = () => {
     const allRequests = stateStore.getRequests();
-    const acceptedForHospital = allRequests.filter(
-      (r) => r.hospital_id === hospitalId && (r.status === 'accepted' || r.status === 'pending')
-    );
+    const relevantRequests = allRequests.filter((r) => {
+      if (selectedFacilityFilter !== 'all' && r.hospital_id !== selectedFacilityFilter) {
+        return false;
+      }
+      return r.status === 'accepted' || r.status === 'pending';
+    });
 
     const transitsList: {
       caseId: string;
       transit: CaseTransitDetails;
       caseData: any;
       ambulanceUnit: string;
+      hospitalName: string;
     }[] = [];
 
-    for (const req of acceptedForHospital) {
+    for (const req of relevantRequests) {
       const c = stateStore.getCase(req.case_id);
       let t = stateStore.getTransit(req.case_id);
+      const targetHosp = allHospitals.find((h) => h.id === req.hospital_id);
+      const hospName = targetHosp?.name || req.hospital_id;
+
       if (!t && c) {
-        // initialize transit if not present
         t = {
           case_id: req.case_id,
           journey_stage: req.status === 'accepted' ? 'HOSPITAL_ACCEPTED' : 'HOSPITAL_MATCHED',
@@ -121,6 +157,7 @@ export const HospitalConsolePage: React.FC = () => {
           transit: t,
           caseData: c,
           ambulanceUnit: 'Unit AMB-04 (ALS)',
+          hospitalName: hospName,
         });
       }
     }
@@ -128,7 +165,7 @@ export const HospitalConsolePage: React.FC = () => {
     setInboundTransits(transitsList);
 
     // Check for patient deterioration alerts
-    const notifs = stateStore.getNotifications('hospital', hospitalId);
+    const notifs = stateStore.getNotifications('coordinator', 'all');
     const detNotif = notifs.find(
       (n) => n.type === 'PATIENT_DETERIORATING' && !n.read
     );
@@ -141,7 +178,6 @@ export const HospitalConsolePage: React.FC = () => {
         timestamp: detNotif.timestamp,
       });
     } else {
-      // Check transits directly
       const criticalTransit = transitsList.find(
         (it) => it.transit.current_transit_status === 'critical' || it.transit.current_transit_status === 'deteriorating'
       );
@@ -149,7 +185,7 @@ export const HospitalConsolePage: React.FC = () => {
         setFlashAlert({
           caseId: criticalTransit.caseId,
           condition: criticalTransit.transit.current_transit_status.toUpperCase(),
-          message: `Inbound patient on ${criticalTransit.ambulanceUnit} has trended to ${criticalTransit.transit.current_transit_status.toUpperCase()}. Trauma bay resuscitation readiness required.`,
+          message: `Inbound patient for ${criticalTransit.hospitalName} has trended to ${criticalTransit.transit.current_transit_status.toUpperCase()}. Resuscitation bay required.`,
           timestamp: criticalTransit.transit.last_updated_at,
         });
       }
@@ -157,68 +193,100 @@ export const HospitalConsolePage: React.FC = () => {
   };
 
   useEffect(() => {
-    refreshHospitalData();
-    const unsub = stateStore.subscribe(refreshHospitalData);
+    refreshTransits();
+    const unsub = stateStore.subscribe(refreshTransits);
     return unsub;
-  }, [hospitalId, pendingRequests.length]);
+  }, [selectedFacilityFilter, allHospitals.length, pendingRequests.length]);
 
-  if (!hospital) {
+  if (allHospitals.length === 0 || !currentHospital) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] text-[#2D231C] p-8 max-w-4xl mx-auto flex items-center justify-center">
-        <LoadingState label="Connecting to hospital telemetry…" />
+        <LoadingState label="Connecting to regional coordinator network…" />
       </div>
     );
   }
 
-  // Handle Accept
+  // Coordinator Acceptance Logic with First-Write-Wins Lock Handling
   const handleAccept = async (requestId: string) => {
-    const res = await api.acceptRequest(requestId, {
-      actor_type: 'hospital',
-      actor_id: hospital.id,
-    });
+    setLockConflictError(null);
+    try {
+      const res = await api.acceptRequest(requestId, {
+        actor_type: 'coordinator' as any,
+        actor_id: user?.id || 'usr_coord_regional',
+      });
 
-    if (res.success && caseObj?.case) {
-      const need = caseObj.case.need_profile;
-      const prepItems = [
-        ...need.specialists_needed.map((s) => ({
-          label: `Alert on-call ${s.replace(/_/g, ' ')} for immediate trauma/ER bay reception`,
-          done: false,
-        })),
-        ...need.capability_flags.map((f) => ({
-          label: `Sterilize & reserve ${f.replace(/_/g, ' ')} unit / bed`,
-          done: false,
-        })),
-      ];
-
-      if (need.blood_type_needed) {
-        prepItems.push({
-          label: `Crossmatch & reserve 2 units of ${need.blood_type_needed} blood from blood bank`,
-          done: false,
-        });
+      if (!res.success) {
+        setLockConflictError(
+          res.error?.message ||
+            'Concurrency Conflict: This request was already accepted or resolved by another coordinator. (First-write-wins lock active).'
+        );
+        return;
       }
 
-      setAcceptedCases((prev) => [
-        {
-          requestId,
-          caseId: caseObj.case!.id,
-          items: prepItems,
-        },
-        ...prev,
-      ]);
+      const acceptedReq = stateStore.getRequest(requestId);
+      const targetHosp = allHospitals.find((h) => h.id === acceptedReq?.hospital_id) || currentHospital;
 
-      // Automatically advance journey stage to committed
-      api.advanceJourneyStage(caseObj.case.id, 'HOSPITAL_ACCEPTED', `${hospital.name} Reception Staff`, 'Bed & team confirmed');
-      refreshHospitalData();
+      if (caseObj?.case) {
+        const need = caseObj.case.need_profile;
+        const prepItems = [
+          ...need.specialists_needed.map((s) => ({
+            label: `Alert on-call ${s.replace(/_/g, ' ')} at ${targetHosp.name} for immediate trauma bay intake`,
+            done: false,
+          })),
+          ...need.capability_flags.map((f) => ({
+            label: `Reserve & sterilize ${f.replace(/_/g, ' ')} unit at ${targetHosp.name}`,
+            done: false,
+          })),
+        ];
+
+        if (need.blood_type_needed) {
+          prepItems.push({
+            label: `Crossmatch 2 units of ${need.blood_type_needed} blood from ${targetHosp.name} blood bank`,
+            done: false,
+          });
+        }
+
+        setAcceptedCases((prev) => [
+          {
+            requestId,
+            caseId: caseObj.case!.id,
+            hospitalName: targetHosp.name,
+            items: prepItems,
+          },
+          ...prev,
+        ]);
+
+        api.advanceJourneyStage(
+          caseObj.case.id,
+          'HOSPITAL_ACCEPTED',
+          `Coordinator on behalf of ${targetHosp.name}`,
+          `Bed and trauma reception confirmed for ${targetHosp.name}`
+        );
+        refreshTransits();
+      }
+    } catch (err: any) {
+      setLockConflictError(
+        err.message ||
+          'Lock Conflict: Another coordinator has accepted this request concurrently. Action safely prevented.'
+      );
     }
   };
 
-  // Handle Reject
+  // Coordinator Rejection / Advance to Next Hospital
   const handleReject = async (requestId: string, reason: string) => {
-    await api.rejectRequest(requestId, reason, {
-      actor_type: 'hospital',
-      actor_id: hospital.id,
-    });
-    refreshHospitalData();
+    setLockConflictError(null);
+    try {
+      const res = await api.rejectRequest(requestId, reason, {
+        actor_type: 'coordinator' as any,
+        actor_id: user?.id || 'usr_coord_regional',
+      });
+      if (!res.success) {
+        setLockConflictError(res.error?.message || 'Unable to decline request.');
+      }
+      refreshTransits();
+    } catch (err: any) {
+      setLockConflictError(err.message || 'Error advancing request to next hospital.');
+    }
   };
 
   const toggleChecklistItem = (caseId: string, itemIdx: number) => {
@@ -232,52 +300,136 @@ export const HospitalConsolePage: React.FC = () => {
     );
   };
 
-  // Confirm arrival or complete handoff
-  const handleAdvanceHandoff = async (caseId: string, targetStage: JourneyStage) => {
-    await api.advanceJourneyStage(caseId, targetStage, `${hospital.name} ER Staff`, `Confirmed ${targetStage} at ER reception`);
-    refreshHospitalData();
+  const handleAdvanceHandoff = async (caseId: string, targetStage: JourneyStage, hospName: string) => {
+    await api.advanceJourneyStage(
+      caseId,
+      targetStage,
+      `Coordinator (${hospName})`,
+      `Confirmed ${targetStage} at ER reception`
+    );
+    refreshTransits();
   };
 
   return (
     <div className="min-h-screen text-[#2D231C] p-4 sm:p-8 md:p-10 font-sans select-none relative z-10">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Top Masthead Bar */}
+        {/* Top Coordinator Masthead Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-[#E8E2D9] bg-white/90 backdrop-blur-xl sticky top-0 z-30 pt-2 stagger-1">
           <div className="flex items-center gap-4">
-            <Link
-              to="/hospital"
-              className="text-xs font-mono font-bold text-[#7D7067] hover:text-[#EA580C] flex items-center gap-1.5 border border-[#E8E2D9] px-3 py-1.5 rounded-xl bg-white transition-colors shadow-xs"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#EA580C]" />
-              <span>Switch Hospital</span>
-            </Link>
+            <div className="w-11 h-11 rounded-2xl bg-[#F0FDFA] border border-[#99F6E4] text-[#0D9488] flex items-center justify-center shadow-xs">
+              <Building2 className="w-6 h-6" />
+            </div>
 
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-[#C2410C] font-black uppercase tracking-wider">
-                  Facility Reception Console
+                <span className="font-mono text-xs text-[#0D9488] font-black uppercase tracking-wider">
+                  Emergency Dispatch Coordinator Console
                 </span>
-                <span className="text-xs font-mono font-bold text-[#7D7067]">[{hospital.id}]</span>
+                <span className="text-xs font-mono font-bold text-[#7D7067] bg-[#F4EFE6] px-2 py-0.5 rounded-md border border-[#E8E2D9]">
+                  Cross-Hospital Authority
+                </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-display font-black text-[#2D231C] tracking-tight">
-                {hospital.name}
+                {selectedFacilityFilter === 'all'
+                  ? 'All Facilities (Network-Wide Dispatch)'
+                  : currentHospital.name}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <FreshnessBadge lastUpdatedAt={hospital.last_updated_at} />
+            <FreshnessBadge lastUpdatedAt={currentHospital.last_updated_at} />
             <button
               onClick={() => playAlertSound()}
-              className="p-2.5 rounded-xl border border-[#E8E2D9] bg-white text-[#7D7067] hover:text-[#EA580C] transition-colors shadow-xs"
+              className="p-2.5 rounded-xl border border-[#E8E2D9] bg-white text-[#7D7067] hover:text-[#0D9488] transition-colors shadow-xs"
               title="Test alert sound chime"
             >
-              <Volume2 className="w-4 h-4 text-[#EA580C]" />
+              <Volume2 className="w-4 h-4 text-[#0D9488]" />
             </button>
           </div>
         </div>
 
-        {/* HIGH-PRIORITY CLINICAL FLASH ALERT (PATIENT IN-TRANSIT DETERIORATION) */}
+        {/* FACILITY FILTER TABS (All Facilities vs Individual Hospitals) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedFacilityFilter('all');
+              setSelectedRequestId(null);
+            }}
+            className={clsx(
+              'px-4 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 transition-all whitespace-nowrap shadow-2xs cursor-pointer',
+              selectedFacilityFilter === 'all'
+                ? 'bg-[#0D9488] text-white shadow-xs'
+                : 'bg-white text-[#7D7067] hover:text-[#2D231C] border border-[#E8E2D9]'
+            )}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>All Network Hospitals</span>
+            <span
+              className={clsx(
+                'px-1.5 py-0.2 rounded-full text-[10px] font-mono',
+                selectedFacilityFilter === 'all' ? 'bg-white/25 text-white' : 'bg-[#F4EFE6] text-[#2D231C]'
+              )}
+            >
+              {allPendingRequests.length}
+            </span>
+          </button>
+
+          {allHospitals.map((hosp) => {
+            const hospPending = allPendingRequests.filter((r) => r.hospital_id === hosp.id);
+            const isSelected = selectedFacilityFilter === hosp.id;
+            return (
+              <button
+                key={hosp.id}
+                type="button"
+                onClick={() => {
+                  setSelectedFacilityFilter(hosp.id);
+                  setSelectedRequestId(null);
+                }}
+                className={clsx(
+                  'px-3.5 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 transition-all whitespace-nowrap shadow-2xs cursor-pointer',
+                  isSelected
+                    ? 'bg-[#0D9488] text-white shadow-xs'
+                    : 'bg-white text-[#7D7067] hover:text-[#2D231C] border border-[#E8E2D9]'
+                )}
+              >
+                <span>{hosp.name.split(' ')[0]}</span>
+                {hospPending.length > 0 && (
+                  <span
+                    className={clsx(
+                      'px-1.5 py-0.2 rounded-full text-[10px] font-black',
+                      isSelected ? 'bg-white text-[#0D9488]' : 'bg-[#FFE4E6] text-[#E11D48] animate-pulse'
+                    )}
+                  >
+                    {hospPending.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* LOCK CONFLICT ALERT BANNER */}
+        {lockConflictError && (
+          <div className="p-4 rounded-2xl bg-[#FFE4E6] border-2 border-[#E11D48] text-[#9F1239] animate-fade-in flex items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-2.5">
+              <Lock className="w-5 h-5 text-[#E11D48] shrink-0" />
+              <div>
+                <span className="font-bold text-sm block">First-Write-Wins Concurrency Lock</span>
+                <span className="text-xs font-mono">{lockConflictError}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setLockConflictError(null)}
+              className="px-3 py-1 bg-white text-[#E11D48] border border-[#E11D48]/30 rounded-xl text-xs font-mono font-bold hover:bg-[#FFF1F2]"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* CLINICAL FLASH ALERT */}
         {flashAlert && (
           <div className="p-5 rounded-3xl bg-[#FFE4E6] border-2 border-[#E11D48] text-[#9F1239] animate-fade-in shadow-md space-y-2">
             <div className="flex items-center justify-between">
@@ -300,31 +452,86 @@ export const HospitalConsolePage: React.FC = () => {
               <span>•</span>
               <span>Timestamp: {new Date(flashAlert.timestamp).toLocaleTimeString()}</span>
               <span>•</span>
-              <span className="font-bold underline">Trauma Resuscitation Team Alerted</span>
+              <span className="font-bold underline">Coordinator Oversight Alerted</span>
             </div>
           </div>
         )}
 
-        {/* INCOMING REQUEST TAKEOVER ALARM */}
-        {activeRequest && caseObj?.case && (
-          <div className="space-y-4 animate-fade-in stagger-2">
+        {/* MULTI-HOSPITAL INCOMING QUEUE SELECTOR (when multiple pending) */}
+        {pendingRequests.length > 1 && (
+          <div className="p-4 bg-white border border-[#E8E2D9] rounded-2xl shadow-xs space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-wider text-[#E11D48] font-black flex items-center gap-2 bg-[#FFE4E6] px-3.5 py-1.5 rounded-full border border-[#FECDD3]">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#E11D48] animate-pulse" />
-                <span>INCOMING EMERGENCY TRANSPORT TAKEOVER — ACTION REQUIRED</span>
+              <span className="text-xs font-mono font-black uppercase text-[#2D231C] flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#EA580C] animate-pulse" />
+                <span>Incoming Emergency Requests Across Network ({pendingRequests.length})</span>
               </span>
+              <span className="text-[10px] font-mono text-[#7D7067]">Click request to inspect and accept</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              {pendingRequests.map((req) => {
+                const hosp = allHospitals.find((h) => h.id === req.hospital_id);
+                const isSelected = activeRequest?.id === req.id;
+                return (
+                  <button
+                    key={req.id}
+                    type="button"
+                    onClick={() => setSelectedRequestId(req.id)}
+                    className={clsx(
+                      'p-3 rounded-xl border text-left font-mono text-xs transition-all flex flex-col justify-between gap-2 shadow-2xs',
+                      isSelected
+                        ? 'border-[#0D9488] bg-[#F0FDFA] ring-2 ring-[#0D9488]/20'
+                        : 'border-[#E8E2D9] bg-[#FAF8F5] hover:border-[#0D9488]/60 hover:bg-white'
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-[#2D231C]">{req.case_id}</span>
+                      <span className="text-[10px] bg-[#FFF7ED] text-[#C2410C] px-2 py-0.5 rounded-full border border-[#EA580C]/30 font-bold">
+                        Rank #{req.attempt_number}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#7D7067] uppercase font-semibold block">Target Facility:</span>
+                      <span className="font-bold text-[#2D231C] truncate block">{hosp?.name || req.hospital_id}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* INCOMING REQUEST TAKEOVER CARD */}
+        {activeRequest && (
+          <div className="space-y-4 animate-fade-in stagger-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs uppercase tracking-wider text-[#E11D48] font-black flex items-center gap-2 bg-[#FFE4E6] px-3.5 py-1.5 rounded-full border border-[#FECDD3]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#E11D48] animate-pulse" />
+                  <span>EMERGENCY INTAKE TAKEOVER — ACTION REQUIRED</span>
+                </span>
+                <span className="text-xs font-mono font-black text-[#0D9488] bg-[#F0FDFA] px-3 py-1.5 rounded-full border border-[#99F6E4]">
+                  Target: {currentHospital.name} (Rank #{activeRequest.attempt_number})
+                </span>
+              </div>
               <span className="text-xs font-mono font-bold text-[#2D231C] bg-white px-3 py-1 rounded-full border border-[#E8E2D9] shadow-xs">
-                Queue: {pendingRequests.length} pending
+                Total Pending: {pendingRequests.length}
               </span>
             </div>
 
-            <RequestCard
-              request={activeRequest}
-              caseData={caseObj.case}
-              hospital={hospital}
-              onAccept={handleAccept}
-              onReject={handleReject}
-            />
+            {caseObj?.case ? (
+              <RequestCard
+                request={activeRequest}
+                caseData={caseObj.case}
+                hospital={currentHospital}
+                onAccept={handleAccept}
+                onReject={handleReject}
+              />
+            ) : (
+              <div className="p-8 rounded-3xl bg-white border border-[#E8E2D9] text-center space-y-3 shadow-sm">
+                <LoadingState label={`Streaming emergency telemetry for Case ${activeRequest.case_id}…`} />
+              </div>
+            )}
           </div>
         )}
 
@@ -335,16 +542,16 @@ export const HospitalConsolePage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-[#EA580C] animate-pulse" />
                 <span className="text-xs font-mono font-black uppercase tracking-wider text-[#2D231C]">
-                  Incoming Ambulance Radar & Handoff Queue ({inboundTransits.length} Inbound)
+                  Cross-Hospital Inbound Ambulance Radar ({inboundTransits.length} En Route)
                 </span>
               </div>
               <span className="text-[10px] font-mono text-[#354F52] bg-[#EFF6F3] px-2.5 py-0.5 rounded-full border border-[#52796F]/30 font-bold">
-                RADAR ACTIVE
+                NETWORK RADAR ACTIVE
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {inboundTransits.map(({ caseId, transit, caseData, ambulanceUnit }) => {
+              {inboundTransits.map(({ caseId, transit, caseData, ambulanceUnit, hospitalName }) => {
                 const stage = transit.journey_stage;
                 const isArrived = stage === 'ARRIVED_AT_HOSPITAL';
                 const isCompleted = stage === 'HANDOFF_COMPLETED';
@@ -380,15 +587,15 @@ export const HospitalConsolePage: React.FC = () => {
                       <div className="font-display font-black text-sm text-[#2D231C]">
                         Case {caseId} • {caseData.patient_basic_info.age}y {caseData.patient_basic_info.sex}
                       </div>
-                      <div className="text-xs font-mono text-[#7D7067] mt-0.5">
-                        Category: <b className="text-[#2D231C] uppercase">{caseData.category}</b>
-                        {caseData.subcategory && ` (${caseData.subcategory.replace(/_/g, ' ')})`}
+                      <div className="text-xs font-mono text-[#0D9488] font-bold mt-0.5 flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5" />
+                        <span>Destination: {hospitalName}</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E8E2D9]">
                       <div>
-                        <span className="text-[9px] text-[#7D7067] uppercase font-bold block">Dynamic ETA</span>
+                        <span className="text-[9px] text-[#7D7067] uppercase font-bold block">ETA</span>
                         <span className="font-black text-[#52796F]">{transit.eta_minutes ?? 6} mins</span>
                       </div>
                       <div>
@@ -410,8 +617,8 @@ export const HospitalConsolePage: React.FC = () => {
                       {!isCompleted && !isArrived && (
                         <button
                           type="button"
-                          onClick={() => handleAdvanceHandoff(caseId, 'ARRIVED_AT_HOSPITAL')}
-                          className="px-3 py-1.5 bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-mono font-bold rounded-xl flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                          onClick={() => handleAdvanceHandoff(caseId, 'ARRIVED_AT_HOSPITAL', hospitalName)}
+                          className="px-3 py-1.5 bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-mono font-bold rounded-xl flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Confirm ER Arrival</span>
@@ -421,11 +628,11 @@ export const HospitalConsolePage: React.FC = () => {
                       {isArrived && (
                         <button
                           type="button"
-                          onClick={() => handleAdvanceHandoff(caseId, 'HANDOFF_COMPLETED')}
-                          className="px-3 py-1.5 bg-[#52796F] hover:bg-[#354F52] text-white text-xs font-mono font-bold rounded-xl flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                          onClick={() => handleAdvanceHandoff(caseId, 'HANDOFF_COMPLETED', hospitalName)}
+                          className="px-3 py-1.5 bg-[#52796F] hover:bg-[#354F52] text-white text-xs font-mono font-bold rounded-xl flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
                         >
                           <UserCheck className="w-3.5 h-3.5" />
-                          <span>Complete Clinical Handoff</span>
+                          <span>Complete Handoff</span>
                         </button>
                       )}
 
@@ -458,16 +665,21 @@ export const HospitalConsolePage: React.FC = () => {
                   className="p-6 rounded-3xl border border-[#52796F]/30 bg-[#F0FDFA] space-y-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between border-b border-[#52796F]/20 pb-3">
-                    <span className="font-mono text-xs font-black text-[#354F52] uppercase">
-                      Incoming Case {ac.caseId}
-                    </span>
+                    <div>
+                      <span className="font-mono text-xs font-black text-[#354F52] uppercase block">
+                        Incoming Case {ac.caseId}
+                      </span>
+                      <span className="text-[11px] font-mono text-[#0D9488] font-bold">
+                        Facility: {ac.hospitalName}
+                      </span>
+                    </div>
                     <span className="text-[10px] font-mono bg-[#EFF6F3] text-[#354F52] px-2.5 py-0.5 rounded-full font-black border border-[#52796F]/30">
-                      COMMITMENT HELD
+                      HOLD ACTIVE
                     </span>
                   </div>
 
                   <p className="text-xs text-[#7D7067] font-mono font-semibold">
-                    Operational prep actions derived from patient need profile:
+                    Clinical and bed hold allocation checklist:
                   </p>
 
                   <div className="space-y-2 pt-1">
@@ -479,7 +691,7 @@ export const HospitalConsolePage: React.FC = () => {
                           'p-3 rounded-xl border text-xs font-mono flex items-start gap-3 cursor-pointer transition-all duration-180 select-none active:scale-[0.99]',
                           item.done
                             ? 'border-[#52796F]/30 bg-[#EFF6F3]/30 text-[#7D7067] font-medium line-through'
-                            : 'border-[#E8E2D9] bg-white text-[#2D231C] font-bold hover:border-[#EA580C]'
+                            : 'border-[#E8E2D9] bg-white text-[#2D231C] font-bold hover:border-[#0D9488]'
                         )}
                       >
                         {item.done ? (
@@ -497,26 +709,28 @@ export const HospitalConsolePage: React.FC = () => {
           </div>
         )}
 
-        {/* CALM DEFAULT CONSOLE: TELEMETRY & CAPABILITY PANEL */}
+        {/* CALM DEFAULT CONSOLE: NO ACTIVE INTAKE */}
         {!activeRequest && inboundTransits.length === 0 && (
           <div className="p-6 rounded-2xl border border-[#E8E2D9] bg-white text-center py-8 text-[#7D7067] font-mono text-xs flex items-center justify-center gap-2.5 shadow-xs">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#EA580C]" />
-            <span className="text-sm font-sans font-bold text-[#7D7067]">Console Idle • No incoming emergency dispatches pending confirmation</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0D9488]" />
+            <span className="text-sm font-sans font-bold text-[#7D7067]">
+              Coordinator Console Idle • All regional hospital emergency queues clear
+            </span>
           </div>
         )}
 
-        {/* EDITABLE CAPABILITY PANEL */}
+        {/* EDITABLE FACILITY CAPABILITY PANEL */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase tracking-wider text-[#7D7067] font-black">
-              Live Facility Capacity Management (Self-Reporting)
+              Hospital Capacity Management • {currentHospital.name}
             </span>
-            <span className="text-[11px] font-mono font-bold text-[#EA580C]">
-              Modifications immediately recalculate regional network ranks
+            <span className="text-[11px] font-mono font-bold text-[#0D9488]">
+              Adjusting availability re-scores sequential priority across the network
             </span>
           </div>
 
-          <HospitalCapabilityPanel hospital={hospital} editable={true} />
+          <HospitalCapabilityPanel hospital={currentHospital} editable={true} />
         </div>
       </div>
     </div>

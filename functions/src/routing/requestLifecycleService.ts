@@ -198,7 +198,7 @@ export class RequestLifecycleService {
   static async acceptRequest(
     requestId: string,
     actorId: string = 'hospital_user',
-    actorType: 'hospital_user' | 'system' = 'hospital_user'
+    actorType: 'hospital_user' | 'system' | 'coordinator_user' = 'hospital_user'
   ): Promise<AcceptRequestResult> {
     const db = getDb();
 

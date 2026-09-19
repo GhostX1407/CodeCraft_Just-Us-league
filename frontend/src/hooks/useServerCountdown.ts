@@ -4,13 +4,19 @@ import { toMillis } from '../utils/time';
 
 const TOTAL_COUNTDOWN_SECONDS = 30;
 
-export function useServerCountdown(expiresAt: Timestamp | null | undefined): {
+export function useServerCountdown(
+  expiresAt: Timestamp | null | undefined,
+  onExpire?: () => void
+): {
   secondsRemaining: number;
   fraction: number;
   expiredLocally: boolean;
 } {
   const targetMs = toMillis(expiresAt);
   const totalMs = TOTAL_COUNTDOWN_SECONDS * 1000;
+  const expiredTriggeredRef = useRef<boolean>(false);
+  const onExpireRef = useRef(onExpire);
+  onExpireRef.current = onExpire;
 
   const [secondsRemaining, setSecondsRemaining] = useState<number>(() => {
     if (!expiresAt) return 0;
@@ -27,6 +33,10 @@ export function useServerCountdown(expiresAt: Timestamp | null | undefined): {
   const animRef = useRef<number>();
 
   useEffect(() => {
+    expiredTriggeredRef.current = false;
+  }, [targetMs]);
+
+  useEffect(() => {
     if (!expiresAt) {
       setSecondsRemaining(0);
       setFraction(0);
@@ -38,6 +48,10 @@ export function useServerCountdown(expiresAt: Timestamp | null | undefined): {
       const remainingMs = targetMs - Date.now();
       const secs = Math.max(0, Math.ceil(remainingMs / 1000));
       setSecondsRemaining(secs);
+      if (secs === 0 && !expiredTriggeredRef.current) {
+        expiredTriggeredRef.current = true;
+        onExpireRef.current?.();
+      }
     }, 250);
 
     // High-performance requestAnimationFrame loop for fluid 120Hz ring/bar transitions

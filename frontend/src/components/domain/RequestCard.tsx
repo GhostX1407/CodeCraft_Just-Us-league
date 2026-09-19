@@ -5,7 +5,8 @@ import { Countdown } from './Countdown';
 import { NeedProfileChips } from './NeedProfileChips';
 import { Button } from '../primitives/Button';
 import { SEVERITY_CONFIG, CATEGORY_LABELS } from '../../utils/format';
-import { AlertTriangle, Clock, User, HeartPulse, Activity } from 'lucide-react';
+import { AlertTriangle, Clock, User, HeartPulse, Activity, Building2 } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface RequestCardProps {
   request: Request;
@@ -105,6 +106,12 @@ export const RequestCard: React.FC<RequestCardProps> = ({
               <span className="font-black text-[#EA580C]">{caseData.id}</span>
             </div>
 
+            <div className="bg-[#F0FDFA] text-[#0F766E] border border-[#99F6E4] px-3 py-1 rounded-xl font-bold flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-[#0D9488]" />
+              <span>Target:</span>
+              <span className="font-black text-[#2D231C]">{hospital.name} (Rank #{request.attempt_number})</span>
+            </div>
+
             <div
               className={clsx(
                 'px-3 py-1 rounded-xl border font-black uppercase flex items-center gap-1.5',
@@ -184,6 +191,11 @@ export const RequestCard: React.FC<RequestCardProps> = ({
               variant="ring"
               size="stage"
               label="Commitment Window"
+              onExpire={() => {
+                if (request.status === 'pending') {
+                  api.timeoutRequest(request.id);
+                }
+              }}
             />
           </div>
         </div>
@@ -243,9 +255,9 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             loading={submitting === 'accept'}
             disabled={submitting !== null}
             onClick={handleAcceptClick}
-            className="flex-1 text-2xl font-display font-black tracking-wide uppercase btn-tactile shadow-md"
+            className="flex-1 text-xl sm:text-2xl font-display font-black tracking-wide uppercase btn-tactile shadow-md"
           >
-            Accept Patient
+            Accept on behalf of {hospital.name}
           </Button>
 
           <Button
@@ -253,9 +265,9 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             size="stage"
             disabled={submitting !== null}
             onClick={() => setShowRejectReasons(!showRejectReasons)}
-            className="flex-1 text-xl font-display font-bold tracking-wide uppercase rounded-2xl btn-tactile"
+            className="flex-1 text-lg sm:text-xl font-display font-bold tracking-wide uppercase rounded-2xl btn-tactile"
           >
-            Reject / Cannot Accept
+            Decline / Advance to Next Ranked Hospital
           </Button>
         </div>
       </div>

@@ -10,6 +10,7 @@ interface CountdownProps {
   size?: 'sm' | 'lg' | 'stage';
   className?: string;
   label?: string;
+  onExpire?: () => void;
 }
 
 export const Countdown: React.FC<CountdownProps> = ({
@@ -18,8 +19,9 @@ export const Countdown: React.FC<CountdownProps> = ({
   size = 'lg',
   className,
   label = 'Hospital response window',
+  onExpire,
 }) => {
-  const { secondsRemaining, fraction, expiredLocally } = useServerCountdown(expiresAt);
+  const { secondsRemaining, fraction, expiredLocally } = useServerCountdown(expiresAt, onExpire);
   const isUrgent = secondsRemaining > 0 && secondsRemaining <= 10;
 
   // Ring variant (Hospital Console)

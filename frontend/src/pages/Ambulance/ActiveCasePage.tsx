@@ -117,6 +117,42 @@ export const ActiveCasePage: React.FC = () => {
     return unsub;
   }, [caseId, activeRequest?.status]);
 
+  // Fallback state when all hospitals in credibility list are exhausted
+  if (routing?.status === 'exhausted' || (c && routing && !routing.active_request_id && !routing.accepted_hospital_id && routing.attempt_number && routing.attempt_number > 1)) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-[#FAF8F5] text-[#2D231C] p-4 sm:p-8 max-w-4xl mx-auto flex items-center justify-center">
+        <div className="p-8 sm:p-10 bg-white border-2 border-[#E11D48] rounded-3xl shadow-xl space-y-6 text-center w-full animate-fade-in">
+          <div className="w-16 h-16 bg-[#FFE4E6] text-[#E11D48] rounded-full flex items-center justify-center mx-auto animate-pulse shadow-sm">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-block px-3 py-1 bg-[#FFE4E6] text-[#BE123C] rounded-full font-mono text-xs font-bold uppercase tracking-wider border border-[#FECDD3]">
+              Dispatch Routing Exhausted
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-display font-black text-[#2D231C]">
+              No Hospital Available
+            </h1>
+            <p className="text-sm font-mono text-[#7D7067] max-w-lg mx-auto leading-relaxed">
+              All ranked hospital candidates in the regional credibility network have either timed out or declined Case {c?.id || caseId}. The priority dispatch queue is exhausted.
+            </p>
+          </div>
+          <div className="p-4 bg-[#FFF7ED] border border-[#EA580C]/30 rounded-2xl text-xs font-mono text-[#C2410C] font-bold max-w-lg mx-auto">
+            Emergency Action: Contact Regional Emergency Dispatch Coordinator immediately for manual override or secondary district diversion.
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 pt-2">
+            <Link
+              to="/ambulance"
+              className="px-6 py-3 bg-[#EA580C] hover:bg-[#C2410C] text-white font-mono text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm transition-all active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Return to Ambulance Terminal</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!c || !routing || !activeRequest || !targetHospital) {
     return (
       <div className="min-h-[calc(100vh-64px)] bg-[#FAF8F5] text-[#2D231C] p-8 max-w-5xl mx-auto flex items-center justify-center">
@@ -215,7 +251,7 @@ export const ActiveCasePage: React.FC = () => {
   const isAccepted = activeRequest.status === 'accepted';
   const isPending = activeRequest.status === 'pending';
   const isSuperseded = activeRequest.status === 'superseded';
-  const isExhausted = routing.status === 'exhausted';
+  const isExhausted = (routing.status as string) === 'exhausted';
 
   const currentStage = transitDetails?.journey_stage || (isAccepted ? 'HOSPITAL_ACCEPTED' : 'HOSPITAL_MATCHED');
   const currentStageIndex = JOURNEY_STAGES.findIndex((s) => s.stage === currentStage);
@@ -494,6 +530,11 @@ export const ActiveCasePage: React.FC = () => {
                   expiresAt={activeRequest.expires_at}
                   variant="bar"
                   label={`Awaiting confirmation commitment from ${targetHospital.name}`}
+                  onExpire={() => {
+                    if (activeRequest.status === 'pending') {
+                      api.timeoutRequest(activeRequest.id);
+                    }
+                  }}
                 />
               </div>
             )}

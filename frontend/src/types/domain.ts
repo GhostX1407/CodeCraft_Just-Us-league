@@ -66,6 +66,10 @@ export interface Case {
   clinical_justification?: string[];
   journey_stage?: JourneyStage;
   transit_condition?: PatientTransitStatus;
+  status?: 'idle' | 'routing' | 'accepted' | 'exhausted' | string;
+  active_request_id?: string | null;
+  attempt_number?: number;
+  accepted_hospital_id?: string | null;
 }
 
 export interface MatchScoreBreakdown {
@@ -256,7 +260,7 @@ export interface Ambulance {
 
 export interface AppNotification {
   id: string;
-  recipientRole: 'ambulance' | 'hospital' | 'admin' | 'family';
+  recipientRole: 'ambulance' | 'coordinator' | 'hospital' | 'admin' | 'family' | 'all';
   recipientId?: string;
   type: string;
   severity: 'info' | 'warning' | 'critical' | 'urgent';
@@ -265,6 +269,7 @@ export interface AppNotification {
   caseId?: string;
   hospitalId?: string;
   ambulanceId?: string;
+  requestId?: string;
   timestamp: string;
   read: boolean;
   metadata?: Record<string, unknown>;
@@ -291,7 +296,7 @@ export interface AuditEvent {
                                   // REQUEST_TIMED_OUT | REQUEST_SUPERSEDED | REROUTE_TRIGGERED |
                                   // CAPABILITY_UPDATED | HOLD_CREATED | HOLD_RELEASED
   timestamp: Timestamp;
-  actor_type: 'ambulance' | 'hospital' | 'admin' | 'system';
+  actor_type: 'ambulance' | 'coordinator' | 'hospital' | 'admin' | 'system';
   snapshot_of_data_at_decision_time: Record<string, unknown>;
 }
 
@@ -307,7 +312,7 @@ export interface ReliabilityRow {
 }
 
 export interface Actor {
-  actor_type: 'ambulance' | 'hospital' | 'admin';
+  actor_type: 'ambulance' | 'coordinator' | 'hospital' | 'admin';
   actor_id: string;   // e.g. "ambulance_demo_01" | "hospital_003_demo" | "admin_demo_01"
 }
 

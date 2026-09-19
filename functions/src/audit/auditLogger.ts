@@ -46,7 +46,7 @@ export interface CreateAuditLogParams {
   caseId: string;
   hospitalId?: string | null;
   eventType: AuditEventType;
-  actorType?: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user';
+  actorType?: 'system' | 'coordinator_user' | 'hospital_user' | 'ambulance_user' | 'admin_user';
   actorId?: string;
   caseData?: Partial<Case>;
   needProfile?: NeedProfile;

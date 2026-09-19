@@ -27,6 +27,10 @@ export class MockQuerySnapshot {
   get size(): number {
     return this.docs.length;
   }
+
+  forEach(callback: (doc: MockDocumentSnapshot) => void): void {
+    this.docs.forEach(callback);
+  }
 }
 
 export class MockDocumentReference {
@@ -166,6 +170,24 @@ export class MockFirestore {
   async runTransaction<T>(updateFunction: (transaction: MockTransaction) => Promise<T>): Promise<T> {
     const tx = new MockTransaction(this);
     return updateFunction(tx);
+  }
+
+  batch() {
+    return {
+      update(ref: any, data: any) {
+        ref.update(data);
+        return this;
+      },
+      set(ref: any, data: any) {
+        ref.set(data);
+        return this;
+      },
+      delete(ref: any) {
+        ref.delete();
+        return this;
+      },
+      commit: async () => {},
+    };
   }
 
   clear() {

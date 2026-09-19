@@ -16,6 +16,9 @@ import { api, healthCheck } from './index';
 import { setDb } from './services/firebase';
 import { MockFirestore } from './data/mockFirestore';
 import { seedAllDemoData } from './data/seedData';
+import { RequestRepository } from './services/repositories';
+import { TimeoutService } from './routing/timeoutService';
+import { nowTimestamp, isRequestExpired } from './services/timestampUtils';
 
 // Automatically load .env if present
 const envFiles = [
@@ -164,6 +167,22 @@ bootstrap().then(() => {
     console.log(`📡 URL: http://localhost:${PORT}/rahi-healthtech/us-central1/api`);
     console.log(`🩺 Healthcheck: http://localhost:${PORT}/healthCheck`);
     console.log('====================================================');
+
+    // Server-Authoritative Timeout Watchdog (checks every 1s for expired pending requests)
+    setInterval(async () => {
+      try {
+        const pending = await RequestRepository.listAllPending();
+        const now = nowTimestamp();
+        for (const req of pending) {
+          if (isRequestExpired(req.expires_at, now)) {
+            console.log(`[Auto-Timeout] Request ${req.id} (Hospital ${req.hospital_id}) deadline expired. Advancing to next hospital in rank...`);
+            await TimeoutService.handleTimeout(req.id, 'server_watchdog');
+          }
+        }
+      } catch (err: any) {
+        // quiet fail on transient errors
+      }
+    }, 1000);
   });
 }).catch((err) => {
   console.error('Failed to bootstrap Raahi Backend:', err);

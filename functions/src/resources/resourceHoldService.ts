@@ -154,7 +154,7 @@ export class ResourceHoldService {
     requestId: string,
     caseId: string,
     actorId: string = 'system',
-    actorType: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'system'
+    actorType: 'system' | 'coordinator_user' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'system'
   ): Promise<ResourceHold | null> {
     const holdRef = HoldRepository.getDocRef(hospitalId, requestId);
     const holdSnap = await transaction.get(holdRef);
@@ -213,7 +213,7 @@ export class ResourceHoldService {
     requestId: string,
     caseId: string,
     actorId: string = 'system',
-    actorType: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'system'
+    actorType: 'system' | 'coordinator_user' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'system'
   ): Promise<ResourceHold | null> {
     return getDb().runTransaction(async (tx) => {
       return this.releaseHoldInTransaction(tx, hospitalId, requestId, caseId, actorId, actorType);
@@ -230,7 +230,7 @@ export class ResourceHoldService {
     requestId: string,
     caseId: string,
     actorId: string = 'hospital_user',
-    actorType: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'hospital_user'
+    actorType: 'system' | 'coordinator_user' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'hospital_user'
   ): Promise<ResourceHold | null> {
     const holdRef = HoldRepository.getDocRef(hospitalId, requestId);
     const holdSnap = await transaction.get(holdRef);
@@ -277,7 +277,7 @@ export class ResourceHoldService {
     requestId: string,
     caseId: string,
     actorId: string = 'hospital_user',
-    actorType: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'hospital_user'
+    actorType: 'system' | 'coordinator_user' | 'hospital_user' | 'ambulance_user' | 'admin_user' = 'hospital_user'
   ): Promise<ResourceHold | null> {
     return getDb().runTransaction(async (tx) => {
       return this.consumeHoldInTransaction(tx, hospitalId, requestId, caseId, actorId, actorType);

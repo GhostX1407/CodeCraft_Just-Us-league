@@ -4,7 +4,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { useActiveRequests } from '../../hooks/useSubscriptions';
 import { subscribeToPushNotifications } from '../../services/notificationBus';
 import { stateStore } from '../../services/stateStore';
+import { api } from '../../services/api';
 import { isAudioUnlocked, unlockAudio, playAlertSound } from '../../utils/sound';
+import { NotificationComposerModal } from './NotificationComposerModal';
 import type { AppNotification } from '../../types/domain';
 import type { UserRole } from '../../services/authStore';
 import {
@@ -26,6 +28,9 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
+  Send,
+  Trash2,
+  Radio,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -44,10 +49,16 @@ export const RoleAwareAppHeader: React.FC = () => {
   const [audioActive, setAudioActive] = useState(isAudioUnlocked());
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [prevUnreadCount, setPrevUnreadCount] = useState(0);
   const prevCountRef = useRef(0);
 
-  const role: UserRole = user?.role || 'ambulance';
+  const role: UserRole = (user?.role === 'hospital' ? 'coordinator' : user?.role) || 'ambulance';
+
+  const handleClearAll = async () => {
+    await api.clearAllNotifications();
+    setNotifications([]);
+  };
 
   // Role Accent Color Scheme
   const roleConfig = {
@@ -61,15 +72,25 @@ export const RoleAwareAppHeader: React.FC = () => {
       dotColor: 'bg-[#DC2626]',
       roleLabel: 'Field EMS Dispatch',
     },
+    coordinator: {
+      accentBorder: 'border-[#0D9488]/40',
+      accentBg: 'bg-[#F0FDFA]',
+      accentText: 'text-[#0D9488]',
+      accentRing: 'ring-[#0D9488]/20',
+      badgeBg: 'bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]',
+      activeNav: 'bg-[#F0FDFA] text-[#0D9488] border-[#99F6E4]',
+      dotColor: 'bg-[#0D9488]',
+      roleLabel: 'Emergency Coordinator',
+    },
     hospital: {
-      accentBorder: 'border-[#0284C7]/40',
-      accentBg: 'bg-[#F0F9FF]',
-      accentText: 'text-[#0284C7]',
-      accentRing: 'ring-[#0284C7]/20',
-      badgeBg: 'bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]',
-      activeNav: 'bg-[#F0F9FF] text-[#0284C7] border-[#BAE6FD]',
-      dotColor: 'bg-[#0284C7]',
-      roleLabel: 'Emergency Dept Triage',
+      accentBorder: 'border-[#0D9488]/40',
+      accentBg: 'bg-[#F0FDFA]',
+      accentText: 'text-[#0D9488]',
+      accentRing: 'ring-[#0D9488]/20',
+      badgeBg: 'bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]',
+      activeNav: 'bg-[#F0FDFA] text-[#0D9488] border-[#99F6E4]',
+      dotColor: 'bg-[#0D9488]',
+      roleLabel: 'Emergency Coordinator',
     },
     admin: {
       accentBorder: 'border-[#D97706]/40',
@@ -99,10 +120,17 @@ export const RoleAwareAppHeader: React.FC = () => {
       { path: '/ambulance', label: 'Dispatch', icon: Ambulance },
       { path: '/ambulance/mass-casualty', label: 'Mass-Casualty', icon: Users },
     ],
+    coordinator: [
+      {
+        path: '/coordinator',
+        label: 'Coordinator Console',
+        icon: Building2,
+      },
+    ],
     hospital: [
       {
-        path: user?.redirectPath || '/hospital/hospital_001',
-        label: 'Hospital Console',
+        path: '/coordinator',
+        label: 'Coordinator Console',
         icon: Building2,
       },
     ],
@@ -119,7 +147,12 @@ export const RoleAwareAppHeader: React.FC = () => {
 
   // Subscribe to push notifications (ZERO interval polling)
   useEffect(() => {
-    const unsub = subscribeToPushNotifications(role, user?.badge, (list) => {
+    const recipientTarget =
+      role === 'coordinator'
+        ? 'all'
+        : (user?.badge || 'all');
+
+    const unsub = subscribeToPushNotifications(role, recipientTarget, (list) => {
       setNotifications(list);
 
       const unread = list.filter((n) => !n.read).length;
@@ -131,7 +164,7 @@ export const RoleAwareAppHeader: React.FC = () => {
     });
 
     return unsub;
-  }, [role, user?.badge]);
+  }, [role, user?.badge, user?.redirectPath]);
 
   const handleAudioToggle = () => {
     const success = unlockAudio();
@@ -262,6 +295,17 @@ export const RoleAwareAppHeader: React.FC = () => {
               </button>
             )}
 
+            {/* Real Local Alert Dispatch Button */}
+            <button
+              type="button"
+              onClick={() => setComposerOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl border border-[#EA580C]/30 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C2410C] text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+              title="Dispatch Real Notification Locally"
+            >
+              <Send className="w-3.5 h-3.5 text-[#EA580C]" />
+              <span className="hidden sm:inline">Send Alert</span>
+            </button>
+
             {/* Push-Based Real-Time Notification Bell */}
             <button
               type="button"
@@ -366,12 +410,32 @@ export const RoleAwareAppHeader: React.FC = () => {
                     </span>
                   </div>
                   <span className="text-[10px] font-mono text-[#7D7067]">
-                    Push-stream live • Sub-second delivery
+                    Real Local Push • No Automated Spam
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setComposerOpen(true)}
+                  className="text-xs font-mono text-[#EA580C] hover:bg-[#FFF7ED] flex items-center gap-1 font-bold px-2 py-1 rounded-lg border border-[#EA580C]/30 transition-colors"
+                  title="Dispatch a real notification locally"
+                >
+                  <Send className="w-3 h-3" />
+                  <span>Send</span>
+                </button>
+                {notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    className="text-xs font-mono text-[#7D7067] hover:text-red-600 flex items-center gap-1 font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                    title="Clear all notifications"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Clear</span>
+                  </button>
+                )}
                 {unreadCount > 0 && (
                   <button
                     type="button"
@@ -395,12 +459,24 @@ export const RoleAwareAppHeader: React.FC = () => {
             {/* Notification List */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
               {notifications.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center text-[#7D7067] text-center p-6 space-y-2">
-                  <Bell className="w-10 h-10 text-[#E8E2D9]" />
-                  <p className="font-bold text-sm text-[#2D231C]">All clear. No notifications.</p>
-                  <p className="text-xs text-[#A89F91]">
-                    Emergency dispatch, patient triage, and admission updates will stream here instantly.
-                  </p>
+                <div className="h-64 flex flex-col items-center justify-center text-[#7D7067] text-center p-6 space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D9] flex items-center justify-center text-[#A89F91]">
+                    <Bell className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-[#2D231C]">No Active Notifications</p>
+                    <p className="text-xs text-[#7D7067] max-w-xs mt-1">
+                      No fake or automated notifications. Only real alerts that you dispatch locally will appear here.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setComposerOpen(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#EA580C] text-white text-xs font-mono font-bold flex items-center gap-1.5 hover:bg-[#C2410C] transition-all shadow-xs"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Send Real Alert Now</span>
+                  </button>
                 </div>
               ) : (
                 notifications.map((n) => (
@@ -466,6 +542,16 @@ export const RoleAwareAppHeader: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Real Local Notification Composer Modal */}
+      <NotificationComposerModal
+        isOpen={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        defaultRole={role}
+        onSuccess={() => {
+          setDrawerOpen(true);
+        }}
+      />
     </>
   );
 };

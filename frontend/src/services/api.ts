@@ -16,6 +16,7 @@ import {
   PatientSymptoms,
 } from '../types/domain';
 import { stateStore } from './stateStore';
+import { notify } from './notificationBus';
 import { calculateDistanceKm, estimateEtaMinutes } from '../utils/geo';
 import { getFreshness, toMillis } from '../utils/time';
 
@@ -284,6 +285,14 @@ export const api = {
 
     stateStore.setCase(newCase, routing);
 
+    notify('admin', 'all', {
+      type: 'CASE_CREATED',
+      severity: newCase.severity === 'red' ? 'urgent' : 'info',
+      title: `New ${newCase.severity.toUpperCase()} Case: ${caseId}`,
+      message: `Emergency intake initiated for ${newCase.category}. Capability matching engine engaged.`,
+      caseId,
+    });
+
     stateStore.logAudit({
       id: 'audit_' + Math.random().toString(36).substring(2, 9),
       case_id: caseId,
@@ -422,6 +431,27 @@ export const api = {
             accepted_hospital_id: null,
           });
 
+          // Immediate multi-tab push notifications
+          notify('hospital', normalizedReq.hospital_id, {
+            type: 'BED_HOLD_REQUESTED',
+            severity: 'critical',
+            title: `Incoming Bed Hold Request: Case ${caseId}`,
+            message: `Emergency commitment request incoming for ${json.match?.hospital?.name || normalizedReq.hospital_id}. Priority score ${json.match?.breakdown?.final_score || 95}. 60s decision window.`,
+            caseId,
+            hospitalId: normalizedReq.hospital_id,
+            requestId: normalizedReq.id,
+          });
+
+          notify('admin', 'all', {
+            type: 'CASE_ASSIGNED',
+            severity: 'info',
+            title: `Case Dispatched: ${caseId}`,
+            message: `Matched to ${json.match?.hospital?.name || normalizedReq.hospital_id} with score ${json.match?.breakdown?.final_score || 95}.`,
+            caseId,
+            hospitalId: normalizedReq.hospital_id,
+            requestId: normalizedReq.id,
+          });
+
           return {
             success: true,
             data: {
@@ -505,6 +535,26 @@ export const api = {
       accepted_hospital_id: null,
     });
 
+    notify('hospital', newRequest.hospital_id, {
+      type: 'BED_HOLD_REQUESTED',
+      severity: 'critical',
+      title: `Incoming Bed Hold Request: Case ${caseId}`,
+      message: `Emergency commitment request incoming for ${topHospital.name}. Priority score ${matchBreakdown.final_score}. 30s decision window.`,
+      caseId,
+      hospitalId: newRequest.hospital_id,
+      requestId: newRequest.id,
+    });
+
+    notify('admin', 'all', {
+      type: 'CASE_ASSIGNED',
+      severity: 'info',
+      title: `Case Dispatched: ${caseId}`,
+      message: `Matched to ${topHospital.name} with score ${matchBreakdown.final_score}.`,
+      caseId,
+      hospitalId: newRequest.hospital_id,
+      requestId: newRequest.id,
+    });
+
     stateStore.logAudit({
       id: 'audit_' + Math.random().toString(36).substring(2, 9),
       case_id: caseId,
@@ -576,6 +626,27 @@ export const api = {
               icu_beds_free: hosp.icu_beds_free - 1,
             });
           }
+
+          notify('ambulance', 'all', {
+            type: 'HOSPITAL_ACCEPTED',
+            severity: 'urgent',
+            title: 'Bed & Resource Hold Confirmed!',
+            message: `Hospital ${req.hospital_id} accepted Case ${req.case_id}. Bed held and trauma bay reserved.`,
+            caseId: req.case_id,
+            hospitalId: req.hospital_id,
+            requestId: req.id,
+          });
+
+          notify('admin', 'all', {
+            type: 'HOSPITAL_ACCEPTED',
+            severity: 'info',
+            title: 'Admission Confirmed',
+            message: `Hospital ${req.hospital_id} accepted patient intake for Case ${req.case_id}.`,
+            caseId: req.case_id,
+            hospitalId: req.hospital_id,
+            requestId: req.id,
+          });
+
           return {
             success: true,
             data: normalizedReq,
@@ -661,6 +732,26 @@ export const api = {
       snapshot_of_data_at_decision_time: { hospital_id: req.hospital_id, hold_locked: true },
     });
 
+    notify('ambulance', 'all', {
+      type: 'HOSPITAL_ACCEPTED',
+      severity: 'urgent',
+      title: 'Bed & Resource Hold Confirmed!',
+      message: `Hospital ${req.hospital_id} accepted Case ${req.case_id}. Bed held and trauma bay reserved.`,
+      caseId: req.case_id,
+      hospitalId: req.hospital_id,
+      requestId: req.id,
+    });
+
+    notify('admin', 'all', {
+      type: 'HOSPITAL_ACCEPTED',
+      severity: 'info',
+      title: 'Admission Confirmed',
+      message: `Hospital ${req.hospital_id} accepted patient intake for Case ${req.case_id}.`,
+      caseId: req.case_id,
+      hospitalId: req.hospital_id,
+      requestId: req.id,
+    });
+
     return {
       success: true,
       data: updated,
@@ -701,8 +792,8 @@ export const api = {
           stateStore.setRequest(rejectedReq);
 
           let newReq: Request | null = null;
-          if (json.next_request) {
-            const next = json.next_request;
+          const next = json.next_request || json.reroute?.newRequest;
+          if (next) {
             newReq = {
               id: next.id,
               case_id: next.case_id,
@@ -722,6 +813,16 @@ export const api = {
               attempt_number: newReq.attempt_number,
               accepted_hospital_id: null,
             });
+
+            notify('hospital', newReq.hospital_id, {
+              type: 'BED_HOLD_REQUESTED',
+              severity: 'critical',
+              title: `Rerouted Intake Request: Case ${newReq.case_id}`,
+              message: `Case ${newReq.case_id} rerouted to your facility. Priority score ${newReq.match_score_breakdown?.final_score || 90}. 60s decision window.`,
+              caseId: newReq.case_id,
+              hospitalId: newReq.hospital_id,
+              requestId: newReq.id,
+            });
           } else {
             stateStore.setRouting(req.case_id, {
               status: 'exhausted',
@@ -730,6 +831,24 @@ export const api = {
               accepted_hospital_id: null,
             });
           }
+
+          notify('ambulance', 'all', {
+            type: 'REQUEST_REJECTED',
+            severity: 'warning',
+            title: 'Hospital Declined • Rerouting',
+            message: `Hospital ${req.hospital_id} was unable to accept (${reason}). Tactical reroute engaged.`,
+            caseId: req.case_id,
+            hospitalId: req.hospital_id,
+          });
+
+          notify('admin', 'all', {
+            type: 'REQUEST_REJECTED',
+            severity: 'warning',
+            title: 'Intake Request Declined',
+            message: `Hospital ${req.hospital_id} declined Case ${req.case_id}: ${reason}.`,
+            caseId: req.case_id,
+            hospitalId: req.hospital_id,
+          });
 
           return {
             success: true,
@@ -881,6 +1000,41 @@ export const api = {
 
   // POST /api/requests/:id/timeout (automatic reroute)
   async timeoutRequest(requestId: string): Promise<ApiResponse<Request | null>> {
+    // 1. First attempt backend authoritative timeout
+    try {
+      const res = await fetch(`${API_BASE_URL}/requests/${requestId}/timeout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_id: 'client_countdown' }),
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        if (payload.request) {
+          stateStore.setRequest(payload.request);
+        }
+        if (payload.rerouteResult?.newRequest) {
+          stateStore.setRequest(payload.rerouteResult.newRequest);
+          stateStore.setRouting(payload.request.case_id, {
+            status: 'pending',
+            active_request_id: payload.rerouteResult.newRequest.id,
+            attempt_number: payload.rerouteResult.newRequest.attempt_number,
+            accepted_hospital_id: null,
+          });
+          return { success: true, data: payload.rerouteResult.newRequest, error: null, meta: {} };
+        } else if (payload.rerouteResult?.exhausted) {
+          stateStore.setRouting(payload.request.case_id, {
+            status: 'exhausted',
+            active_request_id: null,
+            attempt_number: (payload.request.attempt_number || 1) + 1,
+            accepted_hospital_id: null,
+          });
+          return { success: true, data: null, error: null, meta: {} };
+        }
+      }
+    } catch {
+      // network/offline fallback below
+    }
+
     const req = stateStore.getRequest(requestId);
     if (!req || req.status !== 'pending') {
       return { success: false, data: null, error: { code: 'REQUEST_ALREADY_RESOLVED', message: 'Request not pending' }, meta: {} };
@@ -1766,6 +1920,64 @@ export const api = {
       // Fallback
     }
     stateStore.markNotificationRead(id);
+    return true;
+  },
+
+  async sendNotification(payload: {
+    recipientRole: 'all' | 'admin' | 'hospital' | 'coordinator' | 'ambulance' | 'family';
+    recipientId?: string;
+    title: string;
+    message: string;
+    severity?: 'info' | 'warning' | 'critical' | 'urgent';
+    caseId?: string;
+    hospitalId?: string;
+    ambulanceId?: string;
+    type?: string;
+  }): Promise<any> {
+    const severity = payload.severity || 'info';
+    const type = payload.type || 'LOCAL_DISPATCH';
+    const role = payload.recipientRole || 'all';
+    const recipientId = payload.recipientId || 'all';
+
+    // 1. Authoritative local notify (delivered immediately to stateStore and BroadcastChannel)
+    const localNotif = notify(role, recipientId, {
+      title: payload.title,
+      message: payload.message,
+      severity,
+      type,
+      caseId: payload.caseId,
+      hospitalId: payload.hospitalId,
+      ambulanceId: payload.ambulanceId,
+    });
+
+    // 2. Persist to backend
+    try {
+      await fetch(`${API_BASE_URL}/notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          id: localNotif.id,
+          timestamp: localNotif.timestamp,
+        }),
+      });
+    } catch (e) {
+      console.warn('[Raahi API] Backend notification offline, local dispatch saved:', e);
+    }
+
+    return localNotif;
+  },
+
+  async clearAllNotifications(): Promise<boolean> {
+    stateStore.clearNotifications();
+    try {
+      await fetch(`${API_BASE_URL}/notifications/clear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch {
+      // Offline fallback
+    }
     return true;
   },
 

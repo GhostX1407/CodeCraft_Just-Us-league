@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api, API_BASE_URL } from '../../services/api';
+import { subscribeToPushNotifications } from '../../services/notificationBus';
 import { AppNotification } from '../../types/domain';
-import { Bell, X, CheckCheck, AlertCircle, AlertTriangle, Info, ShieldAlert } from 'lucide-react';
+import { NotificationComposerModal } from './NotificationComposerModal';
+import { Bell, X, CheckCheck, Trash2, AlertTriangle, Info, ShieldAlert, Send } from 'lucide-react';
 import clsx from 'clsx';
 
 interface NotificationDrawerProps {
@@ -11,40 +13,30 @@ interface NotificationDrawerProps {
 
 export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ currentRole = 'admin', recipientId }) => {
   const [open, setOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchNotifications = async () => {
-    setLoading(true);
-    try {
-      const list = await api.getNotifications(currentRole, recipientId);
-      setNotifications(list);
-    } catch {
-      // Fallback
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 8000);
-    return () => clearInterval(interval);
+    const unsub = subscribeToPushNotifications(currentRole, recipientId, (list) => {
+      setNotifications(list);
+    });
+    return unsub;
   }, [currentRole, recipientId]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleMarkAllRead = async () => {
     try {
-      await fetch(`${API_BASE_URL}/notifications/read-all`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: currentRole, recipientId }),
-      });
+      await api.markAllNotificationsRead(currentRole, recipientId);
     } catch {
       // Fallback
     }
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = async () => {
+    await api.clearAllNotifications();
+    setNotifications([]);
   };
 
   const handleMarkRead = async (id: string) => {
@@ -66,19 +58,31 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ currentR
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-xl border border-[#E8E2D9] bg-white hover:bg-[#FAF8F5] text-[#2D231C] transition-colors shadow-xs"
-        aria-label="Toggle notifications"
-      >
-        <Bell className="w-4 h-4 text-[#EA580C]" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center animate-pulse border-2 border-white shadow-xs">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setComposerOpen(true)}
+          className="px-2.5 py-1.5 rounded-xl border border-[#EA580C]/30 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C2410C] text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+          title="Dispatch Real Notification Locally"
+        >
+          <Send className="w-3.5 h-3.5 text-[#EA580C]" />
+          <span className="hidden sm:inline">Send Alert</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="relative p-2 rounded-xl border border-[#E8E2D9] bg-white hover:bg-[#FAF8F5] text-[#2D231C] transition-colors shadow-xs"
+          aria-label="Toggle notifications"
+        >
+          <Bell className="w-4 h-4 text-[#EA580C]" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center animate-pulse border-2 border-white shadow-xs">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </button>
+      </div>
 
       {open && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-black/30 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
@@ -95,12 +99,32 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ currentR
                   {currentRole}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setComposerOpen(true)}
+                  className="text-xs font-mono text-[#EA580C] hover:bg-[#FFF7ED] flex items-center gap-1 font-bold px-2 py-1 rounded-lg border border-[#EA580C]/30 transition-colors"
+                  title="Dispatch a real notification locally"
+                >
+                  <Send className="w-3 h-3" />
+                  <span>Send</span>
+                </button>
+                {notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    className="text-xs font-mono text-[#7D7067] hover:text-red-600 flex items-center gap-1 font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                    title="Clear all notifications"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Clear</span>
+                  </button>
+                )}
                 {unreadCount > 0 && (
                   <button
                     type="button"
                     onClick={handleMarkAllRead}
-                    className="text-xs font-mono text-[#7D7067] hover:text-[#EA580C] flex items-center gap-1 font-bold"
+                    className="text-xs font-mono text-[#7D7067] hover:text-[#EA580C] flex items-center gap-1 font-bold px-2 py-1 rounded-lg hover:bg-white"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
                     <span>Read all</span>
@@ -119,10 +143,24 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ currentR
             {/* List */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {notifications.length === 0 ? (
-                <div className="h-64 flex flex-col items-center justify-center text-[#7D7067] text-center p-6 space-y-2">
-                  <Bell className="w-8 h-8 text-[#E8E2D9]" />
-                  <p className="font-bold text-sm">All clear. No notifications.</p>
-                  <p className="text-xs text-[#A89F91]">Role-specific emergency dispatch and admission alerts will stream here.</p>
+                <div className="h-64 flex flex-col items-center justify-center text-[#7D7067] text-center p-6 space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D9] flex items-center justify-center text-[#A89F91]">
+                    <Bell className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-[#2D231C]">No Active Notifications</p>
+                    <p className="text-xs text-[#7D7067] max-w-xs mt-1">
+                      No fake or automated notifications. Only real alerts that you dispatch locally will appear here.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setComposerOpen(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#EA580C] text-white text-xs font-mono font-bold flex items-center gap-1.5 hover:bg-[#C2410C] transition-all shadow-xs"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Send Real Alert Now</span>
+                  </button>
                 </div>
               ) : (
                 notifications.map((n) => (
@@ -142,7 +180,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ currentR
                         <h4 className="font-bold text-xs text-[#2D231C] leading-snug">{n.title}</h4>
                       </div>
                       <span className="text-[10px] font-mono text-[#A89F91] shrink-0">
-                        {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </span>
                     </div>
                     <p className="text-xs text-[#524438] leading-relaxed pl-6">{n.message}</p>
@@ -160,6 +198,17 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ currentR
           </div>
         </div>
       )}
+
+      {/* Real Local Notification Composer Modal */}
+      <NotificationComposerModal
+        isOpen={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        defaultRole={currentRole}
+        onSuccess={() => {
+          setOpen(true);
+        }}
+      />
     </>
   );
 };
+

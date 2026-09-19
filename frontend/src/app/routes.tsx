@@ -50,19 +50,27 @@ export const AppRoutes: React.FC = () => {
         }
       />
 
-      {/* Hospital ER Console Portal */}
+      {/* Coordinator Emergency Portal (formerly Hospital ER Bay) */}
+      <Route
+        path="/coordinator"
+        element={
+          <RoleGuard allowedRoles={['coordinator', 'hospital', 'admin']}>
+            <HospitalConsolePage />
+          </RoleGuard>
+        }
+      />
       <Route
         path="/hospital"
         element={
-          <RoleGuard allowedRoles={['hospital', 'admin']}>
-            <HospitalPickerPage />
+          <RoleGuard allowedRoles={['coordinator', 'hospital', 'admin']}>
+            <HospitalConsolePage />
           </RoleGuard>
         }
       />
       <Route
         path="/hospital/:hospitalId"
         element={
-          <RoleGuard allowedRoles={['hospital', 'admin']}>
+          <RoleGuard allowedRoles={['coordinator', 'hospital', 'admin']}>
             <HospitalConsolePage />
           </RoleGuard>
         }

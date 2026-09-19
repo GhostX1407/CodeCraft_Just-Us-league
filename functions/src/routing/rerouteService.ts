@@ -18,6 +18,7 @@ import { RequestLifecycleService } from './requestLifecycleService';
 import { ReliabilityService } from '../reliability/reliabilityService';
 import { AuditLogger } from '../audit/auditLogger';
 import { isCommitmentStillValid } from '../matching';
+import { NotificationRepository } from '../domain/notifications';
 
 export interface RerouteResult {
   exhausted: boolean;
@@ -79,6 +80,24 @@ export class RerouteService {
         },
       });
 
+      await NotificationRepository.create({
+        recipientRole: 'admin',
+        type: 'ROUTING_EXHAUSTED',
+        severity: 'critical',
+        title: `All Options Exhausted: Case ${caseId}`,
+        message: `No eligible hospitals remaining. Reason: ${reason}. Emergency dispatch manual intervention required.`,
+        caseId,
+      });
+
+      await NotificationRepository.create({
+        recipientRole: 'ambulance',
+        type: 'ROUTING_EXHAUSTED',
+        severity: 'critical',
+        title: `Routing Exhausted: Case ${caseId}`,
+        message: `All nearby hospitals unavailable. Contact regional command coordinator.`,
+        caseId,
+      });
+
       return {
         exhausted: true,
         newRequest: null,
@@ -115,6 +134,43 @@ export class RerouteService {
         attempt_number: nextAttemptNumber,
         previously_attempted: attemptedHospitalIds,
       },
+    });
+
+    // Notify targeted hospital of incoming commitment request
+    await NotificationRepository.create({
+      recipientRole: 'hospital',
+      recipientId: nextCandidate.hospital.id,
+      type: 'BED_HOLD_REQUESTED',
+      severity: 'critical',
+      title: `Rerouted Intake Request: Case ${caseId}`,
+      message: `Emergency intake rerouted to ${nextCandidate.hospital.name}. Priority score ${nextCandidate.breakdown.final_score}. 60s decision window.`,
+      caseId,
+      hospitalId: nextCandidate.hospital.id,
+      requestId: newRequest.id,
+    });
+
+    // Notify ambulance crew of tactical reroute
+    await NotificationRepository.create({
+      recipientRole: 'ambulance',
+      type: 'REROUTE_OCCURRED',
+      severity: 'warning',
+      title: `Rerouted to ${nextCandidate.hospital.name}`,
+      message: `Attempt ${nextAttemptNumber}: Prior facility unavailable (${reason}). Routed to ${nextCandidate.hospital.name}.`,
+      caseId,
+      hospitalId: nextCandidate.hospital.id,
+      requestId: newRequest.id,
+    });
+
+    // Notify regional admin command
+    await NotificationRepository.create({
+      recipientRole: 'admin',
+      type: 'REROUTE_OCCURRED',
+      severity: 'warning',
+      title: `Case ${caseId} Rerouted`,
+      message: `Case ${caseId} rerouted to ${nextCandidate.hospital.name} (Attempt ${nextAttemptNumber}): ${reason}.`,
+      caseId,
+      hospitalId: nextCandidate.hospital.id,
+      requestId: newRequest.id,
     });
 
     return {
@@ -219,6 +275,19 @@ export class RerouteService {
         validation_reasons: validation?.reasons || [],
       },
     });
+
+    if (acceptedHospitalId) {
+      await NotificationRepository.create({
+        recipientRole: 'hospital',
+        recipientId: acceptedHospitalId,
+        type: 'COMMITMENT_INVALIDATED',
+        severity: 'urgent',
+        title: `Commitment Invalidation: Case ${caseId}`,
+        message: `Mid-transit capability invalidated: ${reasonText}. Hold released.`,
+        caseId,
+        hospitalId: acceptedHospitalId,
+      });
+    }
 
     const rerouteRes = await this.rerouteCase(
       caseId,

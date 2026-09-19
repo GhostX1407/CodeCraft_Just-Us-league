@@ -139,6 +139,13 @@ export class RequestRepository {
     return snapshot.docs.map((doc) => doc.data() as Request);
   }
 
+  static async listAllPending(): Promise<Request[]> {
+    const snapshot = await this.getCollection()
+      .where('status', '==', 'pending')
+      .get();
+    return snapshot.docs.map((doc) => doc.data() as Request);
+  }
+
   static async getActiveRequestForCase(caseId: string): Promise<Request | null> {
     const snapshot = await this.getCollection()
       .where('case_id', '==', caseId)

@@ -19,21 +19,19 @@ export interface SubResult<T> {
   error: Error | null;
 }
 
-// Background Timeout Checker: checks pending requests every 1s
-let timeoutCheckerStarted = false;
+// Background Timeout Checker: authoritative watchdog for real pending requests
+let timeoutCheckerInterval: any = null;
 function ensureTimeoutChecker() {
-  if (timeoutCheckerStarted || typeof window === 'undefined') return;
-  timeoutCheckerStarted = true;
-
-  setInterval(() => {
-    const pending = stateStore.getAllPendingRequests();
+  if (timeoutCheckerInterval) return;
+  timeoutCheckerInterval = setInterval(() => {
+    const pendingReqs = stateStore.getAllPendingRequests();
     const now = Date.now();
-    pending.forEach((req) => {
-      if (toMillis(req.expires_at) < now) {
-        // Backend simulator triggers timeout
-        api.timeoutRequest(req.id).catch((e) => console.warn('Timeout execution:', e));
+    for (const req of pendingReqs) {
+      const expMs = toMillis(req.expires_at);
+      if (expMs && now >= expMs) {
+        api.timeoutRequest(req.id);
       }
-    });
+    }
   }, 1000);
 }
 
@@ -60,6 +58,19 @@ export function useCase(caseId: string | null | undefined): SubResult<{ case: Ca
 
     update();
     const unsub = stateStore.subscribe(update);
+
+    if (!stateStore.getCase(caseId)) {
+      api.getCase(caseId).then((res) => {
+        if (res.success && res.data) {
+          stateStore.setCase(res.data.case);
+          if (res.data.routing) {
+            stateStore.setRouting(caseId, res.data.routing);
+          }
+          update();
+        }
+      }).catch(() => {});
+    }
+
     return unsub;
   }, [caseId]);
 

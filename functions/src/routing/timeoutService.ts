@@ -10,10 +10,11 @@
 import { getDb } from '../services/firebase';
 import { RequestRepository } from '../services/repositories';
 import { Request } from '../services/types';
-import { nowTimestamp, isRequestExpired } from '../services/timestampUtils';
 import { RequestLifecycleError } from './requestLifecycleService';
+import { nowTimestamp, toDate } from '../services/timestampUtils';
 import { AuditLogger } from '../audit/auditLogger';
 import { RerouteService, RerouteResult } from './rerouteService';
+import { NotificationRepository } from '../domain/notifications';
 
 export interface TimeoutResult {
   success: boolean;
@@ -47,17 +48,21 @@ export class TimeoutService {
         return request;
       }
 
-      // State check: Only pending requests may time out
-      if (request.status !== 'pending') {
-        throw new RequestLifecycleError(
-          'STATE_CONFLICT',
-          `Cannot time out request ${requestId}: status is '${request.status}'`
-        );
+      // Race condition handling: If already accepted, acceptance wins over timeout
+      if (request.status === 'accepted') {
+        return request;
       }
 
-      // Server-authoritative time check (spec.md §103)
+      // State check: Only pending requests may time out
+      if (request.status !== 'pending') {
+        return request;
+      }
+
+      // Server-authoritative time check (spec.md §103) with 1.5s client-server clock skew tolerance
       const now = nowTimestamp();
-      if (!isRequestExpired(request.expires_at, now)) {
+      const expiryMs = toDate(request.expires_at).getTime();
+      const currentMs = toDate(now).getTime();
+      if (expiryMs - currentMs > 1500) {
         throw new RequestLifecycleError(
           'REQUEST_NOT_YET_EXPIRED',
           `Cannot time out request ${requestId}: server deadline has not passed`
@@ -87,12 +92,33 @@ export class TimeoutService {
       return request;
     });
 
+    // If request was accepted in race condition, do not trigger reroute
+    if (timedOutRequest.status !== 'timed_out') {
+      return {
+        success: false,
+        request: timedOutRequest,
+      };
+    }
+
     // 2. Automatically trigger rerouting to the next eligible candidate (spec.md §14, §102)
     const rerouteResult = await RerouteService.rerouteCase(
       timedOutRequest.case_id,
       `Request timed out for hospital ${timedOutRequest.hospital_id}`,
       actorId
     );
+
+    // Notify timed-out facility and coordinator
+    await NotificationRepository.create({
+      recipientRole: 'hospital',
+      recipientId: timedOutRequest.hospital_id,
+      type: 'REQUEST_TIMED_OUT',
+      severity: 'warning',
+      title: `Commitment Request Timed Out`,
+      message: `The decision window for Case ${timedOutRequest.case_id} expired. Bed hold automatically released and case rerouted to next hospital.`,
+      caseId: timedOutRequest.case_id,
+      hospitalId: timedOutRequest.hospital_id,
+      requestId: timedOutRequest.id,
+    });
 
     return {
       success: true,

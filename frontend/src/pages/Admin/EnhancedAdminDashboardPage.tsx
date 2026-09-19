@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminDashboardPage } from './AdminDashboardPage';
 import { stateStore } from '../../services/stateStore';
+import { api } from '../../services/api';
 import { subscribeToPushNotifications } from '../../services/notificationBus';
+import { NotificationComposerModal } from '../../components/layout/NotificationComposerModal';
 import type { AppNotification } from '../../types/domain';
 import {
   Building2,
@@ -18,10 +20,13 @@ import {
   ExternalLink,
   Radio,
   ArrowRight,
+  Send,
+  Trash2,
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export const EnhancedAdminDashboardPage: React.FC = () => {
+  const [composerOpen, setComposerOpen] = useState(false);
   const [hospitalsCount, setHospitalsCount] = useState(0);
   const [ambulancesCount, setAmbulancesCount] = useState(0);
   const [activeCasesCount, setActiveCasesCount] = useState(0);
@@ -190,14 +195,52 @@ export const EnhancedAdminDashboardPage: React.FC = () => {
                 <span>Live Push</span>
               </span>
             </div>
-            <span className="text-[10px] font-mono text-[#7D7067]">
-              Admin monitors notifications addressed to Hospitals, Ambulances & Command
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setComposerOpen(true)}
+                className="px-2.5 py-1 rounded-xl border border-[#EA580C]/30 bg-[#FFF7ED] hover:bg-[#FFEDD5] text-[#C2410C] text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+                title="Dispatch Real Notification Locally"
+              >
+                <Send className="w-3 h-3 text-[#EA580C]" />
+                <span>Send Alert</span>
+              </button>
+              {globalNotifications.length > 0 && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await api.clearAllNotifications();
+                    setGlobalNotifications([]);
+                  }}
+                  className="px-2.5 py-1 rounded-xl border border-[#E8E2D9] hover:border-red-300 bg-white hover:bg-red-50 text-xs font-mono font-bold text-[#7D7067] hover:text-red-600 flex items-center gap-1.5 transition-all"
+                  title="Clear all notifications"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Clear All</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {globalNotifications.length === 0 ? (
-            <div className="py-4 text-center text-xs font-mono text-[#7D7067]">
-              No events in current push stream.
+            <div className="py-6 flex flex-col items-center justify-center text-center space-y-2">
+              <div className="w-10 h-10 rounded-2xl bg-[#FAF8F5] border border-[#E8E2D9] flex items-center justify-center text-[#A89F91]">
+                <Bell className="w-5 h-5" />
+              </div>
+              <p className="text-xs font-mono font-bold text-[#2D231C]">
+                No active notifications in stream
+              </p>
+              <p className="text-[11px] font-mono text-[#7D7067] max-w-sm">
+                Automated and fake notifications have been disabled. Click "Send Alert" to dispatch real local alerts.
+              </p>
+              <button
+                type="button"
+                onClick={() => setComposerOpen(true)}
+                className="mt-1 px-3 py-1.5 rounded-xl bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-xs"
+              >
+                <Send className="w-3 h-3" />
+                <span>Send Real Alert</span>
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto pr-1">
@@ -231,6 +274,13 @@ export const EnhancedAdminDashboardPage: React.FC = () => {
 
       {/* Embedded Unmodified AdminDashboardPage */}
       <AdminDashboardPage />
+
+      {/* Real Local Notification Composer Modal */}
+      <NotificationComposerModal
+        isOpen={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        defaultRole="all"
+      />
     </div>
   );
 };

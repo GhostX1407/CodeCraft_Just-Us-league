@@ -20,7 +20,13 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, allowedRoles }) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  const role = user.role;
+  const isAllowed =
+    allowedRoles.includes(role) ||
+    (role === 'coordinator' && allowedRoles.includes('hospital')) ||
+    (role === 'hospital' && allowedRoles.includes('coordinator'));
+
+  if (!isAllowed) {
     // Redirect to their designated primary portal
     return <Navigate to={user.redirectPath || '/'} replace />;
   }

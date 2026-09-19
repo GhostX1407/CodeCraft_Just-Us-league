@@ -161,7 +161,7 @@ export interface AuditLog {
   hospital_id: string | null;
   event_type: AuditEventType;
   timestamp: any;
-  actor_type: 'system' | 'hospital_user' | 'ambulance_user' | 'admin_user';
+  actor_type: 'system' | 'coordinator_user' | 'hospital_user' | 'ambulance_user' | 'admin_user';
   actor_id: string;
   snapshot_of_data_at_decision_time?: AuditSnapshot;
   metadata?: Record<string, any>;

@@ -62,7 +62,7 @@ export const LoginPage: React.FC = () => {
     };
   }, []);
 
-  const [selectedRole, setSelectedRole] = useState<'ambulance' | 'hospital' | 'admin'>('ambulance');
+  const [selectedRole, setSelectedRole] = useState<'ambulance' | 'coordinator' | 'admin'>('ambulance');
   // Inputs start empty - not hardcoded
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -71,14 +71,14 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(false);
 
-  const activeRoles: { key: 'ambulance' | 'hospital' | 'admin'; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  const activeRoles: { key: 'ambulance' | 'coordinator' | 'admin'; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { key: 'ambulance', label: 'Ambulance Dispatch', icon: Ambulance },
-    { key: 'hospital', label: 'Hospital Reception', icon: Building2 },
+    { key: 'coordinator', label: 'Coordinator Dispatch', icon: Building2 },
     { key: 'admin', label: 'Regional Oversight', icon: Shield },
   ];
 
   // Role switch handler - changes role and clears inputs for clean entry
-  const handleSelectRole = (role: 'ambulance' | 'hospital' | 'admin') => {
+  const handleSelectRole = (role: 'ambulance' | 'coordinator' | 'admin') => {
     setSelectedRole(role);
     setError(null);
     setUsername('');
@@ -132,8 +132,8 @@ export const LoginPage: React.FC = () => {
       focusBorder: 'focus:border-[#EA580C] focus:ring-[#EA580C]/20',
       dotBg: 'bg-[#EA580C]',
     },
-    hospital: {
-      name: 'Hospital Reception',
+    coordinator: {
+      name: 'Emergency Coordinator',
       accentText: 'text-[#0D9488]',
       accentBg: 'bg-[#F0FDFA]',
       accentBorder: 'border-[#99F6E4]',
@@ -224,7 +224,7 @@ export const LoginPage: React.FC = () => {
                     transform: `translateX(${
                       selectedRole === 'ambulance'
                         ? '0%'
-                        : selectedRole === 'hospital'
+                        : selectedRole === 'coordinator'
                         ? 'calc(100% + 6px)'
                         : 'calc(200% + 12px)'
                     })`,
@@ -254,7 +254,7 @@ export const LoginPage: React.FC = () => {
                         )}
                       />
                       <span className="truncate max-w-full">
-                        {roleItem.key === 'ambulance' ? 'Ambulance' : roleItem.key === 'hospital' ? 'Hospital' : 'Admin'}
+                        {roleItem.key === 'ambulance' ? 'Ambulance' : roleItem.key === 'coordinator' ? 'Coordinator' : 'Admin'}
                       </span>
                     </button>
                   );

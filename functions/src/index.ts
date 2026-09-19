@@ -265,6 +265,22 @@ export const api = functions.https.onRequest(async (req, res) => {
 
       if (rankedCandidates.length === 0) {
         await CaseRepository.update(caseId, { status: 'exhausted' });
+        await NotificationRepository.create({
+          recipientRole: 'admin',
+          type: 'ROUTING_EXHAUSTED',
+          severity: 'critical',
+          title: `Routing Exhausted: Case ${caseId}`,
+          message: `No eligible hospitals found for Case ${caseId}. Manual intervention required.`,
+          caseId,
+        });
+        await NotificationRepository.create({
+          recipientRole: 'ambulance',
+          type: 'ROUTING_EXHAUSTED',
+          severity: 'critical',
+          title: `No Available Hospital`,
+          message: `All hospital options exhausted for Case ${caseId}. Contact dispatch coordinator immediately.`,
+          caseId,
+        });
         res.status(200).json({
           exhausted: true,
           match: null,
@@ -306,6 +322,30 @@ export const api = functions.https.onRequest(async (req, res) => {
         message: `Compatibility score ${top.breakdown.final_score}. Commitment request transmitted.`,
         caseId,
         hospitalId: top.hospital.id,
+        requestId: request.id,
+      });
+
+      await NotificationRepository.create({
+        recipientRole: 'hospital',
+        recipientId: top.hospital.id,
+        type: 'BED_HOLD_REQUESTED',
+        severity: 'critical',
+        title: `Incoming Bed Hold Request: Case ${caseId}`,
+        message: `Emergency commitment request incoming for ${top.hospital.name}. Priority score ${top.breakdown.final_score}. 60s decision window.`,
+        caseId,
+        hospitalId: top.hospital.id,
+        requestId: request.id,
+      });
+
+      await NotificationRepository.create({
+        recipientRole: 'admin',
+        type: 'CASE_ASSIGNED',
+        severity: 'info',
+        title: `Case Dispatched: ${caseId}`,
+        message: `Matched to ${top.hospital.name} with score ${top.breakdown.final_score}.`,
+        caseId,
+        hospitalId: top.hospital.id,
+        requestId: request.id,
       });
 
       res.status(200).json({
@@ -363,6 +403,17 @@ export const api = functions.https.onRequest(async (req, res) => {
           caseId: result.request.case_id,
           hospitalId: result.request.hospital_id,
         });
+
+        await NotificationRepository.create({
+          recipientRole: 'admin',
+          type: 'HOSPITAL_ACCEPTED',
+          severity: 'info',
+          title: `Bed Confirmed: ${result.request.hospital_id}`,
+          message: `Hospital ${result.request.hospital_id} accepted Case ${result.request.case_id}. Bed held and bay prepped.`,
+          caseId: result.request.case_id,
+          hospitalId: result.request.hospital_id,
+          requestId: result.request.id,
+        });
       }
 
       res.status(200).json(result);
@@ -381,6 +432,28 @@ export const api = functions.https.onRequest(async (req, res) => {
         'hospital_user',
         reason
       );
+
+      await NotificationRepository.create({
+        recipientRole: 'admin',
+        type: 'REQUEST_REJECTED',
+        severity: 'warning',
+        title: `Request Declined: ${rejectResult.request.hospital_id}`,
+        message: `Hospital ${rejectResult.request.hospital_id} declined Case ${rejectResult.request.case_id}: ${reason}. Auto-reroute triggered.`,
+        caseId: rejectResult.request.case_id,
+        hospitalId: rejectResult.request.hospital_id,
+        requestId: rejectResult.request.id,
+      });
+
+      await NotificationRepository.create({
+        recipientRole: 'ambulance',
+        type: 'REQUEST_REJECTED',
+        severity: 'warning',
+        title: `Hospital Declined Case`,
+        message: `Hospital ${rejectResult.request.hospital_id} was unable to accept (${reason}). Tactical reroute engaged.`,
+        caseId: rejectResult.request.case_id,
+        hospitalId: rejectResult.request.hospital_id,
+        requestId: rejectResult.request.id,
+      });
 
       // Auto-reroute to next eligible hospital
       const rerouteResult = await RerouteService.rerouteCase(
@@ -950,12 +1023,45 @@ export const api = functions.https.onRequest(async (req, res) => {
 
     // 35. GET /notifications - Query Role-Based Notifications
     if (method === 'GET' && pathParts[0] === 'notifications' && pathParts.length === 1) {
-      const role = (req.query.role as RecipientRole) || 'admin';
+      const role = req.query.role ? (req.query.role as RecipientRole | 'all') : undefined;
       const recipientId = req.query.recipientId as string | undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
 
       const notifications = await NotificationRepository.listForRole(role, recipientId, limit);
       res.status(200).json({ notifications });
+      return;
+    }
+
+    // 35b. POST /notifications - Send / Create Real Local Notification
+    if (method === 'POST' && pathParts[0] === 'notifications' && pathParts.length === 1) {
+      const { recipientRole, recipientId, title, message, severity, type, caseId, hospitalId, ambulanceId, metadata } = req.body || {};
+      if (!title || !message) {
+        res.status(400).json({ error: 'Title and message are required' });
+        return;
+      }
+      const notification = await NotificationRepository.create({
+        recipientRole: (recipientRole as RecipientRole) || 'all',
+        recipientId: recipientId || 'all',
+        title,
+        message,
+        severity: severity || 'info',
+        type: type || 'LOCAL_DISPATCH',
+        caseId,
+        hospitalId,
+        ambulanceId,
+        metadata,
+      });
+      res.status(201).json({ success: true, notification });
+      return;
+    }
+
+    // 35c. POST /notifications/clear or DELETE /notifications - Clear All Real Notifications
+    if (
+      (method === 'POST' && pathParts[0] === 'notifications' && pathParts[1] === 'clear') ||
+      (method === 'DELETE' && pathParts[0] === 'notifications' && pathParts.length === 1)
+    ) {
+      const cleared = await NotificationRepository.clearAll();
+      res.status(200).json({ success: true, cleared_count: cleared });
       return;
     }
 
