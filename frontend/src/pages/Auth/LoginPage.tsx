@@ -120,8 +120,45 @@ export const LoginPage: React.FC = () => {
     setTimeout(() => setApplied(false), 2000);
   };
 
+  const ROLE_THEME = {
+    ambulance: {
+      name: 'Ambulance EMT',
+      accentText: 'text-[#EA580C]',
+      accentBg: 'bg-[#FFF7ED]',
+      accentBorder: 'border-[#FED7AA]',
+      topBar: 'from-[#EA580C] via-[#F59E0B] to-[#EA580C]',
+      btnGradient: 'from-[#EA580C] via-[#F97316] to-[#EA580C]',
+      btnShadow: 'shadow-[#EA580C]/25',
+      focusBorder: 'focus:border-[#EA580C] focus:ring-[#EA580C]/20',
+      dotBg: 'bg-[#EA580C]',
+    },
+    hospital: {
+      name: 'Hospital Reception',
+      accentText: 'text-[#0D9488]',
+      accentBg: 'bg-[#F0FDFA]',
+      accentBorder: 'border-[#99F6E4]',
+      topBar: 'from-[#0D9488] via-[#14B8A6] to-[#0D9488]',
+      btnGradient: 'from-[#0D9488] via-[#14B8A6] to-[#0D9488]',
+      btnShadow: 'shadow-[#0D9488]/25',
+      focusBorder: 'focus:border-[#0D9488] focus:ring-[#0D9488]/20',
+      dotBg: 'bg-[#0D9488]',
+    },
+    admin: {
+      name: 'Regional Admin',
+      accentText: 'text-[#4F46E5]',
+      accentBg: 'bg-[#EEF2FF]',
+      accentBorder: 'border-[#C7D2FE]',
+      topBar: 'from-[#4F46E5] via-[#6366F1] to-[#4F46E5]',
+      btnGradient: 'from-[#4F46E5] via-[#6366F1] to-[#4F46E5]',
+      btnShadow: 'shadow-[#4F46E5]/25',
+      focusBorder: 'focus:border-[#4F46E5] focus:ring-[#4F46E5]/20',
+      dotBg: 'bg-[#4F46E5]',
+    },
+  };
+
   const currentRoleMeta = activeRoles.find((r) => r.key === selectedRole) || activeRoles[0];
   const ActiveIcon = currentRoleMeta.icon;
+  const currentTheme = ROLE_THEME[selectedRole];
 
   return (
     <>
@@ -144,7 +181,7 @@ export const LoginPage: React.FC = () => {
             <img
               src="/raahi-logo.png"
               alt="Raahi Logo"
-              className="w-12 h-12 rounded-2xl object-contain shadow-xs border border-[#E8E2D9] bg-white p-0.5"
+              className="w-12 h-12 rounded-2xl object-contain shadow-xs border border-[#E8E2D9] bg-white p-0.5 hover:scale-105 transition-transform duration-300"
             />
             <div>
               <div className="flex items-center gap-2">
@@ -171,167 +208,212 @@ export const LoginPage: React.FC = () => {
 
         {/* Main Login Card Section */}
         <main className="max-w-md mx-auto w-full my-auto py-6 relative z-10">
-          <div className="bg-white border border-[#E8E2D9] rounded-3xl p-6 sm:p-8 shadow-[0_12px_36px_rgba(45,35,28,0.06)]">
-            {/* 3 Clean Role Segmented Switcher */}
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#F4EFE6] rounded-2xl border border-[#E8E2D9] mb-6">
-              {activeRoles.map((roleItem) => {
-                const Icon = roleItem.icon;
-                const isActive = selectedRole === roleItem.key;
-                return (
+          <div className="bg-white border border-[#E8E2D9] rounded-3xl overflow-hidden shadow-[0_12px_36px_rgba(45,35,28,0.06)] hover:shadow-[0_16px_44px_rgba(45,35,28,0.09)] transition-shadow duration-300">
+            {/* Smooth Role Top Accent Line */}
+            <div className={clsx("h-1 w-full bg-gradient-to-r transition-all duration-500 ease-out", currentTheme.topBar)} />
+
+            <div className="p-6 sm:p-8">
+              {/* 3 Clean Role Segmented Switcher with Smooth Sliding Indicator */}
+              <div className="relative grid grid-cols-3 gap-1.5 p-1.5 bg-[#F4EFE6] rounded-2xl border border-[#E8E2D9] mb-6">
+                {/* Sliding Active Background Pill */}
+                <div
+                  className="absolute top-1.5 bottom-1.5 rounded-xl bg-white shadow-[0_2px_8px_rgba(45,35,28,0.08)] border border-[#E8E2D9] pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  style={{
+                    width: 'calc((100% - 24px) / 3)',
+                    left: '6px',
+                    transform: `translateX(${
+                      selectedRole === 'ambulance'
+                        ? '0%'
+                        : selectedRole === 'hospital'
+                        ? 'calc(100% + 6px)'
+                        : 'calc(200% + 12px)'
+                    })`,
+                  }}
+                />
+
+                {activeRoles.map((roleItem) => {
+                  const Icon = roleItem.icon;
+                  const isActive = selectedRole === roleItem.key;
+                  const itemTheme = ROLE_THEME[roleItem.key];
+                  return (
+                    <button
+                      key={roleItem.key}
+                      type="button"
+                      onClick={() => handleSelectRole(roleItem.key)}
+                      className={clsx(
+                        'relative z-10 py-2.5 px-2 rounded-xl text-xs sm:text-sm font-sans flex flex-col items-center justify-center gap-1.5 transition-all duration-200 select-none cursor-pointer',
+                        isActive
+                          ? 'text-[#2D231C] font-extrabold'
+                          : 'text-[#7D7067] hover:text-[#2D231C] font-semibold'
+                      )}
+                    >
+                      <Icon
+                        className={clsx(
+                          'w-4 h-4 sm:w-4.5 sm:h-4.5 transition-all duration-300',
+                          isActive ? clsx(itemTheme.accentText, 'scale-110') : 'text-[#7D7067] scale-100'
+                        )}
+                      />
+                      <span className="truncate max-w-full">
+                        {roleItem.key === 'ambulance' ? 'Ambulance' : roleItem.key === 'hospital' ? 'Hospital' : 'Admin'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Form Header with Smooth Role Transition */}
+              <div key={selectedRole} className="flex items-center gap-3.5 pb-5 border-b border-[#E8E2D9] mb-5 animate-role-glide">
+                <div
+                  className={clsx(
+                    "w-11 h-11 rounded-2xl border flex items-center justify-center shadow-2xs transition-all duration-300 animate-role-pop",
+                    currentTheme.accentBg,
+                    currentTheme.accentBorder,
+                    currentTheme.accentText
+                  )}
+                >
+                  <ActiveIcon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl font-display font-black text-[#2D231C] tracking-tight">
+                    {currentTheme.name}
+                  </h1>
+                  <p className="text-sm font-medium text-[#5C4E45] truncate">
+                    {DEMO_ACCOUNTS[selectedRole].subtitle}
+                  </p>
+                </div>
+              </div>
+
+              {/* Error Banner */}
+              {error && (
+                <div className="mb-4 p-3 rounded-xl bg-[#FEE2E2] border border-[#FECACA] text-[#DC2626] text-xs font-bold flex items-center gap-2 animate-role-glide">
+                  <ShieldAlert className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                {/* Username */}
+                <div>
+                  <label className="block text-xs font-mono font-bold uppercase text-[#5C4E45] mb-1.5">
+                    Username / Email
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#7D7067]">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter authorized username or email"
+                      className={clsx(
+                        "w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8E2D9] bg-[#FAF8F5] text-sm font-medium text-[#2D231C] placeholder-[#A89F97] focus:outline-none focus:ring-2 transition-all duration-200",
+                        currentTheme.focusBorder
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-xs font-mono font-bold uppercase text-[#5C4E45] mb-1.5">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#5C4E45]">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter access password"
+                      className={clsx(
+                        "w-full pl-11 pr-11 py-3 rounded-xl border border-[#E8E2D9] bg-[#FAF8F5] text-base font-semibold text-[#2D231C] placeholder-[#8C827A] focus:outline-none focus:ring-2 transition-all duration-200 font-mono",
+                        currentTheme.focusBorder
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#5C4E45] hover:text-[#2D231C] active:scale-95 transition-all duration-150 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sign In CTA */}
+                <div className="pt-2">
                   <button
-                    key={roleItem.key}
-                    type="button"
-                    onClick={() => handleSelectRole(roleItem.key)}
+                    type="submit"
+                    disabled={loading}
                     className={clsx(
-                      'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-sans font-bold flex flex-col items-center justify-center gap-1.5 transition-all duration-150 select-none',
-                      isActive
-                        ? 'bg-white text-[#2D231C] shadow-xs border border-[#E8E2D9] font-extrabold'
-                        : 'text-[#5C4E45] hover:text-[#2D231C]'
+                      "w-full py-3.5 px-4 rounded-xl bg-gradient-to-r text-white font-extrabold text-base flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-300 disabled:opacity-60 cursor-pointer",
+                      currentTheme.btnGradient,
+                      currentTheme.btnShadow
                     )}
                   >
-                    <Icon className={clsx('w-4 h-4 sm:w-4.5 sm:h-4.5', isActive ? 'text-[#EA580C]' : 'text-[#7D7067]')} />
-                    <span className="truncate max-w-full">
-                      {roleItem.key === 'ambulance' ? 'Ambulance' : roleItem.key === 'hospital' ? 'Hospital' : 'Admin'}
-                    </span>
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        <span>Signing in…</span>
+                      </span>
+                    ) : (
+                      <span key={selectedRole} className="inline-flex items-center gap-2 animate-role-glide">
+                        <span>Sign In to {currentTheme.name}</span>
+                        <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                      </span>
+                    )}
                   </button>
-                );
-              })}
+                </div>
+              </form>
             </div>
+          </div>
+        </main>
 
-            {/* Form Header */}
-            <div className="flex items-center gap-3.5 pb-5 border-b border-[#E8E2D9] mb-5">
-              <div className="w-11 h-11 rounded-2xl bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-center text-[#EA580C] shadow-2xs">
-                <ActiveIcon className="w-5 h-5" />
-              </div>
+        {/* Bottom Area: Left-Corner Credentials & Right-Corner Compliance */}
+        <footer className="w-full flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 pt-4 border-t border-[#E8E2D9] relative z-10">
+          {/* Full Left Side Corner at Bottom: Shows ONLY the Selected Role's Credential */}
+          <div key={selectedRole} className="text-left font-mono animate-role-glide">
+            <div className="text-xs uppercase font-extrabold text-[#5C4E45] tracking-wider mb-1.5 flex items-center gap-1.5">
+              <span className={clsx("w-2 h-2 rounded-full transition-colors duration-300", currentTheme.dotBg)} />
+              <span>{currentTheme.name} Demo Credentials:</span>
+            </div>
+            <div
+              onClick={handleApplyCredentials}
+              className="text-sm font-semibold text-[#2D231C] bg-white border border-[#E8E2D9] px-4 py-2.5 rounded-xl shadow-xs cursor-pointer hover:border-[#E8E2D9] hover:shadow-sm transition-all duration-200 flex items-center gap-3 group"
+              title="Click to auto-enter credentials"
+            >
               <div>
-                <h1 className="text-2xl font-display font-black text-[#2D231C] tracking-tight">
-                  {selectedRole === 'ambulance' ? 'Ambulance EMT' : selectedRole === 'hospital' ? 'Hospital Reception' : 'Regional Admin'}
-                </h1>
-                <p className="text-sm font-medium text-[#5C4E45]">
-                  {DEMO_ACCOUNTS[selectedRole].subtitle}
-                </p>
+                <span className="font-bold text-[#5C4E45]">Username:</span>{' '}
+                <span className="text-[#2D231C] font-extrabold select-all">{DEMO_ACCOUNTS[selectedRole].username}</span>
               </div>
-            </div>
-
-          {/* Error Banner */}
-          {error && (
-            <div className="mb-4 p-3 rounded-xl bg-[#FEE2E2] border border-[#FECACA] text-[#DC2626] text-xs font-bold flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            {/* Username */}
-            <div>
-              <label className="block text-xs font-mono font-bold uppercase text-[#5C4E45] mb-1.5">
-                Username / Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#7D7067]">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter authorized username or email"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8E2D9] bg-[#FAF8F5] text-sm font-medium text-[#2D231C] placeholder-[#A89F97] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/25 focus:border-[#EA580C] transition-all"
-                />
+              <span className="text-[#D8CFBF]">•</span>
+              <div>
+                <span className="font-bold text-[#5C4E45]">Password:</span>{' '}
+                <span className="text-[#2D231C] font-extrabold select-all">{DEMO_ACCOUNTS[selectedRole].password}</span>
               </div>
+              {applied ? (
+                <span className="flex items-center gap-1 text-xs font-bold text-[#52796F] bg-[#EFF6F3] px-2 py-0.5 rounded-md ml-1 border border-[#52796F]/30 animate-role-pop">
+                  <Check className="w-3.5 h-3.5" />
+                  Applied
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-[#8C827A] group-hover:text-[#2D231C] transition-colors ml-1">
+                  (click to enter)
+                </span>
+              )}
             </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-mono font-bold uppercase text-[#5C4E45] mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#5C4E45]">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter access password"
-                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-[#E8E2D9] bg-[#FAF8F5] text-base font-semibold text-[#2D231C] placeholder-[#8C827A] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/25 focus:border-[#EA580C] transition-all font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#5C4E45] hover:text-[#2D231C] transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Sign In CTA */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#EA580C] via-[#F59E0B] to-[#EA580C] hover:brightness-105 active:scale-[0.99] text-white font-extrabold text-base flex items-center justify-center gap-2 shadow-md shadow-[#EA580C]/20 transition-all disabled:opacity-60"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    <span>Signing in…</span>
-                  </span>
-                ) : (
-                  <>
-                    <span>Sign In to {selectedRole === 'ambulance' ? 'Ambulance' : selectedRole === 'hospital' ? 'Hospital' : 'Admin'}</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </main>
-
-      {/* Bottom Area: Left-Corner Credentials & Right-Corner Compliance */}
-      <footer className="w-full flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3 pt-4 border-t border-[#E8E2D9] relative z-10">
-        {/* Full Left Side Corner at Bottom: Shows ONLY the Selected Role's Credential */}
-        <div className="text-left font-mono">
-          <div className="text-xs uppercase font-extrabold text-[#5C4E45] tracking-wider mb-1.5">
-            {selectedRole === 'ambulance' ? 'Ambulance EMT' : selectedRole === 'hospital' ? 'Hospital Reception' : 'Admin Oversight'} Demo Credentials:
           </div>
-          <div
-            onClick={handleApplyCredentials}
-            className="text-sm font-semibold text-[#2D231C] bg-white border border-[#E8E2D9] px-4 py-2.5 rounded-xl shadow-xs cursor-pointer hover:border-[#EA580C]/50 hover:text-[#EA580C] transition-all flex items-center gap-3 group"
-            title="Click to auto-enter credentials"
-          >
-            <div>
-              <span className="font-bold text-[#5C4E45]">Username:</span>{' '}
-              <span className="text-[#2D231C] font-extrabold select-all">{DEMO_ACCOUNTS[selectedRole].username}</span>
-            </div>
-            <span className="text-[#D8CFBF]">•</span>
-            <div>
-              <span className="font-bold text-[#5C4E45]">Password:</span>{' '}
-              <span className="text-[#2D231C] font-extrabold select-all">{DEMO_ACCOUNTS[selectedRole].password}</span>
-            </div>
-            {applied ? (
-              <span className="flex items-center gap-1 text-xs font-bold text-[#52796F] bg-[#EFF6F3] px-2 py-0.5 rounded-md ml-1 border border-[#52796F]/30">
-                <Check className="w-3.5 h-3.5" />
-                Applied
-              </span>
-            ) : (
-              <span className="text-xs font-bold text-[#8C827A] group-hover:text-[#EA580C] transition-colors ml-1">
-                (click to enter)
-              </span>
-            )}
-          </div>
-        </div>
 
-        {/* Full Right Side Corner at Bottom: DISHA & HIPAA Architecture */}
-        <div className="text-left sm:text-right font-sans">
-          <div className="font-bold text-sm text-[#2D231C]">DISHA &amp; HIPAA Compliant Network</div>
-          <div className="mt-0.5 text-xs font-semibold text-[#5C4E45]">Raahi Emergency Medical Network • 256-bit Encryption</div>
-        </div>
-      </footer>
+          {/* Full Right Side Corner at Bottom: DISHA & HIPAA Architecture */}
+          <div className="text-left sm:text-right font-sans">
+            <div className="font-bold text-sm text-[#2D231C]">DISHA &amp; HIPAA Compliant Network</div>
+            <div className="mt-0.5 text-xs font-semibold text-[#5C4E45]">Raahi Emergency Medical Network • 256-bit Encryption</div>
+          </div>
+        </footer>
     </div>
   </>
 );

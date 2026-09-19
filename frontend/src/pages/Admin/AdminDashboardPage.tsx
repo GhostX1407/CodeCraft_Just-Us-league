@@ -325,7 +325,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* TAB 1: OVERVIEW & SPATIAL RADIANCE */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-page-smooth">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-2">
               <div className="lg:col-span-2 space-y-3">
                 <div className="flex items-center justify-between text-xs font-mono text-[#7D7067]">
@@ -474,7 +474,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* TAB 2: CRISIS COMMAND */}
         {activeTab === 'crisis' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-page-smooth">
             <div className="p-6 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D9]">
                 <div>
@@ -548,7 +548,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* TAB 3: ACCREDITATION & VERIFICATION QUEUE */}
         {activeTab === 'accreditation' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-page-smooth">
             <div className="p-6 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-6">
               <div>
                 <h2 className="text-lg font-display font-black text-[#2D231C]">
@@ -686,7 +686,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* TAB 4: AMBULANCE FLEET RADAR */}
         {activeTab === 'fleet' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-page-smooth">
             <div className="p-6 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D9]">
                 <div>
@@ -745,7 +745,7 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* TAB 5: AI OPERATIONS ANALYST */}
         {activeTab === 'ai' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-page-smooth">
             <div className="p-6 rounded-3xl border border-[#E8E2D9] bg-white shadow-sm space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E8E2D9]">
                 <div className="flex items-center gap-2">
