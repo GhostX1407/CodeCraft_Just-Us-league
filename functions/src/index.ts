@@ -564,6 +564,7 @@ export const api = functions.https.onRequest(async (req, res) => {
 
       const result = await MassCasualtyService.distributeIncident(incidentGroupId, {
         actorId: req.body?.actor_id || 'system',
+        cases: req.body?.cases,
       });
       res.status(200).json(result);
       return;

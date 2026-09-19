@@ -13,6 +13,7 @@ import { CaseRepository, HospitalRepository } from './repositories';
 import { Case, Hospital, MassCasualtyResult } from './types';
 import { distributeMassCasualtyIncident } from '../matching';
 import { AuditLogger } from '../audit/auditLogger';
+import { generateDynamicNeedProfile } from '../domain/vitalsIntelligence';
 
 export interface DistributeIncidentOptions {
   actorId?: string;
@@ -49,6 +50,23 @@ export class MassCasualtyService {
         unassigned_case_ids: [],
       };
     }
+
+    // Ensure every case has a complete need_profile for capability matching
+    cases = cases.map((c) => {
+      if (!c.need_profile) {
+        return {
+          ...c,
+          need_profile: generateDynamicNeedProfile(
+            c.category || 'trauma',
+            c.severity || 'red',
+            (c as any).subcategory,
+            (c as any).vitals,
+            (c as any).symptoms
+          ),
+        };
+      }
+      return c;
+    });
 
     // 2. Load hospitals (or use injected hospitals)
     let hospitals: Hospital[] = options.hospitals || [];

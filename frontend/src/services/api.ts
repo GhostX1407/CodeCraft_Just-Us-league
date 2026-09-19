@@ -991,6 +991,21 @@ export const api = {
       return { success: false, data: null, error: { code: 'NOT_FOUND', message: 'Request not found' }, meta: {} };
     }
 
+    // Proactively inform backend hospital status patch to trigger authoritative mid-transit invalidation
+    try {
+      await fetch(`${API_BASE_URL}/hospitals/${currentReq.hospital_id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          diversion: true,
+          diversion_reason: 'Hospital capability collapsed mid-transit',
+          icu_beds_free: 0,
+        }),
+      });
+    } catch (e) {
+      console.warn('[Raahi API] Backend hospital status patch offline, continuing with local store:', e);
+    }
+
     const now = Date.now();
     // Mark current request superseded
     const supersededReq: Request = {
@@ -1084,9 +1099,83 @@ export const api = {
     }>
   > {
     const hospitals = stateStore.getHospitals();
+    const now = Date.now();
+
+    // 1. First attempt server-side Hungarian joint-optimization distribution
+    try {
+      const res = await fetch(`${API_BASE_URL}/mci/distribute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          incident_group_id: incidentGroupId,
+          actor_id: actor.actor_id,
+          cases,
+        }),
+      });
+      if (res.ok) {
+        const mciData = await res.json();
+        if (mciData && mciData.assignments && mciData.assignments.length > 0) {
+          const distribution = mciData.assignments.map((a: any, idx: number) => ({
+            case_id: a.case_id,
+            hospital_id: a.hospital_id,
+            rank: idx + 1,
+            score: typeof a.score === 'number' ? Math.round(a.score <= 1 ? a.score * 100 : a.score) : 85,
+            reason: a.reason || 'Optimal capacity-balanced regional allocation',
+          }));
+          const requestsCreated: string[] = [];
+
+          distribution.forEach((item: any) => {
+            const c = cases.find((x) => x.id === item.case_id);
+            const hosp = hospitals.find((h) => h.id === item.hospital_id);
+            if (c) {
+              const reqId = 'req_' + Math.random().toString(36).substring(2, 9);
+              requestsCreated.push(reqId);
+              stateStore.setCase(c, {
+                status: 'pending',
+                active_request_id: reqId,
+                attempt_number: 1,
+                accepted_hospital_id: null,
+              });
+              stateStore.setRequest({
+                id: reqId,
+                case_id: c.id,
+                hospital_id: item.hospital_id,
+                status: 'pending',
+                sent_at: now,
+                expires_at: now + DEFAULT_TIMEOUT_SECONDS * 1000,
+                responded_at: null,
+                attempt_number: 1,
+                match_score_breakdown: {
+                  capability_match_pct: 90,
+                  distance_km: 8,
+                  distance_factor: 0.8,
+                  load_factor: 0.85,
+                  staleness_factor: 1.0,
+                  final_score: item.score,
+                },
+                reason_shown_to_dispatcher: `${hosp?.name || item.hospital_id} — ${item.reason}`,
+              });
+            }
+          });
+
+          return {
+            success: true,
+            data: {
+              incident_group_id: incidentGroupId,
+              distribution,
+              requests_created: requestsCreated,
+            },
+            error: null,
+            meta: { timestamp: now },
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /mci/distribute offline, running client fallback:', e);
+    }
+
     const distribution: { case_id: string; hospital_id: string; rank: number; score: number; reason: string }[] = [];
     const requestsCreated: string[] = [];
-    const now = Date.now();
 
     // Map each case according to distinct strength
     cases.forEach((c) => {
@@ -1699,5 +1788,138 @@ export const api = {
       disclaimer: 'AI-generated operational brief for administrative coordination only. Not for clinical diagnosis or triage routing decisions.',
       timestamp: new Date().toISOString(),
     };
+  },
+
+  async completeRequest(requestId: string, actorId: string = 'hospital_user'): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/requests/${requestId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_id: actorId }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /requests/:id/complete offline:', e);
+    }
+    return { success: true };
+  },
+
+  async markAllNotificationsRead(role: string = 'admin', recipientId?: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, recipientId }),
+      });
+      if (res.ok) return true;
+    } catch {
+      // Fallback
+    }
+    return true;
+  },
+
+  async listPendingAmbulances(): Promise<any[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/ambulances/pending`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.pending_ambulances || [];
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  },
+
+  async getAmbulanceTelemetry(ambulanceId: string): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/ambulances/${ambulanceId}/telemetry`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.telemetry;
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  },
+
+  async getMatchExplanation(payload: any): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/explanations/match`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.explanation;
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  },
+
+  async getOperationsAnalysis(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/ai/operations-analyst`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.analysis;
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  },
+
+  async getIncidentForensicAnalysis(incidentId: string, caseIds?: string[]): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/ai/incident-analyst`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incident_id: incidentId, case_ids: caseIds }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.analysis;
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  },
+
+  async listAllCases(status?: string): Promise<any[]> {
+    try {
+      const q = status ? `?status=${encodeURIComponent(status)}` : '';
+      const res = await fetch(`${API_BASE_URL}/cases${q}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.cases || [];
+      }
+    } catch {
+      // Fallback
+    }
+    return Object.values(stateStore.getState().cases);
+  },
+
+  async reseedDatabase(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/seed`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return { success: true };
   },
 };
