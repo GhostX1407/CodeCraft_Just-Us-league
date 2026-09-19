@@ -222,6 +222,13 @@ export const stateStore = {
     return state.hospitals;
   },
 
+  setHospitals(hospitals: Hospital[]): void {
+    if (Array.isArray(hospitals) && hospitals.length > 0) {
+      state.hospitals = hospitals;
+      persistAndBroadcast();
+    }
+  },
+
   updateHospital(id: string, patch: Partial<Hospital>): Hospital {
     const resolvedId =
       id === 'hosp_apex' || id.startsWith('hosp_apex')

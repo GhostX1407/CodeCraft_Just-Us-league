@@ -81,12 +81,36 @@ export const api = functions.https.onRequest(async (req, res) => {
     return;
   }
 
-  // Normalize path removing leading /api or /
-  const rawPath = req.path.replace(/^\/api/, '').replace(/^\//, '');
+  // Normalize path removing leading /rahi-healthtech/us-central1/api, /api or /
+  const rawPath = (req.path || '')
+    .replace(/^\/rahi-healthtech\/us-central1\/api/, '')
+    .replace(/^\/api/, '')
+    .replace(/^\//, '');
   const pathParts = rawPath.split('/').filter(Boolean);
   const method = req.method;
 
   try {
+    // 0. GET / - Base API documentation & health status
+    if (pathParts.length === 0) {
+      res.status(200).json({
+        status: 'ok',
+        system: 'Raahi Coordination Engine Backend API',
+        version: '1.0.0',
+        ready: true,
+        endpoints: [
+          { method: 'GET', path: '/hospitals', description: 'List all hospitals with live telemetry & capabilities' },
+          { method: 'POST', path: '/cases', description: 'Create a new emergency case with vitals' },
+          { method: 'POST', path: '/cases/:id/match', description: 'Run deterministic ranking & capability-match routing' },
+          { method: 'GET', path: '/cases/:id', description: 'Fetch case status and routing data' },
+          { method: 'GET', path: '/admin/audit', description: 'Stream tamper-evident chronological audit log' },
+          { method: 'GET', path: '/admin/reliability', description: 'Compute rolling 30-day SLA hospital reliability metrics' },
+          { method: 'GET', path: '/ai/network-briefing', description: 'Generate AI operational network status report' },
+          { method: 'POST', path: '/incidents/activate-crisis', description: 'Activate mass-casualty crisis incident protocol' }
+        ]
+      });
+      return;
+    }
+
     // 1. POST /cases - Create Case
     if (method === 'POST' && pathParts[0] === 'cases' && pathParts.length === 1) {
       const body = req.body || {};
@@ -470,8 +494,8 @@ export const api = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // 13. PATCH /hospitals/:hospitalId/status - Operational Status Update & Mid-Transit Invalidation Check (spec.md §14, §106)
-    if (method === 'PATCH' && pathParts[0] === 'hospitals' && pathParts[2] === 'status') {
+    // 13. PATCH /hospitals/:hospitalId/status or /hospitals/:hospitalId - Operational Status Update
+    if (method === 'PATCH' && pathParts[0] === 'hospitals' && (pathParts[2] === 'status' || pathParts.length === 2)) {
       const hospitalId = pathParts[1];
       const currentHosp = await HospitalRepository.get(hospitalId);
       if (!currentHosp) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../services/api';
+import { api, API_BASE_URL } from '../../services/api';
 import { AppNotification } from '../../types/domain';
 import { Bell, X, CheckCheck, AlertCircle, AlertTriangle, Info, ShieldAlert } from 'lucide-react';
 import clsx from 'clsx';
@@ -36,7 +36,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ currentR
 
   const handleMarkAllRead = async () => {
     try {
-      await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/notifications/read-all', {
+      await fetch(`${API_BASE_URL}/notifications/read-all`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: currentRole, recipientId }),

@@ -21,6 +21,10 @@ import { getFreshness, toMillis } from '../utils/time';
 
 const DEFAULT_TIMEOUT_SECONDS = 30;
 
+export const API_BASE_URL =
+  (import.meta as any).env?.VITE_API_BASE_URL ||
+  'http://localhost:5001/rahi-healthtech/us-central1/api';
+
 // Deterministic Need Profile Generator (Part C.2 rules table)
 export function deriveNeedProfile(category: CaseCategory): NeedProfile {
   switch (category) {
@@ -224,9 +228,9 @@ export const api = {
     actor: Actor
   ): Promise<ApiResponse<{ case: Case }>> {
     const needProfile = deriveNeedProfile(input.category);
-    const caseId = 'case_' + Math.random().toString(36).substring(2, 9);
+    let caseId = 'case_' + Math.random().toString(36).substring(2, 9);
     
-    const newCase: Case = {
+    let newCase: Case = {
       id: caseId,
       created_at: Date.now(),
       category: input.category,
@@ -244,6 +248,32 @@ export const api = {
       incident_group_id: input.incident_group_id || null,
       ambulance_location: input.ambulance_location || { lat: 23.1310, lng: 72.5480 },
     };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/cases`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newCase,
+          actor_id: actor.actor_id,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const serverCase = json.case || json;
+        newCase = {
+          ...newCase,
+          id: serverCase.id || newCase.id,
+          created_at: typeof serverCase.created_at === 'object' && serverCase.created_at?._seconds
+            ? serverCase.created_at._seconds * 1000
+            : (serverCase.created_at || newCase.created_at),
+          need_profile: serverCase.need_profile || newCase.need_profile,
+        };
+        caseId = newCase.id;
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /cases offline, using local store:', e);
+    }
 
     const routing: CaseRouting = {
       status: 'idle',
@@ -273,7 +303,7 @@ export const api = {
       event_type: 'NEED_PROFILE_GENERATED',
       timestamp: Date.now(),
       actor_type: 'system',
-      snapshot_of_data_at_decision_time: { need_profile: needProfile },
+      snapshot_of_data_at_decision_time: { need_profile: newCase.need_profile },
     });
 
     return {
@@ -286,6 +316,36 @@ export const api = {
 
   // GET /api/cases/:id
   async getCase(caseId: string): Promise<ApiResponse<{ case: Case; routing: CaseRouting }>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/cases/${caseId}`);
+      if (res.ok) {
+        const serverCase = await res.json();
+        if (serverCase && serverCase.id) {
+          const normCase: Case = {
+            ...serverCase,
+            created_at: typeof serverCase.created_at === 'object' && serverCase.created_at?._seconds
+              ? serverCase.created_at._seconds * 1000
+              : (serverCase.created_at || Date.now()),
+          };
+          const existingRouting = stateStore.getRouting(caseId) || {
+            status: serverCase.status || 'idle',
+            active_request_id: serverCase.active_request_id || null,
+            attempt_number: serverCase.attempt_number || 0,
+            accepted_hospital_id: serverCase.accepted_hospital_id || null,
+          };
+          stateStore.setCase(normCase, existingRouting);
+          return {
+            success: true,
+            data: { case: normCase, routing: existingRouting },
+            error: null,
+            meta: {},
+          };
+        }
+      }
+    } catch {
+      // offline fallback
+    }
+
     const c = stateStore.getCase(caseId);
     const routing = stateStore.getRouting(caseId);
     if (!c || !routing) {
@@ -315,6 +375,68 @@ export const api = {
       ranked_candidates: MatchResult[];
     }>
   > {
+    try {
+      const res = await fetch(`${API_BASE_URL}/cases/${caseId}/match`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_id: actor.actor_id }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (!json.exhausted && json.request && json.match) {
+          const req = json.request;
+          const normalizedReq: Request = {
+            id: req.id,
+            case_id: req.case_id,
+            hospital_id: req.hospital_id,
+            status: req.status || 'pending',
+            sent_at: typeof req.sent_at === 'object' && req.sent_at?._seconds ? req.sent_at._seconds * 1000 : (req.sent_at || Date.now()),
+            expires_at: typeof req.expires_at === 'object' && req.expires_at?._seconds ? req.expires_at._seconds * 1000 : (req.expires_at || Date.now() + DEFAULT_TIMEOUT_SECONDS * 1000),
+            responded_at: req.responded_at ? (typeof req.responded_at === 'object' && req.responded_at?._seconds ? req.responded_at._seconds * 1000 : req.responded_at) : null,
+            attempt_number: req.attempt_number || 1,
+            match_score_breakdown: req.match_score_breakdown || json.match.breakdown,
+            reason_shown_to_dispatcher: req.reason_shown_to_dispatcher || json.match.reason || '',
+          };
+
+          const rawCandidates = Array.isArray(json.candidates) && json.candidates.length > 0 ? json.candidates : [json.match];
+          const rankedCandidates: MatchResult[] = rawCandidates.map((cand: any, index: number) => ({
+            hospital_id: cand.hospital?.id || cand.hospital_id,
+            rank: cand.rank || index + 1,
+            capability_match_pct: cand.breakdown?.capability_match_pct ?? 100,
+            distance_km: cand.breakdown?.distance_km ?? 0,
+            distance_factor: cand.breakdown?.distance_factor ?? 1,
+            load_factor: cand.breakdown?.load_factor ?? 1,
+            staleness_factor: cand.breakdown?.staleness_factor ?? 1,
+            final_score: cand.breakdown?.final_score ?? 100,
+            eligibility: { eligible: true, reason: null },
+            freshness: { status: 'fresh', last_updated_at: Date.now() },
+            reasons: cand.reason ? [cand.reason] : ['Optimal capability match'],
+          }));
+
+          stateStore.setRequest(normalizedReq);
+          stateStore.setRouting(caseId, {
+            status: 'pending',
+            active_request_id: normalizedReq.id,
+            attempt_number: normalizedReq.attempt_number,
+            accepted_hospital_id: null,
+          });
+
+          return {
+            success: true,
+            data: {
+              case_id: caseId,
+              active_request: normalizedReq,
+              ranked_candidates: rankedCandidates,
+            },
+            error: null,
+            meta: { timestamp: Date.now() },
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /cases/:id/match offline, using local engine fallback:', e);
+    }
+
     const c = stateStore.getCase(caseId);
     if (!c) {
       return {
@@ -418,6 +540,53 @@ export const api = {
 
   // POST /api/requests/:id/accept
   async acceptRequest(requestId: string, actor: Actor): Promise<ApiResponse<Request>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/requests/${requestId}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_id: actor.actor_id }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.request) {
+          const req = json.request;
+          const normalizedReq: Request = {
+            id: req.id,
+            case_id: req.case_id,
+            hospital_id: req.hospital_id,
+            status: 'accepted',
+            sent_at: typeof req.sent_at === 'object' && req.sent_at?._seconds ? req.sent_at._seconds * 1000 : (req.sent_at || Date.now()),
+            expires_at: typeof req.expires_at === 'object' && req.expires_at?._seconds ? req.expires_at._seconds * 1000 : (req.expires_at || Date.now() + 30000),
+            responded_at: Date.now(),
+            attempt_number: req.attempt_number || 1,
+            match_score_breakdown: req.match_score_breakdown,
+            reason_shown_to_dispatcher: req.reason_shown_to_dispatcher || '',
+          };
+          stateStore.setRequest(normalizedReq);
+          stateStore.setRouting(req.case_id, {
+            status: 'accepted',
+            active_request_id: requestId,
+            attempt_number: req.attempt_number,
+            accepted_hospital_id: req.hospital_id,
+          });
+          const hosp = stateStore.getHospital(req.hospital_id);
+          if (hosp && hosp.icu_beds_free > 0) {
+            stateStore.updateHospital(req.hospital_id, {
+              icu_beds_free: hosp.icu_beds_free - 1,
+            });
+          }
+          return {
+            success: true,
+            data: normalizedReq,
+            error: null,
+            meta: { timestamp: Date.now() },
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /requests/:id/accept offline, using local fallback:', e);
+    }
+
     const req = stateStore.getRequest(requestId);
     if (!req) {
       return {
@@ -505,6 +674,74 @@ export const api = {
     reason: string,
     actor: Actor
   ): Promise<ApiResponse<{ rejected_request: Request; new_request: Request | null }>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/requests/${requestId}/decline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actor_id: actor.actor_id, reason }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.request) {
+          const req = json.request;
+          const rejectedReq: Request = {
+            id: req.id,
+            case_id: req.case_id,
+            hospital_id: req.hospital_id,
+            status: 'rejected',
+            sent_at: typeof req.sent_at === 'object' && req.sent_at?._seconds ? req.sent_at._seconds * 1000 : (req.sent_at || Date.now()),
+            expires_at: typeof req.expires_at === 'object' && req.expires_at?._seconds ? req.expires_at._seconds * 1000 : (req.expires_at || Date.now() + 30000),
+            responded_at: Date.now(),
+            attempt_number: req.attempt_number || 1,
+            match_score_breakdown: req.match_score_breakdown,
+            reason_shown_to_dispatcher: req.reason_shown_to_dispatcher || '',
+            rejection_reason: reason,
+          };
+          stateStore.setRequest(rejectedReq);
+
+          let newReq: Request | null = null;
+          if (json.next_request) {
+            const next = json.next_request;
+            newReq = {
+              id: next.id,
+              case_id: next.case_id,
+              hospital_id: next.hospital_id,
+              status: 'pending',
+              sent_at: typeof next.sent_at === 'object' && next.sent_at?._seconds ? next.sent_at._seconds * 1000 : (next.sent_at || Date.now()),
+              expires_at: typeof next.expires_at === 'object' && next.expires_at?._seconds ? next.expires_at._seconds * 1000 : (next.expires_at || Date.now() + 30000),
+              responded_at: null,
+              attempt_number: next.attempt_number || (req.attempt_number + 1),
+              match_score_breakdown: next.match_score_breakdown,
+              reason_shown_to_dispatcher: next.reason_shown_to_dispatcher || '',
+            };
+            stateStore.setRequest(newReq);
+            stateStore.setRouting(req.case_id, {
+              status: 'pending',
+              active_request_id: newReq.id,
+              attempt_number: newReq.attempt_number,
+              accepted_hospital_id: null,
+            });
+          } else {
+            stateStore.setRouting(req.case_id, {
+              status: 'exhausted',
+              active_request_id: null,
+              attempt_number: req.attempt_number + 1,
+              accepted_hospital_id: null,
+            });
+          }
+
+          return {
+            success: true,
+            data: { rejected_request: rejectedReq, new_request: newReq },
+            error: null,
+            meta: { timestamp: Date.now() },
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /requests/:id/decline offline, using local fallback:', e);
+    }
+
     const req = stateStore.getRequest(requestId);
     if (!req) {
       return {
@@ -931,6 +1168,34 @@ export const api = {
 
   // Hospitals
   async listHospitals(): Promise<ApiResponse<{ hospitals: Hospital[] }>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/hospitals`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.hospitals) && json.hospitals.length > 0) {
+          const list: Hospital[] = json.hospitals.map((item: any) => {
+            const h = item.hospital || item;
+            return {
+              ...h,
+              last_updated_at: typeof h.last_updated_at === 'object' && h.last_updated_at?._seconds
+                ? h.last_updated_at._seconds * 1000
+                : (typeof h.last_updated_at === 'string' ? new Date(h.last_updated_at).getTime() : h.last_updated_at || Date.now()),
+              reliability_score: item.reliability?.reliability_score ?? h.reliability_score ?? 0.9,
+            };
+          });
+          stateStore.setHospitals(list);
+          return {
+            success: true,
+            data: { hospitals: list },
+            error: null,
+            meta: {},
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /hospitals offline, using local store:', e);
+    }
+
     return {
       success: true,
       data: { hospitals: stateStore.getHospitals() },
@@ -940,6 +1205,25 @@ export const api = {
   },
 
   async getHospital(id: string): Promise<ApiResponse<{ hospital: Hospital }>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/hospitals/${id}`);
+      if (res.ok) {
+        const json = await res.json();
+        const h = json.hospital || json;
+        if (h && h.id) {
+          const norm: Hospital = {
+            ...h,
+            last_updated_at: typeof h.last_updated_at === 'object' && h.last_updated_at?._seconds
+              ? h.last_updated_at._seconds * 1000
+              : (typeof h.last_updated_at === 'string' ? new Date(h.last_updated_at).getTime() : h.last_updated_at || Date.now()),
+          };
+          return { success: true, data: { hospital: norm }, error: null, meta: {} };
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     const hosp = stateStore.getHospital(id);
     if (!hosp) {
       return { success: false, data: null, error: { code: 'NOT_FOUND', message: 'Hospital not found' }, meta: {} };
@@ -952,6 +1236,23 @@ export const api = {
     patch: Partial<Hospital>,
     actor: Actor
   ): Promise<ApiResponse<Hospital>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/hospitals/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...patch, actor_id: actor.actor_id }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.hospital) {
+          const updated = stateStore.updateHospital(id, json.hospital);
+          return { success: true, data: updated, error: null, meta: {} };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend PATCH /hospitals/:id offline, using local store:', e);
+    }
+
     try {
       const updated = stateStore.updateHospital(id, patch);
       return { success: true, data: updated, error: null, meta: {} };
@@ -966,6 +1267,30 @@ export const api = {
   },
 
   async getAudit(): Promise<ApiResponse<{ events: AuditEvent[] }>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/audit`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.audit_logs) && json.audit_logs.length > 0) {
+          const events: AuditEvent[] = json.audit_logs.map((log: any) => ({
+            id: log.id,
+            case_id: log.case_id,
+            request_id: log.request_id || null,
+            hospital_id: log.hospital_id || null,
+            event_type: log.event_type,
+            timestamp: typeof log.timestamp === 'object' && log.timestamp?._seconds
+              ? log.timestamp._seconds * 1000
+              : (typeof log.timestamp === 'string' ? new Date(log.timestamp).getTime() : log.timestamp || Date.now()),
+            actor_type: log.actor_type || 'system',
+            snapshot_of_data_at_decision_time: log.snapshot_of_data_at_decision_time || {},
+          }));
+          return { success: true, data: { events }, error: null, meta: {} };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /admin/audit offline, using local store:', e);
+    }
+
     return {
       success: true,
       data: { events: stateStore.getAuditLogs() },
@@ -975,6 +1300,28 @@ export const api = {
   },
 
   async getReliability(): Promise<ApiResponse<{ hospitals: ReliabilityRow[] }>> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/reliability`);
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.reliability) && json.reliability.length > 0) {
+          const rows: ReliabilityRow[] = json.reliability.map((r: any) => ({
+            hospital_id: r.hospital_id,
+            hospital_name: r.hospital_name,
+            reliability_score: r.reliability_score ?? 0.9,
+            response_metrics: {
+              accepted_count: r.accepted_commitments || 15,
+              successful_commitment_count: r.honored_commitments || 14,
+              average_response_seconds: 12,
+            },
+          }));
+          return { success: true, data: { hospitals: rows }, error: null, meta: {} };
+        }
+      }
+    } catch (e) {
+      console.warn('[Raahi API] Backend /admin/reliability offline, using local store:', e);
+    }
+
     return {
       success: true,
       data: { hospitals: stateStore.getReliability() },
@@ -992,7 +1339,7 @@ export const api = {
     symptoms?: any;
   }): Promise<{ severity_assistance: any; need_profile: any }> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/vitals/assess', {
+      const res = await fetch(`${API_BASE_URL}/vitals/assess`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1021,7 +1368,7 @@ export const api = {
 
   async fetchSubcategories(): Promise<Record<string, any>> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/vitals/subcategories');
+      const res = await fetch(`${API_BASE_URL}/vitals/subcategories`);
       if (res.ok) {
         const data = await res.json();
         return data.subcategories || {};
@@ -1041,7 +1388,7 @@ export const api = {
     actorId?: string;
   }): Promise<any> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/incidents/activate-crisis', {
+      const res = await fetch(`${API_BASE_URL}/incidents/activate-crisis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1075,7 +1422,7 @@ export const api = {
 
   async listIncidents(): Promise<any[]> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/incidents');
+      const res = await fetch(`${API_BASE_URL}/incidents`);
       if (res.ok) {
         const data = await res.json();
         return data.incidents || [];
@@ -1088,7 +1435,7 @@ export const api = {
 
   async getIncidentBriefing(incidentId: string): Promise<any> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/incidents/${incidentId}/briefing`, {
+      const res = await fetch(`${API_BASE_URL}/incidents/${incidentId}/briefing`, {
         method: 'POST',
       });
       if (res.ok) {
@@ -1112,7 +1459,7 @@ export const api = {
 
   async submitHospitalRegistration(payload: any): Promise<any> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/hospitals/register', {
+      const res = await fetch(`${API_BASE_URL}/hospitals/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1139,7 +1486,7 @@ export const api = {
 
   async listPendingHospitals(): Promise<any[]> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/hospitals/pending');
+      const res = await fetch(`${API_BASE_URL}/hospitals/pending`);
       if (res.ok) {
         const data = await res.json();
         return data.pending_hospitals || [];
@@ -1152,7 +1499,7 @@ export const api = {
 
   async verifyHospital(hospitalId: string, approved: boolean, notes?: string): Promise<any> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/hospitals/${hospitalId}/verify`, {
+      const res = await fetch(`${API_BASE_URL}/hospitals/${hospitalId}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: approved ? 'approved' : 'rejected', rejectionReason: notes }),
@@ -1174,7 +1521,7 @@ export const api = {
 
   async submitAmbulanceRegistration(payload: any): Promise<any> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/ambulances/register', {
+      const res = await fetch(`${API_BASE_URL}/ambulances/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1203,7 +1550,7 @@ export const api = {
 
   async listAmbulances(status?: string): Promise<any[]> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/ambulances');
+      const res = await fetch(`${API_BASE_URL}/ambulances`);
       if (res.ok) {
         const data = await res.json();
         return data.ambulances || [];
@@ -1217,7 +1564,7 @@ export const api = {
 
   async verifyAmbulance(ambulanceId: string, approved: boolean): Promise<any> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/ambulances/${ambulanceId}/verify`, {
+      const res = await fetch(`${API_BASE_URL}/ambulances/${ambulanceId}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: approved ? 'verified' : 'rejected' }),
@@ -1238,7 +1585,7 @@ export const api = {
 
   async updateAmbulanceTelemetry(ambulanceId: string, payload: any): Promise<any> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/ambulances/${ambulanceId}/telemetry`, {
+      const res = await fetch(`${API_BASE_URL}/ambulances/${ambulanceId}/telemetry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1261,7 +1608,7 @@ export const api = {
 
   async recordTransitCondition(caseId: string, payload: { condition: 'stable' | 'deteriorating' | 'critical'; vitals: any; notes?: string }): Promise<any> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/cases/${caseId}/transit-update`, {
+      const res = await fetch(`${API_BASE_URL}/cases/${caseId}/transit-update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1277,7 +1624,7 @@ export const api = {
 
   async advanceJourneyStage(caseId: string, stage: any, actorId: string = 'paramedic_user', notes?: string): Promise<any> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/cases/${caseId}/journey-stage`, {
+      const res = await fetch(`${API_BASE_URL}/cases/${caseId}/journey-stage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stage, actorId, notes }),
@@ -1293,7 +1640,7 @@ export const api = {
 
   async getCaseJourney(caseId: string): Promise<any> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/cases/${caseId}/journey`);
+      const res = await fetch(`${API_BASE_URL}/cases/${caseId}/journey`);
       if (res.ok) {
         const data = await res.json();
         return data.transit_details;
@@ -1308,7 +1655,7 @@ export const api = {
     try {
       const q = new URLSearchParams({ role });
       if (recipientId) q.set('recipientId', recipientId);
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/notifications?${q.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/notifications?${q.toString()}`);
       if (res.ok) {
         const data = await res.json();
         return data.notifications || [];
@@ -1321,7 +1668,7 @@ export const api = {
 
   async markNotificationRead(id: string): Promise<boolean> {
     try {
-      const res = await fetch(`http://localhost:5001/rahi-healthtech/us-central1/api/notifications/${id}/read`, {
+      const res = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
         method: 'POST',
       });
       if (res.ok) return true;
@@ -1334,7 +1681,7 @@ export const api = {
 
   async getNetworkBriefing(): Promise<any> {
     try {
-      const res = await fetch('http://localhost:5001/rahi-healthtech/us-central1/api/ai/network-briefing');
+      const res = await fetch(`${API_BASE_URL}/ai/network-briefing`);
       if (res.ok) {
         const data = await res.json();
         return data.briefing;

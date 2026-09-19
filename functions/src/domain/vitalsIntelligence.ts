@@ -8,7 +8,7 @@
  * 4. Dynamic Need Profile derivation powered by capability graph resolution
  */
 
-import { resolveCapabilityDependencies } from './capabilityGraph';
+import { resolveCapabilityDependencies, CAPABILITY_GRAPH_NODES } from './capabilityGraph';
 
 export type MainCategory =
   | 'cardiac'
@@ -372,11 +372,14 @@ export function generateDynamicNeedProfile(
   // 4. Resolve full transitive dependencies through Capability Graph
   const graphResolution = resolveCapabilityDependencies(Array.from(new Set(baseCaps)));
 
-  // Separate specialists vs capability flags for backward compatibility
+  // Separate specialists vs capability flags for backward compatibility and matching eligibility
   const specialists = graphResolution.requiredNodes.filter((id) =>
     ['cardiologist', 'trauma_team', 'general_surgeon', 'orthopedist', 'neurosurgeon', 'neurologist', 'pediatrician', 'obgyn', 'anesthetist', 'general_physician', 'pulmonologist', 'plastic_surgeon'].includes(id)
   );
-  const flags = graphResolution.requiredNodes.filter((id) => !specialists.includes(id));
+  // Concrete capability flags: exclude specialists and abstract service-level bundle nodes
+  const flags = graphResolution.requiredNodes.filter(
+    (id) => !specialists.includes(id) && CAPABILITY_GRAPH_NODES[id]?.type !== 'service'
+  );
 
   const summary = `${specialists.map((s) => s.replace('_', ' ')).join(', ') || 'Attending ER Physician'} + ${flags.join(', ')}`;
 

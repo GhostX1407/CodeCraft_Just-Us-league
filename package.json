@@ -8,8 +8,12 @@
     "functions"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=frontend",
+    "dev": "node scripts/start-all.js",
+    "dev:all": "node scripts/start-all.js",
+    "start": "node scripts/start-all.js",
     "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run server --workspace=functions",
+    "server": "npm run server --workspace=functions",
     "dev:functions": "npm run build:watch --workspace=functions",
     "build": "npm run build --workspace=functions && npm run build --workspace=frontend",
     "build:frontend": "npm run build --workspace=frontend",
